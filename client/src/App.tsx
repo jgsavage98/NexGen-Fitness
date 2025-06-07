@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Onboarding from "@/pages/Onboarding";
+import ExerciseUpload from "@/pages/ExerciseUpload";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -28,6 +29,7 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/onboarding" component={Onboarding} />
+          <Route path="/admin/exercises" component={ExerciseUpload} />
         </>
       ) : (
         <>

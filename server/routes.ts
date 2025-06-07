@@ -404,6 +404,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Exercise management routes
+  app.get('/api/exercises', async (req, res) => {
+    try {
+      const exercises = await storage.getExercises();
+      res.json(exercises);
+    } catch (error) {
+      console.error("Error fetching exercises:", error);
+      res.status(500).json({ message: "Failed to fetch exercises" });
+    }
+  });
+
+  app.get('/api/exercises/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const exercise = await storage.getExerciseById(id);
+      if (!exercise) {
+        return res.status(404).json({ message: "Exercise not found" });
+      }
+      res.json(exercise);
+    } catch (error) {
+      console.error("Error fetching exercise:", error);
+      res.status(500).json({ message: "Failed to fetch exercise" });
+    }
+  });
+
+  app.post('/api/exercises', upload.single('gif'), async (req, res) => {
+    try {
+      const exerciseData = {
+        ...req.body,
+        primaryMuscles: Array.isArray(req.body.primaryMuscles) 
+          ? req.body.primaryMuscles 
+          : JSON.parse(req.body.primaryMuscles || '[]'),
+        secondaryMuscles: Array.isArray(req.body.secondaryMuscles)
+          ? req.body.secondaryMuscles
+          : JSON.parse(req.body.secondaryMuscles || '[]'),
+        videoUrl: req.file ? `/exercises/${req.file.filename}` : undefined
+      };
+
+      const validatedData = insertExerciseSchema.parse(exerciseData);
+      const exercise = await storage.createExercise(validatedData);
+      res.status(201).json(exercise);
+    } catch (error) {
+      console.error("Error creating exercise:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.issues 
+        });
+      }
+      res.status(500).json({ message: "Failed to create exercise" });
+    }
+  });
+
+  app.post('/api/exercises/bulk-upload', upload.array('gifs', 500), async (req, res) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      const exercises = [];
+      const errors = [];
+      
+      for (const file of files) {
+        try {
+          // Extract exercise name from filename
+          const exerciseName = path.basename(file.filename, path.extname(file.filename))
+            .replace(/-/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+          
+          const exerciseData = {
+            name: exerciseName,
+            videoUrl: `/exercises/${file.filename}`,
+            primaryMuscles: ['General'],
+            secondaryMuscles: [],
+            category: 'Uploaded',
+            difficulty: 'Intermediate'
+          };
+
+          const validatedData = insertExerciseSchema.parse(exerciseData);
+          const exercise = await storage.createExercise(validatedData);
+          exercises.push(exercise);
+        } catch (error) {
+          errors.push({ filename: file.filename, error: error.message });
+        }
+      }
+
+      res.json({ 
+        message: `Successfully uploaded ${exercises.length} exercises`,
+        total: files.length,
+        successful: exercises.length,
+        errors: errors.length,
+        exercises: exercises.slice(0, 10),
+        errorDetails: errors.slice(0, 5)
+      });
+    } catch (error) {
+      console.error("Error in bulk upload:", error);
+      res.status(500).json({ message: "Failed to process bulk upload" });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // WebSocket server for real-time chat
