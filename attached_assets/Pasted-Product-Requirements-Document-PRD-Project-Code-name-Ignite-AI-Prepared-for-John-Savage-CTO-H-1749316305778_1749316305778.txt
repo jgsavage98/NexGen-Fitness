@@ -1,0 +1,135 @@
+Product Requirements Document (PRD)
+
+Project Code-name: Ignite-AI
+Prepared for: John Savage (CTO / Head of Product) & Chassidy Escobedo (CXO)
+Revision Date: 7 Jun 2025
+
+1. Purpose & Vision
+
+Build a mobile-first, AI-powered fitness-and-nutrition coaching app that replaces Mind Strong’s 1-on-1 model with:
+
+24 / 7 GPT-4o chat & voice Coach-Brain
+Adaptive macro targets and workouts driven by real-time data
+Embedded 1 000-exercise library (looping demos + anatomy overlays)
+Light human oversight (Chassidy) for safety & motivational touchpoints
+North-star: Deliver 90 %+ of a premium coaching outcome at < 40 % of the cost, while remaining unmistakably “our own brand”—not a Mind Strong clone.
+2. Problem Statement
+
+Mind Strong’s $2 500 / 12-week program is effective but:
+
+Scales linearly with coach payroll
+Replies can lag up to 24 h
+Users toggle across multiple tools (Voxer, Kajabi, MyFitnessPal)
+Ignite-AI removes those friction points with always-on AI, unified UX, and near-zero incremental cost.
+
+3. Goals & Success Metrics
+
+Goal	KPI	Target at 6 mo post-launch
+Drive engagement	Daily Active / Monthly Active (DAU / MAU)	≥ 35 %
+Demonstrate personalization wins	Avg. macro-adherence improvement (baseline → week 12)	+20 %
+Retain users	Cohort LTV / CAC	≥ 4 ×
+Unit economics	Gross margin	≥ 95 %
+Safety	Content-safety escalations resolved < 2 h	100 %
+4. Personas
+
+Persona	Archetype	Pain points	What Ignite-AI solves
+Self-starter Sam	30 yr, tech-savvy, wants data-driven plan	Sick of Googling “best macros”	Instant macro engine, 24 / 7 chat
+Busy-parent Priya	41 yr, minimal workout time	Needs guidance without scheduling Zoom calls	Chat + push nudges on her schedule
+Returning athlete Alex	29 yr, rehabbing back injury	Needs exercise swaps	Built-in regression / progression toggles
+Corporate wellness lead Casey	Buys licenses for employees	Needs scalable coaching at low cost	Near-zero marginal user cost
+5. High-Level User Stories (MVP)
+
+Onboarding
+As a new user I answer a short intake (gender, goals, injuries, height, weight) so my plan starts personalized.
+Macro Tracking
+As a user I sync meals from MyFitnessPal so the AI coach can adjust my daily macro targets.
+Workout Execution
+As a user I see today’s workout with demo video and can swap an exercise if it bothers my back.
+Chat & Voice
+As a user I press a mic button, ask a question, and get an instant AI answer (or human follow-up if complex).
+Weekly Progress
+As a user I get a Monday report card (KPIs, suggestions) without having to email anyone.
+6. Functional Requirements
+
+Module	Requirement ID	Description
+Onboarding	ONB-01	5-step wizard (gender, goal, injuries, metrics, account) must complete in ≤ 90 s.
+ONB-02	Must support Imperial & Metric toggles.
+Macro Engine	MAC-01	Daily cron scores calories, protein, carbs, fat; adjusts targets ±5 % per adherence rule set.
+MAC-02	Chassidy can edit rule coefficients via admin panel.
+Workout Engine	WKT-01	GET /workout/today returns JSON array of exercises w/ regressionId & progressionId.
+WKT-02	Swapping an exercise logs event exerciseSwap with reason.
+Coach-Brain (Chat)	CH-01	GPT-4o system prompt must inject “Chassidy coaching tone guidelines v1.0”.
+CH-02	Low-confidence (< 0.7) replies routed to /queue/moderation with 2-hour SLA.
+Media	MED-01	Exercise demo must stream MP4 < 4 MB; fallback WebP < 2 MB.
+MED-02	Anatomy PNG overlay supports primary (red) vs. secondary (amber) highlight.
+Notifications	NOT-01	Push reminders at 08:00 local + adaptive nudge if no meal logged by 13:00.
+Analytics	ANA-01	Track DAU, macro adherence, workout completion; send to App Insights.
+7. Non-Functional Requirements
+
+Category	Requirement
+Performance	App cold-launch ≤ 2 s on iPhone 12+; server P99 latency ≤ 700 ms for chat reply.
+Availability	99.5 % backend uptime (Azure SLA).
+Security	JWT auth (Azure AD B2C). All PII stored encrypted at rest (Cosmos DB + Blob SSE).
+Compliance	HIPAA-ready pattern, GDPR “right to be forgotten,” COPPA not applicable (18+ product).
+Accessibility	WCAG 2.1 AA; dynamic type; VoiceOver labels on all actionable elements.
+Localization	English (US) MVP; architecture ready for i18n keys.
+8. UX / UI Specifications
+
+Device frame: iPhone 16 Pro (393 × 852 logical px).
+Global tokens
+color.primary.500 #0F63FF
+color.surface #1A1A1A
+radius.medium 16 px
+font.heading Inter Bold 28 pt
+Core Components
+ProgressStepper variant set
+PrimaryButton rounded 28 px
+ExerciseVideoCard (video, title, badge chips)
+MuscleChip pills (primary red, secondary amber)
+Navigation (tab bar)
+Home
+Workout
+Chat
+Progress
+Settings
+Wireframes attached in Figma file Ignite-AI v0.3.
+
+9. Data Model (Cosmos DB containers)
+
+Container	Partition Key	Key Fields
+Users	/userId	email, name, metrics, injuries, equipment
+Exercises	/id	name, description, primaryMuscles[], mediaURLs, regressionId
+Workouts	/userId	date, exerciseIds[], swapLog[]
+Meals	/userId	dateTime, calories, macros
+Vector embeddings for exercises stored in Azure AI Search index exercise_vectors.
+
+10. API Endpoints (BFF Functions)
+
+Endpoint	Method	Auth	Description
+/api/onboarding	POST	Bearer	Saves intake form, returns JWT.
+/api/workout/today	GET	Bearer	Today’s workout JSON.
+/api/exercise/swap	POST	Bearer	Payload: exerciseId, swapType.
+/api/chat	POST	Bearer	Stream GPT reply; TSID for log.
+11. Success Metrics & Instrumentation
+
+Adoption: DAU / MAU, onboarding completion rate.
+Engagement: Avg. workouts per week, chat messages per user per week.
+Outcome: Avg. macro adherence delta vs. baseline, weight-loss distribution.
+Reliability: P95 chat latency, weekly uptime.
+All metrics captured via App Insights and displayed in Power BI dashboard Ignite-MVP-Health.
+12. Scope & MVP Cut Lines
+
+Feature	In MVP	Notes
+iOS app	✔️	SwiftUI only; Android deferred.
+AI chat + voice	✔️	Text + 60 s voice memo.
+Macro & workout adaptation	✔️	Daily. Weekly ML refinements deferred.
+Social cohort leaderboard	❌	Post-MVP.
+watchOS companion	❌	Stretch goal.
+In-app subscription paywall	❌	Pilot launch is invite-only free beta.
+13. Risks & Mitigations
+
+Risk	Impact	Mitigation
+AI hallucination of medical advice	Legal	Content-safety filter + disclaimer banner + human audit queue
+No registered dietitian	Compliance	Conservative macro ranges, disclaimers, part-time dietitian advisor by launch+3 mo
+Scope creep (watchOS, social feed)	Timeline	Enforce MVP cut lines, weekly backlog scrub.
+Cloud cost spike	Finances	RU budget alerts, autoscale guardrail at $500/mo.
