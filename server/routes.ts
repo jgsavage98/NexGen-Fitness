@@ -525,6 +525,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple admin interface for development
+  app.get('/admin/exercises', (req, res) => {
+    res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exercise Upload Admin</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .upload-area { border: 2px dashed #ccc; padding: 40px; text-align: center; margin: 20px 0; }
+        .upload-area:hover { border-color: #999; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .results { margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 4px; }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+    </style>
+</head>
+<body>
+    <h1>Exercise GIF Upload</h1>
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <p>Click here to select exercise GIF files</p>
+        <p>Supports single or multiple file upload</p>
+    </div>
+    
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="videos" multiple accept=".gif" style="display: none;">
+        <br><br>
+        <label>Exercise Name (optional - will auto-extract from filename):</label><br>
+        <input type="text" id="exerciseName" placeholder="e.g., Push Up"><br><br>
+        
+        <label>Primary Muscles:</label><br>
+        <input type="text" id="primaryMuscles" placeholder="e.g., Chest, Shoulders" value="General"><br><br>
+        
+        <label>Difficulty:</label><br>
+        <select id="difficulty">
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate" selected>Intermediate</option>
+            <option value="Advanced">Advanced</option>
+        </select><br><br>
+        
+        <button type="submit" class="btn">Upload Exercise(s)</button>
+    </form>
+    
+    <div id="results" class="results" style="display: none;"></div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                document.querySelector('.upload-area p').textContent = 
+                    files.length === 1 ? files[0].name : files.length + ' files selected';
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const files = document.getElementById('fileInput').files;
+            if (files.length === 0) {
+                alert('Please select at least one GIF file');
+                return;
+            }
+            
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('videos', file);
+            }
+            
+            const exerciseName = document.getElementById('exerciseName').value;
+            const primaryMuscles = document.getElementById('primaryMuscles').value;
+            const difficulty = document.getElementById('difficulty').value;
+            
+            if (exerciseName) formData.append('exerciseName', exerciseName);
+            if (primaryMuscles) formData.append('primaryMuscles', primaryMuscles);
+            if (difficulty) formData.append('difficulty', difficulty);
+            
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<p>Uploading...</p>';
+            
+            try {
+                const response = await fetch('/api/exercises/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultsDiv.innerHTML = \`
+                        <div class="success">
+                            <h3>Upload Successful!</h3>
+                            <p>Total files: \${result.total}</p>
+                            <p>Successful: \${result.successful}</p>
+                            <p>Errors: \${result.errors}</p>
+                            \${result.exercises.length > 0 ? '<h4>Uploaded Exercises:</h4><ul>' + 
+                              result.exercises.map(ex => '<li>' + ex.name + ' (ID: ' + ex.id + ')</li>').join('') + 
+                              '</ul>' : ''}
+                        </div>
+                    \`;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Upload failed: ' + result.message + '</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Upload failed: ' + error.message + '</div>';
+            }
+        });
+    </script>
+</body>
+</html>
+    `);
+  });
+
   const httpServer = createServer(app);
   
   // WebSocket server for real-time chat
