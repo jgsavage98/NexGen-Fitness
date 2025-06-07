@@ -481,6 +481,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload route for admin interface
+  app.post('/api/exercises/upload', upload.array('videos', 500), async (req, res) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      const exercises = [];
+      const errors = [];
+      
+      for (const file of files) {
+        try {
+          // Extract exercise name from filename or use provided name
+          let exerciseName = req.body.exerciseName || 
+            path.basename(file.filename, path.extname(file.filename))
+              .replace(/-/g, ' ')
+              .replace(/\b\w/g, l => l.toUpperCase());
+          
+          const primaryMuscles = req.body.primaryMuscles ? 
+            req.body.primaryMuscles.split(',').map(m => m.trim()) : 
+            ['General'];
+          
+          const exerciseData = {
+            name: exerciseName,
+            videoUrl: `/exercises/${file.filename}`,
+            primaryMuscles,
+            secondaryMuscles: [],
+            category: 'Uploaded',
+            difficulty: req.body.difficulty || 'Intermediate'
+          };
+
+          const validatedData = insertExerciseSchema.parse(exerciseData);
+          const exercise = await storage.createExercise(validatedData);
+          exercises.push(exercise);
+        } catch (error) {
+          errors.push({ filename: file.filename, error: (error as Error).message });
+        }
+      }
+
+      res.json({ 
+        message: `Successfully uploaded ${exercises.length} exercises`,
+        total: files.length,
+        successful: exercises.length,
+        errors: errors.length,
+        exercises: exercises.slice(0, 10),
+        errorDetails: errors.slice(0, 5)
+      });
+    } catch (error) {
+      console.error("Error in upload:", error);
+      res.status(500).json({ message: "Failed to process upload" });
+    }
+  });
+
   app.post('/api/exercises/bulk-upload', upload.array('gifs', 500), async (req, res) => {
     try {
       const files = req.files as Express.Multer.File[];
