@@ -575,8 +575,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test route
+  app.get('/admin/test', (req, res) => {
+    res.send('<h1>Admin Test Page Works!</h1><p>If you see this, the server is working.</p>');
+  });
+
   // Simple admin interface for development
   app.get('/admin/exercises', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
     res.send(`
 <!DOCTYPE html>
 <html>

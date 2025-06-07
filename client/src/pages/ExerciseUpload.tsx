@@ -32,10 +32,10 @@ export default function ExerciseUpload() {
     mutationFn: async (files: FileList) => {
       const formData = new FormData();
       Array.from(files).forEach(file => {
-        formData.append('gifs', file);
+        formData.append('videos', file);
       });
       
-      const response = await fetch('/api/exercises/bulk-upload', {
+      const response = await fetch('/api/exercises/upload', {
         method: 'POST',
         body: formData,
       });
