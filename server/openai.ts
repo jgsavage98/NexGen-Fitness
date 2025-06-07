@@ -99,7 +99,7 @@ Response format should be encouraging but professional, focusing on sustainable 
     availableTime?: number
   ): Promise<WorkoutRecommendation> {
     try {
-      const context = this.buildUserContext(userProfile);
+      const context = this.buildUserContext(userProfile, false); // Privacy-focused by default
       const constraints = this.buildWorkoutConstraints(targetMuscleGroups, availableTime, userProfile);
 
       const response = await openai.chat.completions.create({
@@ -233,9 +233,21 @@ Respond with JSON in this format:
     }
   }
 
-  private buildUserContext(userProfile: any): string {
+  private buildUserContext(userProfile: any, includePersonalData: boolean = false): string {
     if (!userProfile) return "No user profile available";
 
+    if (!includePersonalData) {
+      // Privacy-focused version - only fitness-relevant data
+      return `
+User Profile:
+- Goal: ${userProfile.goal || 'general fitness'}
+- Activity Level: ${userProfile.activityLevel || 'moderate'}
+- Movement Restrictions: ${userProfile.injuries?.length ? 'has limitations' : 'none reported'}
+- Available Equipment: ${userProfile.equipment?.join(', ') || 'bodyweight only'}
+      `.trim();
+    }
+
+    // Full version (only if explicitly requested)
     return `
 User Profile:
 - Goal: ${userProfile.goal || 'not specified'}
