@@ -201,6 +201,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/workout-logs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { exercise, days } = req.query;
+      
+      // Get logs from last 30 days by default
+      const daysBack = parseInt(days as string) || 30;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysBack);
+      
+      const logs = await storage.getUserWorkoutLogs(userId, startDate);
+      
+      // Filter by exercise if specified
+      const filteredLogs = exercise 
+        ? logs.filter((log: any) => log.exerciseName.toLowerCase().includes(exercise.toLowerCase()))
+        : logs;
+      
+      res.json(filteredLogs);
+    } catch (error) {
+      console.error("Error fetching workout logs:", error);
+      res.status(500).json({ message: "Failed to fetch workout logs" });
+    }
+  });
+
   // Meal and nutrition routes
   app.get('/api/meals', isAuthenticated, async (req: any, res) => {
     try {

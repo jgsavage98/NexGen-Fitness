@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { WorkoutExercise, WorkoutSet } from "@/lib/types";
+import { Plus, Minus } from "lucide-react";
+import WeightProgressChart from "./WeightProgressChart";
 
 interface ExerciseVideoCardProps {
   exercise: WorkoutExercise;
@@ -17,6 +21,9 @@ export default function ExerciseVideoCard({
   const [currentReps, setCurrentReps] = useState<number[]>(
     Array(exercise.sets).fill(parseInt(exercise.reps.split('-')[0]) || 12)
   );
+  const [currentWeights, setCurrentWeights] = useState<number[]>(
+    Array(exercise.sets).fill(0)
+  );
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const handleRepsChange = (setIndex: number, delta: number) => {
@@ -25,9 +32,23 @@ export default function ExerciseVideoCard({
     setCurrentReps(newReps);
   };
 
+  const handleWeightChange = (setIndex: number, delta: number) => {
+    const newWeights = [...currentWeights];
+    newWeights[setIndex] = Math.max(0, newWeights[setIndex] + delta);
+    setCurrentWeights(newWeights);
+  };
+
+  const handleWeightInput = (setIndex: number, value: string) => {
+    const newWeights = [...currentWeights];
+    const weight = parseFloat(value) || 0;
+    newWeights[setIndex] = Math.max(0, weight);
+    setCurrentWeights(newWeights);
+  };
+
   const handleCompleteSet = (setNumber: number) => {
     const reps = currentReps[setNumber - 1];
-    onCompleteSet(exercise.name, setNumber, reps);
+    const weight = currentWeights[setNumber - 1];
+    onCompleteSet(exercise.name, setNumber, reps, weight > 0 ? weight : undefined);
   };
 
   const handleSwapExercise = () => {
@@ -135,45 +156,91 @@ export default function ExerciseVideoCard({
         </p>
 
         {/* Set Tracking */}
-        <div className="space-y-3">
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 font-medium">
+            <div className="text-center">SET</div>
+            <div className="text-center">WEIGHT (lbs)</div>
+            <div className="text-center">REPS</div>
+          </div>
+          
           {Array.from({ length: exercise.sets }, (_, index) => {
             const setNumber = index + 1;
             const isCompleted = getSetStatus(exercise.name, setNumber);
             
             return (
-              <div key={setNumber} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white">Set {setNumber}</span>
-                <div className="flex items-center space-x-2">
+              <div key={setNumber} className={`grid grid-cols-3 gap-2 items-center p-3 rounded-lg ${
+                isCompleted ? 'bg-success/20 border border-success/30' : 'bg-gray-800/50'
+              }`}>
+                {/* Set Number */}
+                <div className="text-center">
+                  <span className="text-white font-medium">{setNumber}</span>
+                </div>
+                
+                {/* Weight Input */}
+                <div className="flex items-center space-x-1">
                   <Button
-                    onClick={() => handleRepsChange(index, -1)}
-                    className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center text-sm p-0"
+                    onClick={() => handleWeightChange(index, -2.5)}
+                    className="w-6 h-6 bg-gray-700 hover:bg-gray-600 rounded flex items-center justify-center text-xs p-0"
                     disabled={isCompleted}
                   >
-                    -
+                    <Minus className="w-3 h-3" />
                   </Button>
                   
-                  <span className="w-8 text-center text-white font-medium">
+                  <Input
+                    type="number"
+                    value={currentWeights[index] || ''}
+                    onChange={(e) => handleWeightInput(index, e.target.value)}
+                    placeholder="0"
+                    className="w-12 h-6 text-center text-xs bg-gray-700 border-gray-600 text-white p-1"
+                    disabled={isCompleted}
+                    step="2.5"
+                    min="0"
+                  />
+                  
+                  <Button
+                    onClick={() => handleWeightChange(index, 2.5)}
+                    className="w-6 h-6 bg-gray-700 hover:bg-gray-600 rounded flex items-center justify-center text-xs p-0"
+                    disabled={isCompleted}
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </div>
+                
+                {/* Reps Input */}
+                <div className="flex items-center space-x-1">
+                  <Button
+                    onClick={() => handleRepsChange(index, -1)}
+                    className="w-6 h-6 bg-gray-700 hover:bg-gray-600 rounded flex items-center justify-center text-xs p-0"
+                    disabled={isCompleted}
+                  >
+                    <Minus className="w-3 h-3" />
+                  </Button>
+                  
+                  <span className="w-8 text-center text-white font-medium text-sm">
                     {currentReps[index]}
                   </span>
                   
                   <Button
                     onClick={() => handleRepsChange(index, 1)}
-                    className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center text-sm p-0"
+                    className="w-6 h-6 bg-gray-700 hover:bg-gray-600 rounded flex items-center justify-center text-xs p-0"
                     disabled={isCompleted}
                   >
-                    +
+                    <Plus className="w-3 h-3" />
                   </Button>
-                  
+                </div>
+                
+                {/* Complete Set Button */}
+                <div className="col-span-3 mt-2">
                   <Button
                     onClick={() => handleCompleteSet(setNumber)}
                     disabled={isCompleted}
-                    className={`ml-2 px-3 py-1 rounded-full text-sm font-medium ${
+                    className={`w-full py-2 rounded-lg text-sm font-medium ${
                       isCompleted
                         ? "bg-success text-white cursor-not-allowed"
                         : "bg-success hover:bg-green-600 text-white"
                     }`}
                   >
-                    {isCompleted ? "✓ Done" : "✓"}
+                    {isCompleted ? "✓ Set Complete" : "Complete Set"}
                   </Button>
                 </div>
               </div>
