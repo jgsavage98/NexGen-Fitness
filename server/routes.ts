@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
@@ -8,9 +9,44 @@ import {
   updateUserProfileSchema, 
   insertMealSchema, 
   insertWorkoutLogSchema,
-  insertChatMessageSchema 
+  insertChatMessageSchema,
+  insertExerciseSchema
 } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+// Configure multer for exercise GIF uploads
+const exerciseStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(process.cwd(), 'public', 'exercises');
+    fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    // Use original filename or create standardized name
+    const exerciseName = req.body.name || 'exercise';
+    const sanitized = exerciseName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const extension = path.extname(file.originalname);
+    cb(null, `${sanitized}${extension}`);
+  }
+});
+
+const upload = multer({ 
+  storage: exerciseStorage,
+  fileFilter: (req, file, cb) => {
+    // Accept only GIF and video files
+    if (file.mimetype.startsWith('image/gif') || file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only GIF and video files are allowed'));
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
