@@ -69,8 +69,6 @@ async function upsertUser(
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
-  app.use(passport.initialize());
-  app.use(passport.session());
 
   // Development mode: create a demo user for testing
   if (process.env.NODE_ENV === 'development') {
@@ -107,6 +105,10 @@ export async function setupAuth(app: Express) {
 
     return;
   }
+
+  // Production mode: use passport for Replit Auth
+  app.use(passport.initialize());
+  app.use(passport.session());
 
   // Production mode: use proper Replit Auth
   const config = await getOidcConfig();
