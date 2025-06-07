@@ -27,7 +27,7 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
@@ -72,6 +72,43 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Development mode: create a demo user for testing
+  if (process.env.NODE_ENV === 'development') {
+    // Simple demo authentication for development
+    app.get("/api/login", async (req, res) => {
+      // Create or get demo user
+      const demoUser = await storage.upsertUser({
+        id: "demo-user-123",
+        email: "demo@example.com",
+        firstName: "Demo",
+        lastName: "User",
+        profileImageUrl: "https://via.placeholder.com/150",
+      });
+      
+      // Set session
+      (req as any).session.user = {
+        claims: {
+          sub: demoUser.id,
+          email: demoUser.email,
+          first_name: demoUser.firstName,
+          last_name: demoUser.lastName,
+          profile_image_url: demoUser.profileImageUrl,
+          exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days
+        }
+      };
+      
+      res.redirect('/');
+    });
+
+    app.get("/api/logout", (req, res) => {
+      (req as any).session.destroy();
+      res.redirect('/');
+    });
+
+    return;
+  }
+
+  // Production mode: use proper Replit Auth
   const config = await getOidcConfig();
 
   const verify: VerifyFunction = async (
@@ -128,6 +165,25 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Development mode: check session
+  if (process.env.NODE_ENV === 'development') {
+    const sessionUser = (req as any).session?.user;
+    if (!sessionUser || !sessionUser.claims) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    // Check if session is expired
+    const now = Math.floor(Date.now() / 1000);
+    if (sessionUser.claims.exp && now > sessionUser.claims.exp) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    // Attach user to request
+    (req as any).user = sessionUser;
+    return next();
+  }
+
+  // Production mode: use passport authentication
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {
