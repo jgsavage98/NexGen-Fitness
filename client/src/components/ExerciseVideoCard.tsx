@@ -248,6 +248,12 @@ export default function ExerciseVideoCard({
           })}
         </div>
 
+        {/* Weight Progress Chart */}
+        <WeightProgressChart 
+          exerciseName={exercise.name} 
+          className="mt-4"
+        />
+
         {/* Exercise Notes */}
         <div className="mt-4 p-3 bg-dark rounded-lg">
           <div className="flex items-start space-x-2">
