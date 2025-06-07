@@ -10,6 +10,7 @@ import {
   real,
   boolean,
   date,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -115,7 +116,9 @@ export const macroTargets = pgTable("macro_targets", {
   fat: real("fat").notNull(),
   date: date("date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  userDateUnique: unique("macro_targets_user_date_unique").on(table.userId, table.date),
+}));
 
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),

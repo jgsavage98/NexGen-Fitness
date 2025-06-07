@@ -168,46 +168,58 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserWorkoutLogs(userId: string, date?: Date): Promise<WorkoutLog[]> {
-    let query = db.select().from(workoutLogs).where(eq(workoutLogs.userId, userId));
-    
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
       
-      query = query.where(
-        and(
-          eq(workoutLogs.userId, userId),
-          gte(workoutLogs.completedAt, startOfDay),
-          lte(workoutLogs.completedAt, endOfDay)
+      return await db
+        .select()
+        .from(workoutLogs)
+        .where(
+          and(
+            eq(workoutLogs.userId, userId),
+            gte(workoutLogs.completedAt, startOfDay),
+            lte(workoutLogs.completedAt, endOfDay)
+          )
         )
-      );
+        .orderBy(desc(workoutLogs.completedAt));
     }
     
-    return await query.orderBy(desc(workoutLogs.completedAt));
+    return await db
+      .select()
+      .from(workoutLogs)
+      .where(eq(workoutLogs.userId, userId))
+      .orderBy(desc(workoutLogs.completedAt));
   }
 
   // Meal operations
   async getUserMeals(userId: string, date?: Date): Promise<Meal[]> {
-    let query = db.select().from(meals).where(eq(meals.userId, userId));
-    
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
       
-      query = query.where(
-        and(
-          eq(meals.userId, userId),
-          gte(meals.loggedAt, startOfDay),
-          lte(meals.loggedAt, endOfDay)
+      return await db
+        .select()
+        .from(meals)
+        .where(
+          and(
+            eq(meals.userId, userId),
+            gte(meals.loggedAt, startOfDay),
+            lte(meals.loggedAt, endOfDay)
+          )
         )
-      );
+        .orderBy(desc(meals.loggedAt));
     }
     
-    return await query.orderBy(desc(meals.loggedAt));
+    return await db
+      .select()
+      .from(meals)
+      .where(eq(meals.userId, userId))
+      .orderBy(desc(meals.loggedAt));
   }
 
   async logMeal(meal: InsertMeal): Promise<Meal> {
@@ -230,15 +242,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async setMacroTargets(targets: InsertMacroTarget): Promise<MacroTarget> {
-    const [newTargets] = await db
-      .insert(macroTargets)
-      .values(targets)
-      .onConflictDoUpdate({
-        target: [macroTargets.userId, macroTargets.date],
-        set: targets,
-      })
-      .returning();
-    return newTargets;
+    // First try to find existing targets
+    const [existing] = await db
+      .select()
+      .from(macroTargets)
+      .where(
+        and(
+          eq(macroTargets.userId, targets.userId),
+          eq(macroTargets.date, targets.date)
+        )
+      );
+
+    if (existing) {
+      // Update existing record
+      const [updated] = await db
+        .update(macroTargets)
+        .set({
+          calories: targets.calories,
+          protein: targets.protein,
+          carbs: targets.carbs,
+          fat: targets.fat,
+        })
+        .where(eq(macroTargets.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Insert new record
+      const [newTargets] = await db
+        .insert(macroTargets)
+        .values(targets)
+        .returning();
+      return newTargets;
+    }
   }
 
   // Chat operations

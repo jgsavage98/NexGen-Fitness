@@ -314,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Process as regular chat message
-      const { message } = transcription;
+      const { text: message } = transcription;
       
       // Save user message
       await storage.saveChatMessage({
