@@ -225,40 +225,62 @@ export default function Onboarding() {
             <h2 className="text-xl font-semibold mb-4">Your Nutrition Plan</h2>
             <div className="space-y-4">
               
-              {/* Baseline vs New Calories */}
+              {/* Baseline Section */}
               <div className="bg-surface rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-sm text-gray-400">Baseline Calories</div>
-                    <div className="text-xl font-semibold">{macroSummary?.baselineCalories || 2000}</div>
-                  </div>
-                  <ArrowLeft className="text-primary-500 w-6 h-6 rotate-180" />
-                  <div>
-                    <div className="text-sm text-gray-400">New Daily Target</div>
-                    <div className="text-xl font-semibold text-primary-500">{macroSummary?.newCalories || 1950}</div>
-                  </div>
+                <div className="text-sm font-medium mb-3 text-gray-300">Baseline (From Your Screenshot)</div>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-lg font-semibold">{macroSummary?.baselineCalories || 2000} calories</span>
                 </div>
-                <div className="mt-2 text-xs text-blue-200 bg-blue-500/10 rounded p-2">
-                  I'm starting you with a gentle 50-calorie reduction. We'll adjust gradually as you progress!
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="text-gray-400">Protein</div>
+                    <div className="font-semibold">{macroSummary?.baselineMacros?.protein || 120}g</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-gray-400">Carbs</div>
+                    <div className="font-semibold">{macroSummary?.baselineMacros?.carbs || 200}g</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-gray-400">Fat</div>
+                    <div className="font-semibold">{macroSummary?.baselineMacros?.fat || 65}g</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Macro Breakdown */}
-              <div className="bg-surface rounded-lg p-4">
-                <div className="text-sm font-medium mb-3">Daily Macro Targets</div>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Protein</span>
-                    <span className="font-semibold">{macroSummary?.newMacros?.protein || 122}g</span>
+              {/* Arrow */}
+              <div className="flex justify-center">
+                <div className="flex items-center space-x-2 text-primary-500">
+                  <div className="h-px bg-primary-500 w-8"></div>
+                  <ArrowLeft className="w-6 h-6 rotate-180" />
+                  <div className="h-px bg-primary-500 w-8"></div>
+                </div>
+              </div>
+
+              {/* New Target Section */}
+              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
+                <div className="text-sm font-medium mb-3 text-primary-300">New Daily Target</div>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-lg font-semibold text-primary-100">{macroSummary?.newCalories || 1950} calories</span>
+                  <span className="text-xs bg-success/20 text-success px-2 py-1 rounded">
+                    -{((macroSummary?.baselineCalories || 2000) - (macroSummary?.newCalories || 1950))} cal
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="text-primary-400">Protein</div>
+                    <div className="font-semibold text-primary-100">{macroSummary?.newMacros?.protein || 122}g</div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Carbs</span>
-                    <span className="font-semibold">{macroSummary?.newMacros?.carbs || 219}g</span>
+                  <div className="text-center">
+                    <div className="text-primary-400">Carbs</div>
+                    <div className="font-semibold text-primary-100">{macroSummary?.newMacros?.carbs || 219}g</div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Fat</span>
-                    <span className="font-semibold">{macroSummary?.newMacros?.fat || 65}g</span>
+                  <div className="text-center">
+                    <div className="text-primary-400">Fat</div>
+                    <div className="font-semibold text-primary-100">{macroSummary?.newMacros?.fat || 65}g</div>
                   </div>
+                </div>
+                <div className="mt-3 text-xs text-blue-200 bg-blue-500/10 rounded p-2">
+                  I'm starting you with a gentle reduction. We'll adjust gradually as you progress!
                 </div>
               </div>
             </div>
