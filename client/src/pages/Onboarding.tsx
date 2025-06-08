@@ -50,7 +50,7 @@ export default function Onboarding() {
       // Convert string values to numbers where needed
       const profileData = {
         ...data,
-        goal: data.goal ? parseFloat(data.goal as string) : undefined,
+        goal: data.goal, // Keep goal as string (weight-loss, muscle-gain, maintenance)
         weight: data.weight ? parseFloat(data.weight.toString()) : undefined,
         height: data.height ? parseInt(data.height.toString()) : undefined,
         age: data.age ? parseInt(data.age.toString()) : undefined,
