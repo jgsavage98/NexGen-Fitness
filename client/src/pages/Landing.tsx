@@ -31,7 +31,19 @@ export default function Landing() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">Personal Coaching</h3>
-                  <p className="text-gray-400 text-sm">Work directly with Coach Chassidy</p>
+                  <p className="text-gray-400 text-sm">
+                    Work directly with{" "}
+                    <a 
+                      href="/coach-chassidy-bio" 
+                      className="text-primary-400 hover:text-primary-300 underline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.open('/coach-chassidy-bio', '_blank');
+                      }}
+                    >
+                      Coach Chassidy
+                    </a>
+                  </p>
                 </div>
               </div>
             </CardContent>

@@ -6,9 +6,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve static files
-app.use('/exercises', express.static('public/exercises'));
+// Serve static files first, before other middleware
 app.use(express.static('public'));
+app.use('/exercises', express.static('public/exercises'));
 
 app.use((req, res, next) => {
   const start = Date.now();

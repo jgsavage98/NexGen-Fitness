@@ -10,6 +10,7 @@ import Home from "@/pages/Home";
 import Onboarding from "@/pages/Onboarding";
 import ExerciseUpload from "@/pages/ExerciseUpload";
 import MeetYourCoach from "@/pages/MeetYourCoach";
+import CoachBio from "@/pages/CoachBio";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
