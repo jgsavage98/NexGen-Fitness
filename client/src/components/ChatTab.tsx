@@ -158,10 +158,10 @@ export default function ChatTab() {
             <i className="fas fa-robot text-white"></i>
           </div>
           <div>
-            <div className="font-semibold text-white">AI Coach</div>
+            <div className="font-semibold text-white">Virtual Agent</div>
             <div className="text-sm text-success flex items-center">
               <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-              Online 24/7
+              AI Assistant • Online 24/7
             </div>
           </div>
         </div>

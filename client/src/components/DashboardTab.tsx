@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import MacroRings from "./MacroRings";
 import { Workout, MacroTarget, Meal } from "@/lib/types";
+import { Link } from "wouter";
+import { User, Calendar, Target } from "lucide-react";
 
 export default function DashboardTab() {
   const today = new Date().toISOString().split('T')[0];
@@ -48,6 +50,30 @@ export default function DashboardTab() {
 
   return (
     <div className="px-6 py-6 space-y-6">
+      {/* Coach Welcome Card */}
+      <Card className="bg-gradient-to-r from-primary/20 to-purple-600/20 border-primary/30">
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-3">
+            <img 
+              src="/coach-chassidy.jpg" 
+              alt="Coach Chassidy"
+              className="w-12 h-12 rounded-full object-cover border-2 border-primary/30"
+            />
+            <div className="flex-1">
+              <p className="text-white font-medium mb-1">Coach Chassidy</p>
+              <p className="text-gray-300 text-sm">
+                Great work staying consistent! Keep uploading your daily screenshots for the best results.
+              </p>
+            </div>
+            <Link href="/coach">
+              <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
+                <User className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Daily Overview Card */}
       <Card className="bg-surface border-gray-700">
         <CardContent className="p-6">

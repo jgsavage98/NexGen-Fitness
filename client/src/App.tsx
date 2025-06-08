@@ -9,6 +9,7 @@ import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Onboarding from "@/pages/Onboarding";
 import ExerciseUpload from "@/pages/ExerciseUpload";
+import MeetYourCoach from "@/pages/MeetYourCoach";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -29,6 +30,7 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/onboarding" component={Onboarding} />
+          <Route path="/coach" component={MeetYourCoach} />
           <Route path="/admin/exercises" component={ExerciseUpload} />
         </>
       ) : (

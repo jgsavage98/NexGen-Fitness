@@ -8,8 +8,9 @@ interface TabNavigationProps {
 export default function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   const tabs = [
     { id: 'dashboard' as TabType, icon: 'fas fa-home', label: 'Home' },
+    { id: 'nutrition' as TabType, icon: 'fas fa-camera', label: 'Nutrition' },
     { id: 'workout' as TabType, icon: 'fas fa-dumbbell', label: 'Workout' },
-    { id: 'chat' as TabType, icon: 'fas fa-comments', label: 'Coach' },
+    { id: 'chat' as TabType, icon: 'fas fa-comments', label: 'Assistant' },
     { id: 'progress' as TabType, icon: 'fas fa-chart-line', label: 'Progress' },
   ];
 
