@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +30,17 @@ export default function Onboarding() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/auth/logout", {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setLocation("/landing");
+    },
+  });
 
   const totalSteps = 5;
   const progressPercentage = (currentStep / totalSteps) * 100;
@@ -118,8 +130,31 @@ export default function Onboarding() {
         {/* Progress Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-gray-400">Step {currentStep} of {totalSteps}</span>
-            <span className="text-sm text-gray-400">{Math.round(progressPercentage)}%</span>
+            <div className="flex items-center space-x-3">
+              {currentStep > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentStep(currentStep - 1)}
+                  className="text-gray-400 hover:text-white p-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+              )}
+              <span className="text-sm text-gray-400">Step {currentStep} of {totalSteps}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-400">{Math.round(progressPercentage)}%</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => logoutMutation.mutate()}
+                className="text-gray-400 hover:text-white text-xs"
+                disabled={logoutMutation.isPending}
+              >
+                Exit
+              </Button>
+            </div>
           </div>
           <Progress value={progressPercentage} className="h-2" />
         </div>
