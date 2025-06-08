@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { aiCoach } from "./openai";
+import { aiCoach, extractNutritionFromScreenshot } from "./openai";
 import { 
   updateUserProfileSchema, 
   insertMealSchema, 
@@ -300,6 +300,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid meal data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to log meal" });
+    }
+  });
+
+  // Nutrition screenshot upload
+  app.post('/api/nutrition/screenshot', isAuthenticated, upload.single('screenshot'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const file = req.file;
+      const { hungerLevel, energyLevel, notes, date } = req.body;
+      
+      if (!file) {
+        return res.status(400).json({ message: "Screenshot file is required" });
+      }
+      
+      // Convert image to base64 for OpenAI
+      const imageBase64 = file.buffer.toString('base64');
+      
+      // Extract nutrition data using OpenAI
+      const extraction = await extractNutritionFromScreenshot(imageBase64);
+      
+      if (extraction.error) {
+        return res.status(400).json({ 
+          success: false,
+          message: extraction.error,
+          extraction 
+        });
+      }
+      
+      // Save to database
+      const dailyMacros = await storage.createDailyMacros({
+        userId,
+        date: date || new Date().toISOString().split('T')[0],
+        screenshotUrl: `screenshots/${file.filename}`,
+        extractedCalories: extraction.calories,
+        extractedProtein: extraction.protein,
+        extractedCarbs: extraction.carbs,
+        extractedFat: extraction.fat,
+        visionConfidence: extraction.confidence,
+        visionProcessedAt: new Date(),
+        hungerLevel: hungerLevel ? parseInt(hungerLevel) : undefined,
+        energyLevel: energyLevel ? parseInt(energyLevel) : undefined,
+        notes: notes || undefined,
+      });
+      
+      res.json({
+        success: true,
+        message: "Screenshot processed successfully",
+        extraction,
+        dailyMacros
+      });
+    } catch (error) {
+      console.error("Error processing screenshot:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to process screenshot",
+        extraction: { calories: 0, protein: 0, carbs: 0, fat: 0, confidence: 0, error: "Processing failed" }
+      });
     }
   });
 
