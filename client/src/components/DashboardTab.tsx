@@ -115,7 +115,7 @@ export default function DashboardTab() {
             <i className="fas fa-camera text-white text-xl"></i>
             <div>
               <div className="font-semibold text-white">Upload Screenshot</div>
-              <div className="text-sm text-primary-100">Upload Today's MyFitnessPal Screenshot</div>
+              <div className="text-xs text-primary-100 leading-tight">Today's MyFitnessPal</div>
             </div>
           </Button>
         </Link>
