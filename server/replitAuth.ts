@@ -3,6 +3,7 @@ import { Strategy, type VerifyFunction } from "openid-client/passport";
 
 import passport from "passport";
 import session from "express-session";
+import cookieParser from "cookie-parser";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
@@ -81,6 +82,9 @@ async function upsertUser(
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   
+  // Add cookie parser middleware
+  app.use(cookieParser());
+  
   // Add CORS headers for session cookies
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -98,9 +102,9 @@ export async function setupAuth(app: Express) {
 
   // Development mode: create a demo user for testing
   if (process.env.NODE_ENV === 'development') {
-    // Simple demo authentication for development - return HTML page that handles auth
+    // Simple demo authentication for development using auth token
     app.get("/api/login", async (req, res) => {
-      console.log('Login attempt - Session ID:', req.sessionID);
+      console.log('Login attempt');
       
       // Create or get demo user
       const demoUser = await storage.upsertUser({
@@ -111,36 +115,21 @@ export async function setupAuth(app: Express) {
         profileImageUrl: "https://via.placeholder.com/150",
       });
       
-      // Set session data
-      (req.session as any).userId = demoUser.id;
-      (req.session as any).userEmail = demoUser.email;
-      (req.session as any).authenticated = true;
+      // Create simple auth token
+      const authToken = Buffer.from(`${demoUser.id}:${Date.now()}`).toString('base64');
       
-      console.log('Session data set for user:', demoUser.id);
+      console.log('Setting auth cookie for user:', demoUser.id);
       
-      // Save session and return HTML that reloads the page
-      req.session.save((saveErr: any) => {
-        if (saveErr) {
-          console.error('Session save error:', saveErr);
-          return res.status(500).json({ error: 'Session save failed' });
-        }
-        console.log('Session saved successfully, returning reload page');
-        
-        res.send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Logging in...</title>
-          </head>
-          <body>
-            <script>
-              // Force reload to home page with session
-              window.location.replace('/');
-            </script>
-          </body>
-          </html>
-        `);
+      // Set httpOnly auth cookie
+      res.cookie('auth_token', authToken, {
+        httpOnly: true,
+        secure: false,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        sameSite: 'lax',
+        path: '/'
       });
+      
+      res.redirect('/');
     });
 
     app.get("/api/logout", (req, res) => {
@@ -212,24 +201,36 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Development mode: check session
+  // Development mode: check auth cookie
   if (process.env.NODE_ENV === 'development') {
-    const isAuth = (req.session as any).authenticated;
-    const userId = (req.session as any).userId;
-    console.log('Session check:', { sessionExists: !!req.session, authenticated: isAuth, userId, sessionId: req.sessionID });
+    const authToken = req.cookies?.auth_token;
+    console.log('Auth check:', { hasCookie: !!authToken });
     
-    if (!isAuth || !userId) {
+    if (!authToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     
-    // Attach user info to request for compatibility
-    (req as any).user = {
-      claims: {
-        sub: userId,
-        email: (req.session as any).userEmail,
+    try {
+      // Decode the auth token
+      const decoded = Buffer.from(authToken, 'base64').toString();
+      const [userId] = decoded.split(':');
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
       }
-    };
-    return next();
+      
+      // Attach user info to request for compatibility
+      (req as any).user = {
+        claims: {
+          sub: userId,
+          email: "demo@example.com",
+        }
+      };
+      return next();
+    } catch (error) {
+      console.error('Auth token decode error:', error);
+      return res.status(401).json({ message: "Unauthorized" });
+    }
   }
 
   // Production mode: use passport authentication
