@@ -48,7 +48,7 @@ export default function MeetYourCoach() {
               <img
                 src={trainer?.photoUrl || "/coach-chassidy.jpg"}
                 alt={trainer?.name || "Coach Chassidy"}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
               />
             </div>
             <div className="absolute bottom-4 left-4 right-4">
@@ -56,7 +56,7 @@ export default function MeetYourCoach() {
                 <h2 className="text-2xl font-bold text-white mb-1">
                   {trainer?.name || "Coach Chassidy"}
                 </h2>
-                <p className="text-primary font-medium">Your Personal Trainer & Nutrition Coach</p>
+                <p className="text-gray-200 font-medium">Your Personal Trainer & Nutrition Coach</p>
               </div>
             </div>
           </div>
@@ -70,7 +70,7 @@ export default function MeetYourCoach() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {(trainer?.certifications || ["NASM-CPT", "Precision Nutrition Level 1", "NSCA-CSCS"]).map((cert) => (
-                  <Badge key={cert} variant="secondary" className="bg-primary/20 text-primary border-primary/30">
+                  <Badge key={cert} variant="secondary" className="bg-gray-700 text-gray-200 border-gray-600">
                     {cert}
                   </Badge>
                 ))}
@@ -82,7 +82,7 @@ export default function MeetYourCoach() {
           <div className="grid grid-cols-3 gap-4">
             <Card className="bg-gray-800 border-gray-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary mb-1">8+</div>
+                <div className="text-2xl font-bold text-white mb-1">8+</div>
                 <div className="text-xs text-gray-400">Years Experience</div>
               </CardContent>
             </Card>
