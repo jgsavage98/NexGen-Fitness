@@ -6,8 +6,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve static exercise files
+// Serve static files
 app.use('/exercises', express.static('public/exercises'));
+app.use(express.static('public'));
 
 app.use((req, res, next) => {
   const start = Date.now();
