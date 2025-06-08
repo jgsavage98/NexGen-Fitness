@@ -40,6 +40,7 @@ export function getSession() {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
+      sameSite: 'lax',
     },
   });
 }
@@ -95,7 +96,14 @@ export async function setupAuth(app: Express) {
         }
       };
       
-      res.redirect('/');
+      // Save session before redirect
+      (req as any).session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ error: 'Session save failed' });
+        }
+        res.redirect('/');
+      });
     });
 
     app.get("/api/logout", (req, res) => {
