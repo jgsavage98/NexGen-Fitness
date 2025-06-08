@@ -363,6 +363,20 @@ export default function ScreenshotUploadTab() {
             />
           </div>
 
+          {/* Test Button for Debugging */}
+          <Button
+            onClick={() => {
+              console.log('Testing API endpoints...');
+              fetch('/api/nutrition/screenshot')
+                .then(res => console.log('Screenshot endpoint test:', res.status))
+                .catch(err => console.error('Screenshot endpoint error:', err));
+            }}
+            variant="outline"
+            className="w-full mb-2"
+          >
+            Test API Endpoints
+          </Button>
+
           {/* Upload Button */}
           <Button
             onClick={handleUpload}
