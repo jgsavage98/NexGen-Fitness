@@ -36,7 +36,7 @@ export default function Home() {
       case 'dashboard':
         return <DashboardTab onTabChange={setActiveTab} />;
       case 'nutrition':
-        return <ScreenshotUploadTab />;
+        return <ScreenshotUploadTab onTabChange={setActiveTab} />;
       case 'workout':
         return <WorkoutTab />;
       case 'chat':

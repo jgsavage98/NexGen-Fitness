@@ -115,13 +115,6 @@ export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTab
       toast({
         title: "Screenshot Processed!",
         description: `Extracted ${result.extraction.calories} calories with ${Math.round(result.extraction.confidence * 100)}% confidence`,
-        action: {
-          altText: "OK",
-          onClick: () => {
-            // Navigate back to dashboard
-            onTabChange?.('dashboard');
-          },
-        },
       });
       
       // Clear form

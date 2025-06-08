@@ -117,12 +117,21 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
       <div className="grid grid-cols-2 gap-4">
         <Button 
           onClick={() => onTabChange?.('nutrition')}
-          className="bg-primary-500 hover:bg-primary-600 border-primary-500 p-4 h-auto text-left flex flex-col items-start space-y-2 w-full"
+          disabled={hasUploadedToday}
+          className={`p-4 h-auto text-left flex flex-col items-start space-y-2 w-full ${
+            hasUploadedToday 
+              ? "bg-gray-600 hover:bg-gray-600 border-gray-600 cursor-not-allowed" 
+              : "bg-primary-500 hover:bg-primary-600 border-primary-500"
+          }`}
         >
-          <i className="fas fa-camera text-white text-xl"></i>
+          <i className={`fas fa-camera text-xl ${hasUploadedToday ? "text-gray-400" : "text-white"}`}></i>
           <div>
-            <div className="font-semibold text-white">Upload Screenshot</div>
-            <div className="text-xs text-primary-100 leading-tight">Today's MyFitnessPal</div>
+            <div className={`font-semibold ${hasUploadedToday ? "text-gray-400" : "text-white"}`}>
+              {hasUploadedToday ? "Today's Upload Complete" : "Upload Screenshot"}
+            </div>
+            <div className={`text-xs leading-tight ${hasUploadedToday ? "text-gray-500" : "text-primary-100"}`}>
+              {hasUploadedToday ? "Check back tomorrow" : "Today's MyFitnessPal"}
+            </div>
           </div>
         </Button>
         
