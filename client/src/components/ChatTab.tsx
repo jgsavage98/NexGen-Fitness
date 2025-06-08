@@ -154,14 +154,16 @@ export default function ChatTab() {
       {/* Chat Header */}
       <div className="px-6 py-4 bg-surface border-b border-gray-700">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center">
-            <i className="fas fa-robot text-white"></i>
-          </div>
+          <img 
+            src="/coach-chassidy.jpg" 
+            alt="Coach Chassidy"
+            className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
+          />
           <div>
-            <div className="font-semibold text-white">Virtual Agent</div>
+            <div className="font-semibold text-white">Coach Chassidy</div>
             <div className="text-sm text-success flex items-center">
               <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-              AI Assistant • Online 24/7
+              Your Personal Coach • Available 24/7
             </div>
           </div>
         </div>
@@ -171,12 +173,14 @@ export default function ChatTab() {
       <div className="flex-1 px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin">
         {messages.length === 0 && (
           <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <i className="fas fa-robot text-white text-sm"></i>
-            </div>
+            <img 
+              src="/coach-chassidy.jpg" 
+              alt="Coach Chassidy"
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+            />
             <div className="bg-surface rounded-lg rounded-tl-none p-4 max-w-xs">
               <p className="text-sm text-white">
-                Hi! I'm your AI fitness coach. I'm here to help you with workouts, nutrition, and any questions about your fitness journey. What can I help you with today?
+                Hey there! It's Coach Chassidy. I'm here to support you with your workouts, nutrition, and answer any questions about your fitness journey. What's on your mind today?
               </p>
             </div>
           </div>
@@ -190,9 +194,11 @@ export default function ChatTab() {
             }`}
           >
             {message.isAI && (
-              <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <i className="fas fa-robot text-white text-sm"></i>
-              </div>
+              <img 
+                src="/coach-chassidy.jpg" 
+                alt="Coach Chassidy"
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              />
             )}
             
             <div

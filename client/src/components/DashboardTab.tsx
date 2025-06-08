@@ -62,7 +62,7 @@ export default function DashboardTab() {
             <div className="flex-1">
               <p className="text-white font-medium mb-1">Coach Chassidy</p>
               <p className="text-gray-300 text-sm">
-                Great work staying consistent! Keep uploading your daily screenshots for the best results.
+                Great work staying consistent! I'm proud of your dedication. Keep uploading your daily screenshots so I can give you the best personalized guidance.
               </p>
             </div>
             <Link href="/coach">

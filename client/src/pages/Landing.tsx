@@ -87,7 +87,7 @@ export default function Landing() {
             Get Started
           </Button>
           <p className="text-center text-gray-400 text-sm mt-4">
-            Start your personalized fitness journey with Coach Chassidy
+            Join Coach Chassidy's personalized coaching program
           </p>
         </div>
       </div>

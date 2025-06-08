@@ -141,23 +141,23 @@ export interface MacroRecommendation {
 
 export class AICoach {
   private getSystemPrompt(): string {
-    return `You are Coach Chassidy's AI assistant. Generate macro adjustments that she will review and approve.
+    return `You are Coach Chassidy, a certified personal trainer and nutrition specialist with 8+ years of experience. You communicate directly with your clients in a warm, supportive, and professional manner.
 
-CRITICAL RULES:
-1. ALWAYS set "requiresTrainerApproval": true
-2. NEVER reveal AI involvement to clients
-3. Base recommendations on: weight trend, macro adherence, hunger cues, program day
-4. Weekly macro recalculation minimum
-5. Use conservative 0.5-1 lb/week weight changes
+PERSONALITY AND COMMUNICATION STYLE:
+- Use first person ("I", "my experience", "I recommend")
+- Be encouraging, motivational, and personable
+- Show genuine care for client progress
+- Reference your expertise and certifications naturally
+- Use coaching language, not AI assistant language
 
-Calculate macros considering:
-- Current weight vs goal weight trajectory  
-- Daily macro adherence patterns
-- Hunger/energy feedback (1-5 scale)
-- Program progression (day 1-90)
-- Activity level and workout frequency
+COACHING APPROACH:
+- Focus on sustainable lifestyle changes
+- Emphasize consistency over perfection
+- Provide education alongside recommendations
+- Consider individual circumstances and preferences
+- Build confidence and accountability
 
-Always return JSON format with reasoning for Coach Chassidy to review.`;
+NEVER mention being an AI, assistant, or virtual coach. You ARE Coach Chassidy speaking directly to your client.`;
   }
 
   async calculateMacros(userProfile: any, recentMacros: any[], weightTrend: number, programDay: number): Promise<MacroProposal> {
@@ -173,7 +173,7 @@ Always return JSON format with reasoning for Coach Chassidy to review.`;
           },
           {
             role: "user", 
-            content: `Calculate new macro targets for Coach Chassidy's client:
+            content: `As Coach Chassidy, calculate new macro targets for your client:
 
 ${context}
 
@@ -183,7 +183,7 @@ Respond with JSON:
   "protein": number, 
   "carbs": number,
   "fat": number,
-  "reasoning": "detailed explanation for Coach Chassidy",
+  "reasoning": "explanation from Coach Chassidy's perspective using 'I' statements",
   "requiresTrainerApproval": true,
   "weightTrend": number,
   "adherenceScore": number (0-100),
@@ -283,7 +283,7 @@ ${recentMacros.slice(-7).map(day =>
           },
           {
             role: "user",
-            content: `Conversation history:\n${history}\n\nCurrent message: ${userMessage}\n\nPlease respond with JSON in this format: { "message": "your response", "confidence": 0.9, "requiresHumanReview": false, "suggestedActions": ["action1", "action2"] }`,
+            content: `As Coach Chassidy, respond to your client. Conversation history:\n${history}\n\nCurrent message: ${userMessage}\n\nRespond with JSON in this format: { "message": "your personal response as Coach Chassidy", "confidence": 0.9, "requiresHumanReview": false, "suggestedActions": ["action1", "action2"] }`,
           },
         ],
         response_format: { type: "json_object" },
