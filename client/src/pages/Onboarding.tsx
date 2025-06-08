@@ -229,7 +229,7 @@ export default function Onboarding() {
                   className="w-full p-4 bg-surface rounded-medium text-left hover:bg-gray-700 transition-colors"
                 >
                   <div className="flex items-center">
-                    <i className="fas fa-heart text-primary-500 w-6 mr-4"></i>
+                    <Heart className="text-primary-500 w-6 h-6 mr-4" />
                     <div>
                       <div className="font-semibold">Stay Healthy</div>
                       <div className="text-sm text-gray-400">Maintain current fitness level</div>
@@ -367,7 +367,7 @@ export default function Onboarding() {
                     <div className="flex items-center justify-between">
                       <span>{injury}</span>
                       {formData.injuries?.includes(injury) && (
-                        <i className="fas fa-check"></i>
+                        <Check className="w-4 h-4" />
                       )}
                     </div>
                   </button>
@@ -403,7 +403,7 @@ export default function Onboarding() {
                     <div className="flex items-center justify-between">
                       <span>{equipment}</span>
                       {formData.equipment?.includes(equipment) && (
-                        <i className="fas fa-check"></i>
+                        <Check className="w-4 h-4" />
                       )}
                     </div>
                   </button>
@@ -434,7 +434,7 @@ export default function Onboarding() {
                   <label htmlFor="macros-upload" className="cursor-pointer">
                     <div className="space-y-4">
                       <div className="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto">
-                        <i className="fas fa-camera text-primary-500 text-2xl"></i>
+                        <Camera className="text-primary-500 w-8 h-8" />
                       </div>
                       <div>
                         <p className="text-lg font-semibold">Upload Screenshot</p>
@@ -450,7 +450,7 @@ export default function Onboarding() {
                   <div className="bg-surface rounded-lg p-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-success/20 rounded-lg flex items-center justify-center">
-                        <i className="fas fa-check text-success"></i>
+                        <Check className="text-success w-5 h-5" />
                       </div>
                       <div>
                         <p className="font-semibold">Screenshot uploaded</p>
@@ -462,7 +462,7 @@ export default function Onboarding() {
                 
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                   <div className="flex items-start space-x-3">
-                    <i className="fas fa-info-circle text-blue-400 mt-0.5"></i>
+                    <Info className="text-blue-400 w-5 h-5 mt-0.5" />
                     <div className="text-sm text-blue-200">
                       <p className="font-semibold mb-1">Pro tip:</p>
                       <p>Take a screenshot of your MyFitnessPal daily nutrition summary showing calories, protein, carbs, and fat. This helps me create a more personalized plan.</p>
