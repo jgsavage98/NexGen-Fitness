@@ -56,14 +56,31 @@ export default function ScreenshotUploadTab() {
   const today = new Date().toISOString().split('T')[0];
 
   // Get today's macros
-  const { data: todaysMacros, isLoading } = useQuery<DailyMacros | null>({
+  const { data: todaysMacros, isLoading, error } = useQuery<DailyMacros | null>({
     queryKey: [`/api/daily-macros?date=${today}`],
     retry: false,
+    queryFn: async () => {
+      const response = await fetch(`/api/daily-macros?date=${today}`);
+      if (response.status === 404) {
+        // No data for today is expected initially
+        return null;
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch daily macros: ${response.statusText}`);
+      }
+      return response.json();
+    },
   });
+  
+  console.log('Screenshot Upload Tab - Today:', today);
+  console.log('Screenshot Upload Tab - Data:', todaysMacros);
+  console.log('Screenshot Upload Tab - Error:', error);
 
   // Upload screenshot mutation
   const uploadMutation = useMutation({
     mutationFn: async (data: { file: File; hungerLevel: number; energyLevel: number; notes: string; date: string }) => {
+      console.log('Starting upload for file:', data.file.name, 'Size:', data.file.size);
+      
       const formData = new FormData();
       formData.append('screenshot', data.file);
       formData.append('hungerLevel', data.hungerLevel.toString());
@@ -71,17 +88,23 @@ export default function ScreenshotUploadTab() {
       formData.append('notes', data.notes);
       formData.append('date', data.date);
 
+      console.log('Uploading to /api/nutrition/screenshot');
       const response = await fetch('/api/nutrition/screenshot', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('Upload response status:', response.status);
+      
       if (!response.ok) {
         const error = await response.json();
+        console.error('Upload error:', error);
         throw new Error(error.message || 'Upload failed');
       }
 
-      return response.json() as Promise<ScreenshotUploadResult>;
+      const result = await response.json();
+      console.log('Upload successful:', result);
+      return result as ScreenshotUploadResult;
     },
     onSuccess: (result) => {
       toast({
