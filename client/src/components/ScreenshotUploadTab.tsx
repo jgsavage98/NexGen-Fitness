@@ -353,7 +353,7 @@ export default function ScreenshotUploadTab() {
               <p className="text-white font-medium mb-1">Coach Chassidy</p>
               <p className="text-gray-300 text-sm">
                 Upload your daily MyFitnessPal screenshot by 8 PM for macro tracking. 
-                I'll review your progress and adjust your targets as needed!
+                I personally review every upload and adjust your targets based on your progress!
               </p>
             </div>
           </div>
