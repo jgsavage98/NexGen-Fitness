@@ -91,26 +91,71 @@ export default function Onboarding() {
       console.log('Onboarding complete response:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Calculate initial macro recommendations using Chassidy's gradual approach
-      const baselineCalories = data.baselineCalories || 2000;
-      const newCalories = data.newCalories || Math.max(baselineCalories - 50, 1200);
-      
-      const macroData = {
-        baselineCalories,
-        newCalories,
-        baselineMacros: data.baselineMacros || { protein: 120, carbs: 200, fat: 65 },
-        newMacros: data.newMacros || { 
-          protein: Math.round(newCalories * 0.25 / 4), 
-          carbs: Math.round(newCalories * 0.45 / 4), 
-          fat: Math.round(newCalories * 0.30 / 9) 
-        }
-      };
-      
-      console.log('Setting macro summary:', macroData);
-      setMacroSummary(macroData);
-      
-      console.log('Setting showSummary to true');
-      setShowSummary(true);
+      // Fetch actual extracted nutrition data from database
+      const today = new Date().toISOString().split('T')[0];
+      fetch(`/api/daily-macros?date=${today}`)
+        .then(response => response.ok ? response.json() : null)
+        .then(todaysMacros => {
+          let baselineData = { calories: 2000, protein: 120, carbs: 200, fat: 65 };
+          
+          if (todaysMacros?.extractedCalories) {
+            baselineData = {
+              calories: todaysMacros.extractedCalories,
+              protein: todaysMacros.extractedProtein || baselineData.protein,
+              carbs: todaysMacros.extractedCarbs || baselineData.carbs,
+              fat: todaysMacros.extractedFat || baselineData.fat
+            };
+            console.log('Using extracted baseline data:', baselineData);
+          } else {
+            console.log('No extracted data found, using defaults');
+          }
+          
+          // Calculate new targets using Chassidy's gradual approach
+          const newCalories = Math.max(baselineData.calories - 50, 1200);
+          
+          const macroData = {
+            baselineCalories: baselineData.calories,
+            newCalories,
+            baselineMacros: { 
+              protein: baselineData.protein, 
+              carbs: baselineData.carbs, 
+              fat: baselineData.fat 
+            },
+            newMacros: { 
+              protein: Math.round(newCalories * 0.25 / 4), 
+              carbs: Math.round(newCalories * 0.45 / 4), 
+              fat: Math.round(newCalories * 0.30 / 9) 
+            }
+          };
+          
+          console.log('Setting macro summary:', macroData);
+          setMacroSummary(macroData);
+          setShowSummary(true);
+        })
+        .catch(error => {
+          console.log('Could not fetch extracted data, using defaults');
+          // Use fallback values
+          const baselineData = { calories: 2000, protein: 120, carbs: 200, fat: 65 };
+          const newCalories = Math.max(baselineData.calories - 50, 1200);
+          
+          const macroData = {
+            baselineCalories: baselineData.calories,
+            newCalories,
+            baselineMacros: { 
+              protein: baselineData.protein, 
+              carbs: baselineData.carbs, 
+              fat: baselineData.fat 
+            },
+            newMacros: { 
+              protein: Math.round(newCalories * 0.25 / 4), 
+              carbs: Math.round(newCalories * 0.45 / 4), 
+              fat: Math.round(newCalories * 0.30 / 9) 
+            }
+          };
+          
+          setMacroSummary(macroData);
+          setShowSummary(true);
+        });
     },
     onError: (error) => {
       toast({
