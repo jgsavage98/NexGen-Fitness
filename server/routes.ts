@@ -345,21 +345,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Save to database
-      const dailyMacros = await storage.createDailyMacros({
-        userId,
-        date: date || new Date().toISOString().split('T')[0],
-        screenshotUrl: `screenshots/${file.filename}`,
-        extractedCalories: extraction.calories,
-        extractedProtein: extraction.protein,
-        extractedCarbs: extraction.carbs,
-        extractedFat: extraction.fat,
-        visionConfidence: extraction.confidence,
-        visionProcessedAt: new Date(),
-        hungerLevel: hungerLevel ? parseInt(hungerLevel) : undefined,
-        energyLevel: energyLevel ? parseInt(energyLevel) : undefined,
-        notes: notes || undefined,
-      });
+      // Save to database - check if record exists and update or create
+      const targetDate = date || new Date().toISOString().split('T')[0];
+      let dailyMacros;
+      
+      try {
+        const existing = await storage.getDailyMacros(userId, new Date(targetDate));
+        if (existing) {
+          // Update existing record
+          dailyMacros = await storage.updateDailyMacros(existing.id, {
+            screenshotUrl: `screenshots/${file.filename}`,
+            extractedCalories: extraction.calories,
+            extractedProtein: extraction.protein,
+            extractedCarbs: extraction.carbs,
+            extractedFat: extraction.fat,
+            visionConfidence: extraction.confidence,
+            visionProcessedAt: new Date(),
+            hungerLevel: hungerLevel ? parseInt(hungerLevel) : undefined,
+            energyLevel: energyLevel ? parseInt(energyLevel) : undefined,
+            notes: notes || undefined,
+          });
+        } else {
+          // Create new record
+          dailyMacros = await storage.createDailyMacros({
+            userId,
+            date: targetDate,
+            screenshotUrl: `screenshots/${file.filename}`,
+            extractedCalories: extraction.calories,
+            extractedProtein: extraction.protein,
+            extractedCarbs: extraction.carbs,
+            extractedFat: extraction.fat,
+            visionConfidence: extraction.confidence,
+            visionProcessedAt: new Date(),
+            hungerLevel: hungerLevel ? parseInt(hungerLevel) : undefined,
+            energyLevel: energyLevel ? parseInt(energyLevel) : undefined,
+            notes: notes || undefined,
+          });
+        }
+      } catch (error) {
+        console.error("Database error:", error);
+        return res.status(500).json({ 
+          success: false,
+          message: "Failed to save nutrition data",
+          extraction: { calories: 0, protein: 0, carbs: 0, fat: 0, confidence: 0, error: "Database error" }
+        });
+      }
       
       res.json({
         success: true,
@@ -374,6 +404,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to process screenshot",
         extraction: { calories: 0, protein: 0, carbs: 0, fat: 0, confidence: 0, error: "Processing failed" }
       });
+    }
+  });
+
+  // Get daily macros by date
+  app.get('/api/daily-macros', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const date = req.query.date || new Date().toISOString().split('T')[0];
+      
+      const dailyMacros = await storage.getDailyMacros(userId, new Date(date));
+      
+      if (!dailyMacros) {
+        return res.status(404).json({ message: "No data found for this date" });
+      }
+      
+      res.json(dailyMacros);
+    } catch (error) {
+      console.error("Error fetching daily macros:", error);
+      res.status(500).json({ message: "Failed to fetch daily macros" });
     }
   });
 
