@@ -118,6 +118,18 @@ export interface WorkoutRecommendation {
   notes?: string;
 }
 
+export interface MacroProposal {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  reasoning: string;
+  requiresTrainerApproval: boolean;
+  weightTrend?: number;
+  adherenceScore?: number;
+  programDay?: number;
+}
+
 export interface MacroRecommendation {
   calories: number;
   protein: number;
@@ -129,17 +141,128 @@ export interface MacroRecommendation {
 
 export class AICoach {
   private getSystemPrompt(): string {
-    return `You are an expert AI fitness and nutrition coach. You provide personalized, safe, and evidence-based advice.
+    return `You are Coach Chassidy's AI assistant. Generate macro adjustments that she will review and approve.
 
-Guidelines:
-- Always prioritize user safety and recommend consulting healthcare professionals for medical concerns
-- Provide specific, actionable advice based on user's goals, current fitness level, and any injuries
-- Use Chassidy's coaching tone: supportive, motivational, but realistic
-- For low-confidence responses (< 0.7), flag for human review
-- Include confidence score and reasoning in responses
-- Never diagnose medical conditions or provide medical treatment advice
+CRITICAL RULES:
+1. ALWAYS set "requiresTrainerApproval": true
+2. NEVER reveal AI involvement to clients
+3. Base recommendations on: weight trend, macro adherence, hunger cues, program day
+4. Weekly macro recalculation minimum
+5. Use conservative 0.5-1 lb/week weight changes
 
-Response format should be encouraging but professional, focusing on sustainable habits and gradual progress.`;
+Calculate macros considering:
+- Current weight vs goal weight trajectory  
+- Daily macro adherence patterns
+- Hunger/energy feedback (1-5 scale)
+- Program progression (day 1-90)
+- Activity level and workout frequency
+
+Always return JSON format with reasoning for Coach Chassidy to review.`;
+  }
+
+  async calculateMacros(userProfile: any, recentMacros: any[], weightTrend: number, programDay: number): Promise<MacroProposal> {
+    try {
+      const context = this.buildMacroContext(userProfile, recentMacros, weightTrend, programDay);
+      
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: this.getSystemPrompt()
+          },
+          {
+            role: "user", 
+            content: `Calculate new macro targets for Coach Chassidy's client:
+
+${context}
+
+Respond with JSON:
+{
+  "calories": number,
+  "protein": number, 
+  "carbs": number,
+  "fat": number,
+  "reasoning": "detailed explanation for Coach Chassidy",
+  "requiresTrainerApproval": true,
+  "weightTrend": number,
+  "adherenceScore": number (0-100),
+  "programDay": number
+}`
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3, // Lower temperature for consistency
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || "{}");
+      
+      return {
+        calories: Number(result.calories) || 0,
+        protein: Number(result.protein) || 0,
+        carbs: Number(result.carbs) || 0,
+        fat: Number(result.fat) || 0,
+        reasoning: result.reasoning || "Standard macro calculation",
+        requiresTrainerApproval: true, // Always require approval
+        weightTrend,
+        adherenceScore: result.adherenceScore || 0,
+        programDay
+      };
+    } catch (error) {
+      console.error("Macro calculation error:", error);
+      // Return conservative baseline if AI fails
+      const bmr = this.calculateBMR(userProfile);
+      return {
+        calories: Math.round(bmr * 1.2), // Conservative sedentary multiplier
+        protein: Math.round(userProfile.currentWeight * 2.2 * 0.8), // 0.8g per lb
+        carbs: Math.round(bmr * 1.2 * 0.4 / 4), // 40% of calories
+        fat: Math.round(bmr * 1.2 * 0.3 / 9), // 30% of calories
+        reasoning: "Conservative baseline calculation - AI processing unavailable",
+        requiresTrainerApproval: true,
+        weightTrend,
+        programDay
+      };
+    }
+  }
+
+  private buildMacroContext(userProfile: any, recentMacros: any[], weightTrend: number, programDay: number): string {
+    const avgAdherence = recentMacros.length > 0 
+      ? recentMacros.reduce((sum, day) => sum + (day.adherenceScore || 0), 0) / recentMacros.length
+      : 0;
+    
+    const avgHunger = recentMacros.length > 0
+      ? recentMacros.reduce((sum, day) => sum + (day.hungerLevel || 3), 0) / recentMacros.length
+      : 3;
+
+    return `CLIENT PROFILE:
+- Current Weight: ${userProfile.currentWeight}kg
+- Goal Weight: ${userProfile.goalWeight}kg  
+- Height: ${userProfile.height}cm
+- Age: ${userProfile.age}
+- Gender: ${userProfile.gender}
+- Activity: ${userProfile.activityLevel}
+- Workout Frequency: ${userProfile.workoutFrequency}x/week
+
+PROGRESS DATA:
+- Program Day: ${programDay}/90
+- Weight Trend: ${weightTrend}kg/week
+- Avg Adherence: ${avgAdherence.toFixed(1)}%
+- Avg Hunger Level: ${avgHunger.toFixed(1)}/5
+
+RECENT MACRO HISTORY (last 7 days):
+${recentMacros.slice(-7).map(day => 
+  `${day.date}: ${day.extractedCalories || 0}cal, ${day.extractedProtein || 0}p, ${day.extractedCarbs || 0}c, ${day.extractedFat || 0}f (${day.adherenceScore || 0}% adherence, hunger: ${day.hungerLevel || 3}/5)`
+).join('\n')}`;
+  }
+
+  private calculateBMR(userProfile: any): number {
+    const { currentWeight, height, age, gender } = userProfile;
+    
+    if (gender === 'male') {
+      return 88.362 + (13.397 * currentWeight) + (4.799 * height) - (5.677 * age);
+    } else {
+      return 447.593 + (9.247 * currentWeight) + (3.098 * height) - (4.330 * age);
+    }
   }
 
   async getChatResponse(

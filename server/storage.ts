@@ -1,5 +1,8 @@
 import {
   users,
+  trainers,
+  dailyMacros,
+  macroChanges,
   exercises,
   workouts,
   workoutLogs,
@@ -9,6 +12,12 @@ import {
   progressEntries,
   type User,
   type UpsertUser,
+  type Trainer,
+  type InsertTrainer,
+  type DailyMacros,
+  type InsertDailyMacros,
+  type MacroChanges,
+  type InsertMacroChanges,
   type Exercise,
   type InsertExercise,
   type Workout,
@@ -34,6 +43,22 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserProfile(userId: string, profile: UpdateUserProfile): Promise<User>;
   
+  // Trainer operations
+  getTrainer(id: string): Promise<Trainer | undefined>;
+  upsertTrainer(trainer: InsertTrainer): Promise<Trainer>;
+  
+  // Daily macros operations (core PRD workflow)
+  getDailyMacros(userId: string, date: Date): Promise<DailyMacros | undefined>;
+  createDailyMacros(macros: InsertDailyMacros): Promise<DailyMacros>;
+  updateDailyMacros(id: number, updates: Partial<InsertDailyMacros>): Promise<DailyMacros>;
+  getRecentMacros(userId: string, days: number): Promise<DailyMacros[]>;
+  
+  // Macro changes operations (Coach Chassidy approval)
+  createMacroChange(change: InsertMacroChanges): Promise<MacroChanges>;
+  getPendingMacroChanges(trainerId?: string): Promise<MacroChanges[]>;
+  approveMacroChange(id: number, trainerId: string, trainerNotes?: string): Promise<MacroChanges>;
+  editMacroChange(id: number, trainerId: string, finalMacros: any, trainerNotes?: string): Promise<MacroChanges>;
+  
   // Exercise operations
   getExercises(): Promise<Exercise[]>;
   getExerciseById(id: number): Promise<Exercise | undefined>;
@@ -50,11 +75,9 @@ export interface IStorage {
   logWorkoutExercise(log: InsertWorkoutLog): Promise<WorkoutLog>;
   getUserWorkoutLogs(userId: string, date?: Date): Promise<WorkoutLog[]>;
   
-  // Meal operations
+  // Legacy operations (keeping for compatibility)
   getUserMeals(userId: string, date?: Date): Promise<Meal[]>;
   logMeal(meal: InsertMeal): Promise<Meal>;
-  
-  // Macro target operations
   getUserMacroTargets(userId: string, date: Date): Promise<MacroTarget | undefined>;
   setMacroTargets(targets: InsertMacroTarget): Promise<MacroTarget>;
   
@@ -99,6 +122,117 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  // Trainer operations
+  async getTrainer(id: string): Promise<Trainer | undefined> {
+    const [trainer] = await db.select().from(trainers).where(eq(trainers.id, id));
+    return trainer;
+  }
+
+  async upsertTrainer(trainer: InsertTrainer): Promise<Trainer> {
+    const [upsertedTrainer] = await db
+      .insert(trainers)
+      .values(trainer)
+      .onConflictDoUpdate({
+        target: trainers.id,
+        set: trainer,
+      })
+      .returning();
+    return upsertedTrainer;
+  }
+
+  // Daily macros operations (core PRD workflow)
+  async getDailyMacros(userId: string, date: Date): Promise<DailyMacros | undefined> {
+    const dateStr = date.toISOString().split('T')[0];
+    const [macros] = await db
+      .select()
+      .from(dailyMacros)
+      .where(and(eq(dailyMacros.userId, userId), eq(dailyMacros.date, dateStr)));
+    return macros;
+  }
+
+  async createDailyMacros(macros: InsertDailyMacros): Promise<DailyMacros> {
+    const [newMacros] = await db.insert(dailyMacros).values(macros).returning();
+    return newMacros;
+  }
+
+  async updateDailyMacros(id: number, updates: Partial<InsertDailyMacros>): Promise<DailyMacros> {
+    const [updatedMacros] = await db
+      .update(dailyMacros)
+      .set(updates)
+      .where(eq(dailyMacros.id, id))
+      .returning();
+    return updatedMacros;
+  }
+
+  async getRecentMacros(userId: string, days: number): Promise<DailyMacros[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    return await db
+      .select()
+      .from(dailyMacros)
+      .where(and(
+        eq(dailyMacros.userId, userId),
+        gte(dailyMacros.date, startDate.toISOString().split('T')[0])
+      ))
+      .orderBy(desc(dailyMacros.date));
+  }
+
+  // Macro changes operations (Coach Chassidy approval)
+  async createMacroChange(change: InsertMacroChanges): Promise<MacroChanges> {
+    const [newChange] = await db.insert(macroChanges).values(change).returning();
+    return newChange;
+  }
+
+  async getPendingMacroChanges(trainerId?: string): Promise<MacroChanges[]> {
+    const conditions = [eq(macroChanges.status, 'pending')];
+    if (trainerId) {
+      conditions.push(eq(macroChanges.trainerId, trainerId));
+    }
+    
+    return await db
+      .select()
+      .from(macroChanges)
+      .where(and(...conditions))
+      .orderBy(desc(macroChanges.createdAt));
+  }
+
+  async approveMacroChange(id: number, trainerId: string, trainerNotes?: string): Promise<MacroChanges> {
+    const [approvedChange] = await db
+      .update(macroChanges)
+      .set({
+        status: 'approved',
+        trainerId,
+        trainerNotes,
+        approvedAt: new Date(),
+        finalCalories: sql`ai_calories`,
+        finalProtein: sql`ai_protein`,
+        finalCarbs: sql`ai_carbs`,
+        finalFat: sql`ai_fat`,
+      })
+      .where(eq(macroChanges.id, id))
+      .returning();
+    return approvedChange;
+  }
+
+  async editMacroChange(id: number, trainerId: string, finalMacros: any, trainerNotes?: string): Promise<MacroChanges> {
+    const [editedChange] = await db
+      .update(macroChanges)
+      .set({
+        status: 'edited',
+        trainerId,
+        trainerNotes,
+        approvedAt: new Date(),
+        finalCalories: finalMacros.calories,
+        finalProtein: finalMacros.protein,
+        finalCarbs: finalMacros.carbs,
+        finalFat: finalMacros.fat,
+      })
+      .where(eq(macroChanges.id, id))
+      .returning();
+    return editedChange;
   }
 
   // Exercise operations
