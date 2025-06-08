@@ -22,8 +22,15 @@ export default function DashboardTab() {
     retry: false,
   });
 
-  // Only show extracted macros if screenshot was uploaded today
-  const hasUploadedToday = dailyMacros && (dailyMacros as any).screenshotUrl && (dailyMacros as any).visionProcessedAt;
+  // Only show extracted macros if screenshot was uploaded today and processed
+  const todayString = new Date().toISOString().split('T')[0];
+  const hasUploadedToday = dailyMacros && 
+    (dailyMacros as any).screenshotUrl && 
+    (dailyMacros as any).visionProcessedAt &&
+    (dailyMacros as any).date === todayString;
+    
+  console.log('Dashboard check:', { dailyMacros, hasUploadedToday, todayString });
+  
   const consumedMacros = hasUploadedToday ? {
     calories: (dailyMacros as any).extractedCalories || 0,
     protein: (dailyMacros as any).extractedProtein || 0,
