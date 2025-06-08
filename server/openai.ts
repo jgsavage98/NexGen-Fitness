@@ -69,9 +69,17 @@ JSON FORMAT (exact structure required):
     const result = JSON.parse(rawContent);
     console.log("Parsed result:", result);
     
-    // Validate extraction
-    if (!result.calories || !result.protein || !result.carbs || !result.fat) {
-      console.log("Incomplete nutrition data extracted");
+    // Calculate calories if missing but other macros are present
+    let calculatedCalories = result.calories;
+    if (!calculatedCalories && result.protein && result.carbs && result.fat) {
+      // Standard macro-to-calorie conversion: 4 cal/g protein, 4 cal/g carbs, 9 cal/g fat
+      calculatedCalories = (result.protein * 4) + (result.carbs * 4) + (result.fat * 9);
+      console.log(`Calculated calories from macros: ${calculatedCalories}`);
+    }
+    
+    // Validate extraction - need at least protein, carbs, fat
+    if (!result.protein || !result.carbs || !result.fat) {
+      console.log("Incomplete nutrition data extracted - missing essential macros");
       return {
         calories: 0,
         protein: 0,
@@ -83,7 +91,7 @@ JSON FORMAT (exact structure required):
     }
 
     return {
-      calories: Number(result.calories) || 0,
+      calories: Number(calculatedCalories) || 0,
       protein: Number(result.protein) || 0,
       carbs: Number(result.carbs) || 0,
       fat: Number(result.fat) || 0,
