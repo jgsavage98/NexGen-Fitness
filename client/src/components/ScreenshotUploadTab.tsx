@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Camera, Upload, CheckCircle, AlertCircle, Clock } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { TabType } from "@/pages/Home";
 
 interface DailyMacros {
   id: number;
@@ -44,7 +45,11 @@ interface ScreenshotUploadResult {
   message: string;
 }
 
-export default function ScreenshotUploadTab() {
+interface ScreenshotUploadTabProps {
+  onTabChange?: (tab: TabType) => void;
+}
+
+export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTabProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [hungerLevel, setHungerLevel] = useState(3);
@@ -110,6 +115,13 @@ export default function ScreenshotUploadTab() {
       toast({
         title: "Screenshot Processed!",
         description: `Extracted ${result.extraction.calories} calories with ${Math.round(result.extraction.confidence * 100)}% confidence`,
+        action: {
+          altText: "OK",
+          onClick: () => {
+            // Navigate back to dashboard
+            onTabChange?.('dashboard');
+          },
+        },
       });
       
       // Clear form
@@ -120,6 +132,11 @@ export default function ScreenshotUploadTab() {
       // Refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/daily-macros?date=${today}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/daily-macros'] });
+      
+      // Auto-navigate back to dashboard after 3 seconds if user doesn't click OK
+      setTimeout(() => {
+        onTabChange?.('dashboard');
+      }, 3000);
     },
     onError: (error: Error) => {
       toast({
@@ -401,9 +418,11 @@ export default function ScreenshotUploadTab() {
       {/* Coach Message */}
       <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
         <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-xs font-bold">C</span>
-          </div>
+          <img 
+            src="/attached_assets/CE Bio Image_1749399911915.jpeg" 
+            alt="Coach Chassidy"
+            className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
+          />
           <div className="text-sm">
             <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
             <p className="text-primary-100">
