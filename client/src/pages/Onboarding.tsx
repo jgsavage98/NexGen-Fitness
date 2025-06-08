@@ -25,6 +25,8 @@ interface OnboardingData {
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showSummary, setShowSummary] = useState(false);
+  const [macroSummary, setMacroSummary] = useState<any>(null);
   const [formData, setFormData] = useState<OnboardingData>({
     injuries: [],
     equipment: [],
@@ -84,13 +86,25 @@ export default function Onboarding() {
       
       return profileResponse.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Profile Complete!",
-        description: "Welcome to Ignite AI. Let's start your fitness journey!",
+      
+      // Calculate initial macro recommendations using Chassidy's gradual approach
+      const baselineCalories = data.baselineCalories || 2000;
+      const newCalories = Math.max(baselineCalories - 50, 1200); // Max 50 calorie reduction
+      
+      setMacroSummary({
+        baselineCalories,
+        newCalories,
+        baselineMacros: data.baselineMacros || { protein: 120, carbs: 200, fat: 65 },
+        newMacros: data.newMacros || { 
+          protein: Math.round(newCalories * 0.25 / 4), 
+          carbs: Math.round(newCalories * 0.45 / 4), 
+          fat: Math.round(newCalories * 0.30 / 9) 
+        }
       });
-      setLocation("/");
+      
+      setShowSummary(true);
     },
     onError: (error) => {
       toast({
@@ -158,6 +172,121 @@ export default function Onboarding() {
         return false;
     }
   };
+
+  if (showSummary) {
+    return (
+      <div className="min-h-screen bg-dark text-white">
+        <div className="max-w-md mx-auto px-6 py-8 h-screen flex flex-col">
+          {/* Summary Header */}
+          <div className="mb-8 text-center">
+            <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="text-success w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2">Welcome to Your Journey!</h1>
+            <p className="text-gray-400">Here's your personalized plan from Coach Chassidy</p>
+          </div>
+
+          {/* Weight Progress Graph */}
+          {formData.goal === 'weight-loss' && formData.weight && formData.goalWeight && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">Your 12-Week Weight Goal</h2>
+              <div className="bg-surface rounded-lg p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary-500">{formData.weight}kg</div>
+                    <div className="text-sm text-gray-400">Current</div>
+                  </div>
+                  <div className="flex-1 mx-4">
+                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-primary-500 to-success w-full rounded-full"></div>
+                    </div>
+                    <div className="text-center text-xs text-gray-400 mt-1">12 weeks</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-success">{formData.goalWeight}kg</div>
+                    <div className="text-sm text-gray-400">Goal</div>
+                  </div>
+                </div>
+                <div className="text-center text-sm text-gray-300">
+                  Target loss: {(formData.weight - formData.goalWeight).toFixed(1)}kg
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Macro Comparison */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Your Nutrition Plan</h2>
+            <div className="space-y-4">
+              
+              {/* Baseline vs New Calories */}
+              <div className="bg-surface rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="text-sm text-gray-400">Baseline Calories</div>
+                    <div className="text-xl font-semibold">{macroSummary?.baselineCalories || 2000}</div>
+                  </div>
+                  <ArrowLeft className="text-primary-500 w-6 h-6 rotate-180" />
+                  <div>
+                    <div className="text-sm text-gray-400">New Daily Target</div>
+                    <div className="text-xl font-semibold text-primary-500">{macroSummary?.newCalories || 1950}</div>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-blue-200 bg-blue-500/10 rounded p-2">
+                  I'm starting you with a gentle 50-calorie reduction. We'll adjust gradually as you progress!
+                </div>
+              </div>
+
+              {/* Macro Breakdown */}
+              <div className="bg-surface rounded-lg p-4">
+                <div className="text-sm font-medium mb-3">Daily Macro Targets</div>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Protein</span>
+                    <span className="font-semibold">{macroSummary?.newMacros?.protein || 122}g</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Carbs</span>
+                    <span className="font-semibold">{macroSummary?.newMacros?.carbs || 219}g</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Fat</span>
+                    <span className="font-semibold">{macroSummary?.newMacros?.fat || 65}g</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Coach Message */}
+          <div className="mb-8 bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-bold">C</span>
+              </div>
+              <div className="text-sm">
+                <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
+                <p className="text-primary-100">
+                  Welcome to your personalized fitness journey! I've created a gentle starting plan that focuses on sustainable progress. 
+                  Remember, we're not rushing - slow and steady wins the race. I'll adjust your plan every week based on your progress.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Acknowledgment Button */}
+          <div className="mt-auto">
+            <Button
+              onClick={() => setLocation("/")}
+              className="w-full bg-primary-500 hover:bg-primary-600 text-white py-4 rounded-full font-semibold"
+            >
+              Let's Start My Journey!
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-dark text-white">

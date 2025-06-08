@@ -82,19 +82,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedUser = await storage.updateUserProfile(userId, profileData);
       
       // If this is onboarding completion, generate initial macro targets
+      let macroData = null;
       if (profileData.onboardingCompleted) {
         const macroRecommendation = await aiCoach.calculateMacroTargets(updatedUser);
+        
+        // Get baseline macros from recent daily_macros entries (from screenshot upload)
+        const recentMacros = await storage.getRecentMacros(userId, 7);
+        const baselineMacros = recentMacros.length > 0 ? {
+          calories: recentMacros[0].extractedCalories || 2000,
+          protein: recentMacros[0].extractedProtein || 120,
+          carbs: recentMacros[0].extractedCarbs || 200,
+          fat: recentMacros[0].extractedFat || 65
+        } : {
+          calories: 2000,
+          protein: 120,
+          carbs: 200,
+          fat: 65
+        };
+
+        // Apply Chassidy's gradual approach - max 50 calorie reduction
+        const adjustedCalories = Math.max(baselineMacros.calories - 50, 1200);
+        
         await storage.setMacroTargets({
           userId,
           date: new Date().toISOString().split('T')[0],
-          calories: macroRecommendation.calories,
+          calories: adjustedCalories,
           protein: macroRecommendation.protein,
           carbs: macroRecommendation.carbs,
           fat: macroRecommendation.fat,
         });
+
+        macroData = {
+          baselineCalories: baselineMacros.calories,
+          newCalories: adjustedCalories,
+          baselineMacros: {
+            protein: baselineMacros.protein,
+            carbs: baselineMacros.carbs,
+            fat: baselineMacros.fat
+          },
+          newMacros: {
+            protein: macroRecommendation.protein,
+            carbs: macroRecommendation.carbs,
+            fat: macroRecommendation.fat
+          }
+        };
       }
       
-      res.json(updatedUser);
+      res.json({ ...updatedUser, ...macroData });
     } catch (error) {
       console.error("Error updating user profile:", error);
       if (error instanceof z.ZodError) {
