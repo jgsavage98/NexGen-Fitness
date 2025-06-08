@@ -48,6 +48,22 @@ const upload = multer({
   }
 });
 
+// Separate multer configuration for nutrition screenshots
+const screenshotUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    // Accept image files for nutrition screenshots
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed for screenshots'));
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  }
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
@@ -304,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Nutrition screenshot upload
-  app.post('/api/nutrition/screenshot', isAuthenticated, upload.single('screenshot'), async (req: any, res) => {
+  app.post('/api/nutrition/screenshot', isAuthenticated, screenshotUpload.single('screenshot'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const file = req.file;
