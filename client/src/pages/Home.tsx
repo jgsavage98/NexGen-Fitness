@@ -34,7 +34,7 @@ export default function Home() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardTab />;
+        return <DashboardTab onTabChange={setActiveTab} />;
       case 'nutrition':
         return <ScreenshotUploadTab />;
       case 'workout':
@@ -44,7 +44,7 @@ export default function Home() {
       case 'progress':
         return <ProgressTab />;
       default:
-        return <DashboardTab />;
+        return <DashboardTab onTabChange={setActiveTab} />;
     }
   };
 

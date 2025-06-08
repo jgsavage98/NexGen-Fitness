@@ -5,8 +5,13 @@ import MacroRings from "./MacroRings";
 import { Workout, MacroTarget } from "@/lib/types";
 import { Link } from "wouter";
 import { User, Calendar, Target } from "lucide-react";
+import { TabType } from "@/pages/Home";
 
-export default function DashboardTab() {
+interface DashboardTabProps {
+  onTabChange?: (tab: TabType) => void;
+}
+
+export default function DashboardTab({ onTabChange }: DashboardTabProps) {
   const today = new Date().toISOString().split('T')[0];
 
   const { data: workout } = useQuery<Workout>({
@@ -110,15 +115,16 @@ export default function DashboardTab() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-4">
-        <Link href="/screenshot-upload">
-          <Button className="bg-primary-500 hover:bg-primary-600 border-primary-500 p-4 h-auto text-left flex flex-col items-start space-y-2 w-full">
-            <i className="fas fa-camera text-white text-xl"></i>
-            <div>
-              <div className="font-semibold text-white">Upload Screenshot</div>
-              <div className="text-xs text-primary-100 leading-tight">Today's MyFitnessPal</div>
-            </div>
-          </Button>
-        </Link>
+        <Button 
+          onClick={() => onTabChange?.('nutrition')}
+          className="bg-primary-500 hover:bg-primary-600 border-primary-500 p-4 h-auto text-left flex flex-col items-start space-y-2 w-full"
+        >
+          <i className="fas fa-camera text-white text-xl"></i>
+          <div>
+            <div className="font-semibold text-white">Upload Screenshot</div>
+            <div className="text-xs text-primary-100 leading-tight">Today's MyFitnessPal</div>
+          </div>
+        </Button>
         
         <Link href="/workout">
           <Button className="bg-surface hover:bg-gray-700 border-gray-700 p-4 h-auto text-left flex flex-col items-start space-y-2 w-full">
