@@ -22,8 +22,9 @@ export default function DashboardTab() {
     retry: false,
   });
 
-  // Use extracted macros from screenshot if available
-  const consumedMacros = dailyMacros ? {
+  // Only show extracted macros if screenshot was uploaded today
+  const hasUploadedToday = dailyMacros && (dailyMacros as any).screenshotUrl && (dailyMacros as any).visionProcessedAt;
+  const consumedMacros = hasUploadedToday ? {
     calories: (dailyMacros as any).extractedCalories || 0,
     protein: (dailyMacros as any).extractedProtein || 0,
     carbs: (dailyMacros as any).extractedCarbs || 0,
