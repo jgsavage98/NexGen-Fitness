@@ -41,6 +41,7 @@ export const users = pgTable("users", {
   // Ignite-AI profile data
   goal: varchar("goal"), // fitness goal: weight-loss, muscle-gain, maintenance
   weight: real("weight"), // current weight in kg
+  goalWeight: real("goal_weight"), // target weight in kg (for weight loss goals)
   height: integer("height"), // in cm
   age: integer("age"),
   gender: varchar("gender"), // male, female
@@ -381,6 +382,7 @@ export const insertProgressEntrySchema = createInsertSchema(progressEntries).omi
 export const updateUserProfileSchema = z.object({
   goal: z.string().optional(),
   weight: z.number().optional(),
+  goalWeight: z.number().optional(),
   height: z.number().optional(),
   age: z.number().optional(),
   gender: z.string().optional(),

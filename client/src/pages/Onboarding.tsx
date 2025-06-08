@@ -14,6 +14,7 @@ interface OnboardingData {
   goal?: string;
   height?: number;
   weight?: number;
+  goalWeight?: number;
   age?: number;
   gender?: string;
   activityLevel?: string;
@@ -53,6 +54,7 @@ export default function Onboarding() {
         ...data,
         goal: data.goal, // Keep goal as string (weight-loss, muscle-gain, maintenance)
         weight: data.weight ? parseFloat(data.weight.toString()) : undefined,
+        goalWeight: data.goalWeight ? parseFloat(data.goalWeight.toString()) : undefined,
         height: data.height ? parseInt(data.height.toString()) : undefined,
         age: data.age ? parseInt(data.age.toString()) : undefined,
         onboardingCompleted: true,
@@ -141,7 +143,9 @@ export default function Onboarding() {
       case 1:
         return !!formData.goal;
       case 2:
-        return !!(formData.height && formData.weight && formData.age && formData.gender);
+        const basicInfoComplete = !!(formData.height && formData.weight && formData.age && formData.gender);
+        const goalWeightRequired = formData.goal === 'weight-loss' ? !!formData.goalWeight : true;
+        return basicInfoComplete && goalWeightRequired;
       case 3:
         return !!formData.activityLevel;
       case 4:
@@ -258,7 +262,7 @@ export default function Onboarding() {
                     />
                   </div>
                   <div>
-                    <Label className="block text-sm font-medium mb-2">Weight (kg)</Label>
+                    <Label className="block text-sm font-medium mb-2">Current Weight (kg)</Label>
                     <Input
                       type="number"
                       placeholder="70"
@@ -267,6 +271,20 @@ export default function Onboarding() {
                       className="bg-surface border-gray-600"
                     />
                   </div>
+                  
+                  {formData.goal === 'weight-loss' && (
+                    <div>
+                      <Label className="block text-sm font-medium mb-2">Goal Weight (kg)</Label>
+                      <Input
+                        type="number"
+                        placeholder="60"
+                        value={formData.goalWeight || ''}
+                        onChange={(e) => setFormData({ ...formData, goalWeight: Number(e.target.value) })}
+                        className="bg-surface border-gray-600"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Your target weight for this weight loss journey</p>
+                    </div>
+                  )}
                 </div>
                 
                 <div>
