@@ -6,12 +6,30 @@ import ChatTab from "@/components/ChatTab";
 import ProgressTab from "@/components/ProgressTab";
 import ScreenshotUploadTab from "@/components/ScreenshotUploadTab";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Settings, LogOut, User } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 export type TabType = 'dashboard' | 'nutrition' | 'workout' | 'chat' | 'progress';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/auth/logout", {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setLocation("/landing");
+    },
+  });
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -49,9 +67,22 @@ export default function Home() {
                 <div className="text-sm text-gray-400">Day 1 of your journey</div>
               </div>
             </div>
-            <button className="p-2 hover:bg-gray-700 rounded-lg transition-colors">
-              <i className="fas fa-bell text-gray-400"></i>
-            </button>
+            <div className="flex items-center space-x-2">
+              <img 
+                src="/ignite-logo.png" 
+                alt="Ignite" 
+                className="h-8 w-auto"
+              />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                className="text-gray-400 hover:text-white"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </header>
 
