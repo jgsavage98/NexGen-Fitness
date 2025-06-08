@@ -19,6 +19,10 @@ export default function ChatTab() {
     queryKey: ["/api/chat/messages"],
   });
 
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+  });
+
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
       const response = await apiRequest("POST", "/api/chat/message", { message });
@@ -230,6 +234,14 @@ export default function ChatTab() {
                 )}
               </span>
             </div>
+
+            {!message.isAI && user?.profilePicture && (
+              <img 
+                src={`/assets/${user.profilePicture}`}
+                alt="Your Profile"
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              />
+            )}
           </div>
         ))}
 

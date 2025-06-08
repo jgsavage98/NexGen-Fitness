@@ -53,6 +53,7 @@ export const users = pgTable("users", {
   trainerId: varchar("trainer_id").default("coach_chassidy"),
   programStartDate: timestamp("program_start_date"),
   timezone: varchar("timezone").default("America/New_York"),
+  profilePicture: varchar("profile_picture"),
 });
 
 export const exercises = pgTable("exercises", {
