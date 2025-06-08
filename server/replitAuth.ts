@@ -8,6 +8,15 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
+// Extend session type for development
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+    userEmail?: string;
+    authenticated?: boolean;
+  }
+}
+
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
@@ -34,13 +43,15 @@ export function getSession() {
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
+    name: 'ignite.sid',
     cookie: {
-      httpOnly: false,
+      httpOnly: true,
       secure: false,
       maxAge: sessionTtl,
-      sameSite: 'lax',
+      sameSite: 'strict',
+      path: '/',
     },
   });
 }
@@ -86,22 +97,15 @@ export async function setupAuth(app: Express) {
         profileImageUrl: "https://via.placeholder.com/150",
       });
       
-      // Set session
-      (req as any).session.user = {
-        claims: {
-          sub: demoUser.id,
-          email: demoUser.email,
-          first_name: demoUser.firstName,
-          last_name: demoUser.lastName,
-          profile_image_url: demoUser.profileImageUrl,
-          exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days
-        }
-      };
+      // Set session data
+      (req.session as any).userId = demoUser.id;
+      (req.session as any).userEmail = demoUser.email;
+      (req.session as any).authenticated = true;
       
-      console.log('Session user set:', !!req.session.user);
+      console.log('Session data set for user:', demoUser.id);
       
       // Save session before redirect
-      (req as any).session.save((err: any) => {
+      req.session.save((err: any) => {
         if (err) {
           console.error('Session save error:', err);
           return res.status(500).json({ error: 'Session save failed' });
@@ -182,21 +186,21 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Development mode: check session
   if (process.env.NODE_ENV === 'development') {
-    const sessionUser = (req as any).session?.user;
-    console.log('Session check:', { sessionExists: !!req.session, userExists: !!sessionUser, sessionId: req.sessionID });
+    const isAuth = (req.session as any).authenticated;
+    const userId = (req.session as any).userId;
+    console.log('Session check:', { sessionExists: !!req.session, authenticated: isAuth, userId, sessionId: req.sessionID });
     
-    if (!sessionUser || !sessionUser.claims) {
+    if (!isAuth || !userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     
-    // Check if session is expired
-    const now = Math.floor(Date.now() / 1000);
-    if (sessionUser.claims.exp && now > sessionUser.claims.exp) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
-    // Attach user to request
-    (req as any).user = sessionUser;
+    // Attach user info to request for compatibility
+    (req as any).user = {
+      claims: {
+        sub: userId,
+        email: (req.session as any).userEmail,
+      }
+    };
     return next();
   }
 
