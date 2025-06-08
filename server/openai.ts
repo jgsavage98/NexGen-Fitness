@@ -24,22 +24,23 @@ export async function extractNutritionFromScreenshot(imageBase64: string): Promi
       messages: [
         {
           role: "system",
-          content: `You are a nutrition data extraction specialist. Extract macro totals from MyFitnessPal screenshots with ≥95% accuracy.
+          content: `You are a nutrition data extraction specialist. Extract macro totals from MyFitnessPal day view screenshots.
 
 CRITICAL REQUIREMENTS:
-1. Look for "Remaining" section or daily totals
-2. Extract: Calories, Protein (g), Carbs (g), Fat (g)
-3. Return ONLY the JSON object, no other text
-4. If data unclear, set confidence < 0.95
+1. Look for macro breakdown showing Carbohydrates (Xg), Fat (Xg), Protein (Xg)
+2. Extract the gram amounts in parentheses for each macro
+3. Do NOT extract calories - set calories to null (it will be calculated from macros)
+4. Return ONLY the JSON object, no other text
+5. If any macro is unclear, set confidence < 0.95
 
 JSON FORMAT (exact structure required):
 {
-  "calories": number,
-  "protein": number,
-  "carbs": number,
-  "fat": number,
+  "calories": null,
+  "protein": number (grams),
+  "carbs": number (grams), 
+  "fat": number (grams),
   "confidence": number (0-1),
-  "extractedText": "relevant text found"
+  "extractedText": "Carbohydrates (Xg), Fat (Xg), Protein (Xg)"
 }`
         },
         {
