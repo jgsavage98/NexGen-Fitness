@@ -60,7 +60,7 @@ export default function Onboarding() {
         goalWeight: data.goalWeight ? parseFloat(data.goalWeight.toString()) : undefined,
         height: data.height ? parseInt(data.height.toString()) : undefined,
         age: data.age ? parseInt(data.age.toString()) : undefined,
-        onboardingCompleted: true,
+        onboardingCompleted: false, // Don't mark as completed yet - wait for user acknowledgment
       };
       
       // First update the profile
@@ -88,13 +88,14 @@ export default function Onboarding() {
       return profileResponse.json();
     },
     onSuccess: (data) => {
+      console.log('Onboarding complete response:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
       // Calculate initial macro recommendations using Chassidy's gradual approach
       const baselineCalories = data.baselineCalories || 2000;
-      const newCalories = Math.max(baselineCalories - 50, 1200); // Max 50 calorie reduction
+      const newCalories = data.newCalories || Math.max(baselineCalories - 50, 1200);
       
-      setMacroSummary({
+      const macroData = {
         baselineCalories,
         newCalories,
         baselineMacros: data.baselineMacros || { protein: 120, carbs: 200, fat: 65 },
@@ -103,8 +104,12 @@ export default function Onboarding() {
           carbs: Math.round(newCalories * 0.45 / 4), 
           fat: Math.round(newCalories * 0.30 / 9) 
         }
-      });
+      };
       
+      console.log('Setting macro summary:', macroData);
+      setMacroSummary(macroData);
+      
+      console.log('Setting showSummary to true');
       setShowSummary(true);
     },
     onError: (error) => {
@@ -293,7 +298,12 @@ export default function Onboarding() {
               </div>
             ) : (
               <Button
-                onClick={() => setLocation("/")}
+                onClick={async () => {
+                  // Mark onboarding as truly completed
+                  await apiRequest("PUT", "/api/user/profile", { onboardingCompleted: true });
+                  queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+                  setLocation("/");
+                }}
                 className="w-full bg-success hover:bg-success/80 text-white py-4 rounded-full font-semibold"
               >
                 Let's Start My Journey!
