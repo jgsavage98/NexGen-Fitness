@@ -11,14 +11,13 @@ export default function Landing() {
       <div className="max-w-md mx-auto px-6 py-8 h-screen flex flex-col">
         {/* Header */}
         <div className="text-center mb-12 pt-16">
-          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-primary/30 mx-auto mb-6">
+          <div className="w-32 h-32 mx-auto mb-6 flex items-center justify-center">
             <img 
-              src="/coach-chassidy.jpg" 
-              alt="Coach Chassidy"
-              className="w-full h-full object-cover"
+              src="/ignite-logo.png" 
+              alt="Ignite Logo"
+              className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Ignite</h1>
           <p className="text-gray-400 text-lg">Premium Personal Training & Nutrition Coaching</p>
         </div>
 

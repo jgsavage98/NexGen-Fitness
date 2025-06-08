@@ -45,12 +45,12 @@ export function getSession() {
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    name: 'ignite.sid',
+    name: 'connect.sid',
     cookie: {
       httpOnly: true,
       secure: false,
       maxAge: sessionTtl,
-      sameSite: 'strict',
+      sameSite: 'lax',
       path: '/',
     },
   });
