@@ -25,6 +25,7 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/coach-chassidy-bio" component={CoachBio} />
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : user?.onboardingCompleted ? (
