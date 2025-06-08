@@ -317,8 +317,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert image to base64 for OpenAI
       const imageBase64 = file.buffer.toString('base64');
       
-      // Extract nutrition data using OpenAI
-      const extraction = await extractNutritionFromScreenshot(imageBase64);
+      // Import and use OpenAI nutrition extraction
+      const openaiModule = await import('./openai');
+      const extraction = await openaiModule.extractNutritionFromScreenshot(imageBase64);
       
       if (extraction.error) {
         return res.status(400).json({ 
