@@ -67,23 +67,8 @@ export default function Onboarding() {
       const profileResponse = await apiRequest("PUT", "/api/user/profile", profileData);
       
       // If there's a current macros screenshot, upload and analyze it
-      if (data.currentMacrosFile) {
-        const formData = new FormData();
-        formData.append('screenshot', data.currentMacrosFile);
-        formData.append('date', new Date().toISOString().split('T')[0]);
-        formData.append('hungerLevel', '3'); // Default neutral
-        formData.append('energyLevel', '3'); // Default neutral
-        formData.append('notes', 'Initial onboarding screenshot from MyFitnessPal');
-        
-        try {
-          await fetch('/api/nutrition/screenshot', {
-            method: 'POST',
-            body: formData,
-          });
-        } catch (error) {
-          console.log('Screenshot analysis failed, continuing with onboarding');
-        }
-      }
+      // Note: Baseline screenshot is stored but not processed for nutrition data
+      // Nutrition extraction only happens on the Screenshot Upload tab for daily tracking
       
       return profileResponse.json();
     },
@@ -91,71 +76,29 @@ export default function Onboarding() {
       console.log('Onboarding complete response:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Fetch actual extracted nutrition data from database
-      const today = new Date().toISOString().split('T')[0];
-      fetch(`/api/daily-macros?date=${today}`)
-        .then(response => response.ok ? response.json() : null)
-        .then(todaysMacros => {
-          let baselineData = { calories: 2000, protein: 120, carbs: 200, fat: 65 };
-          
-          if (todaysMacros?.extractedCalories) {
-            baselineData = {
-              calories: todaysMacros.extractedCalories,
-              protein: todaysMacros.extractedProtein || baselineData.protein,
-              carbs: todaysMacros.extractedCarbs || baselineData.carbs,
-              fat: todaysMacros.extractedFat || baselineData.fat
-            };
-            console.log('Using extracted baseline data:', baselineData);
-          } else {
-            console.log('No extracted data found, using defaults');
-          }
-          
-          // Calculate new targets using Chassidy's gradual approach
-          const newCalories = Math.max(baselineData.calories - 50, 1200);
-          
-          const macroData = {
-            baselineCalories: baselineData.calories,
-            newCalories,
-            baselineMacros: { 
-              protein: baselineData.protein, 
-              carbs: baselineData.carbs, 
-              fat: baselineData.fat 
-            },
-            newMacros: { 
-              protein: Math.round(newCalories * 0.25 / 4), 
-              carbs: Math.round(newCalories * 0.45 / 4), 
-              fat: Math.round(newCalories * 0.30 / 9) 
-            }
-          };
-          
-          console.log('Setting macro summary:', macroData);
-          setMacroSummary(macroData);
-          setShowSummary(true);
-        })
-        .catch(error => {
-          console.log('Could not fetch extracted data, using defaults');
-          // Use fallback values
-          const baselineData = { calories: 2000, protein: 120, carbs: 200, fat: 65 };
-          const newCalories = Math.max(baselineData.calories - 50, 1200);
-          
-          const macroData = {
-            baselineCalories: baselineData.calories,
-            newCalories,
-            baselineMacros: { 
-              protein: baselineData.protein, 
-              carbs: baselineData.carbs, 
-              fat: baselineData.fat 
-            },
-            newMacros: { 
-              protein: Math.round(newCalories * 0.25 / 4), 
-              carbs: Math.round(newCalories * 0.45 / 4), 
-              fat: Math.round(newCalories * 0.30 / 9) 
-            }
-          };
-          
-          setMacroSummary(macroData);
-          setShowSummary(true);
-        });
+      // Use standard baseline values for onboarding summary
+      // User will upload their actual daily nutrition data via Screenshot Upload tab
+      const baselineData = { calories: 2000, protein: 120, carbs: 200, fat: 65 };
+      const newCalories = Math.max(baselineData.calories - 50, 1200);
+      
+      const macroData = {
+        baselineCalories: baselineData.calories,
+        newCalories,
+        baselineMacros: { 
+          protein: baselineData.protein, 
+          carbs: baselineData.carbs, 
+          fat: baselineData.fat 
+        },
+        newMacros: { 
+          protein: Math.round(newCalories * 0.25 / 4), 
+          carbs: Math.round(newCalories * 0.45 / 4), 
+          fat: Math.round(newCalories * 0.30 / 9) 
+        }
+      };
+      
+      console.log('Setting standard macro summary for onboarding:', macroData);
+      setMacroSummary(macroData);
+      setShowSummary(true);
     },
     onError: (error) => {
       toast({
