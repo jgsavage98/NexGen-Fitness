@@ -39,8 +39,8 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   // Ignite-AI profile data
-  goalWeight: real("goal_weight"), // target weight in kg
-  currentWeight: real("current_weight"), // current weight in kg
+  goal: real("goal"), // target weight in kg
+  weight: real("weight"), // current weight in kg
   height: integer("height"), // in cm
   age: integer("age"),
   gender: varchar("gender"), // male, female
