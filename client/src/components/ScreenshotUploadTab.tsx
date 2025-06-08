@@ -57,7 +57,7 @@ export default function ScreenshotUploadTab() {
 
   // Get today's macros
   const { data: todaysMacros, isLoading } = useQuery<DailyMacros | null>({
-    queryKey: ['/api/nutrition/daily', today],
+    queryKey: [`/api/daily-macros?date=${today}`],
     retry: false,
   });
 
@@ -95,7 +95,8 @@ export default function ScreenshotUploadTab() {
       setNotes("");
       
       // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/nutrition/daily'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/daily-macros?date=${today}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/daily-macros'] });
     },
     onError: (error: Error) => {
       toast({
@@ -191,13 +192,33 @@ export default function ScreenshotUploadTab() {
         </CardContent>
       </Card>
 
-      {/* Today's Progress */}
+      {/* Today's Progress with Screenshot Thumbnail */}
       {todaysMacros?.extractedCalories && (
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="text-white text-lg">Today's Progress</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Screenshot Thumbnail */}
+            {todaysMacros.screenshotUrl && (
+              <div className="mb-4">
+                <Label className="text-gray-300 text-sm">Uploaded Screenshot</Label>
+                <div className="mt-2 p-2 bg-gray-700 rounded-lg">
+                  <img 
+                    src={`/${todaysMacros.screenshotUrl}`} 
+                    alt="Today's MyFitnessPal Screenshot"
+                    className="w-full max-w-xs mx-auto rounded border border-gray-600"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDIwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjMzc0MTUxIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iNTUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOUI5QkE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JbWFnZSBOb3QgQXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4K";
+                    }}
+                  />
+                  <p className="text-xs text-gray-400 text-center mt-2">
+                    Uploaded {new Date(todaysMacros.date).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-primary">{todaysMacros.extractedCalories}</p>

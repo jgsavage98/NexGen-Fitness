@@ -48,9 +48,24 @@ const upload = multer({
   }
 });
 
-// Separate multer configuration for nutrition screenshots
+// Configure multer for nutrition screenshot uploads
+const screenshotStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(process.cwd(), 'public', 'screenshots');
+    fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    // Create unique filename with timestamp
+    const timestamp = Date.now();
+    const userId = 'user';
+    const extension = path.extname(file.originalname);
+    cb(null, `${userId}-${timestamp}${extension}`);
+  }
+});
+
 const screenshotUpload = multer({
-  storage: multer.memoryStorage(),
+  storage: screenshotStorage,
   fileFilter: (req, file, cb) => {
     // Accept image files for nutrition screenshots
     if (file.mimetype.startsWith('image/')) {
@@ -330,8 +345,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Screenshot file is required" });
       }
       
-      // Convert image to base64 for OpenAI
-      const imageBase64 = file.buffer.toString('base64');
+      // Read the saved file and convert to base64 for OpenAI
+      const imagePath = file.path;
+      const imageBuffer = fs.readFileSync(imagePath);
+      const imageBase64 = imageBuffer.toString('base64');
       
       // Import and use OpenAI nutrition extraction
       const openaiModule = await import('./openai');
