@@ -88,13 +88,13 @@ export default function MeetYourCoach() {
             </Card>
             <Card className="bg-gray-800 border-gray-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary mb-1">500+</div>
+                <div className="text-2xl font-bold text-white mb-1">500+</div>
                 <div className="text-xs text-gray-400">Clients Helped</div>
               </CardContent>
             </Card>
             <Card className="bg-gray-800 border-gray-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary mb-1">4.9</div>
+                <div className="text-2xl font-bold text-white mb-1">4.9</div>
                 <div className="text-xs text-gray-400">
                   <div className="flex items-center justify-center space-x-1">
                     <Star className="w-3 h-3 fill-current text-yellow-400" />
