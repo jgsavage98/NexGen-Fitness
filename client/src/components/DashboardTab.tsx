@@ -51,7 +51,7 @@ export default function DashboardTab() {
   return (
     <div className="px-6 py-6 space-y-6">
       {/* Coach Welcome Card */}
-      <Card className="bg-gradient-to-r from-primary/20 to-purple-600/20 border-primary/30">
+      <Card className="bg-gradient-to-r from-gray-800 to-gray-900 border-primary/30">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3">
             <img 
