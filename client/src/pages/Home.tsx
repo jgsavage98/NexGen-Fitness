@@ -4,9 +4,10 @@ import DashboardTab from "@/components/DashboardTab";
 import WorkoutTab from "@/components/WorkoutTab";
 import ChatTab from "@/components/ChatTab";
 import ProgressTab from "@/components/ProgressTab";
+import ScreenshotUploadTab from "@/components/ScreenshotUploadTab";
 import { useAuth } from "@/hooks/useAuth";
 
-export type TabType = 'dashboard' | 'workout' | 'chat' | 'progress';
+export type TabType = 'dashboard' | 'nutrition' | 'workout' | 'chat' | 'progress';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -16,6 +17,8 @@ export default function Home() {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardTab />;
+      case 'nutrition':
+        return <ScreenshotUploadTab />;
       case 'workout':
         return <WorkoutTab />;
       case 'chat':

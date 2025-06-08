@@ -344,9 +344,11 @@ export default function ScreenshotUploadTab() {
       <Card className="bg-gradient-to-r from-primary/20 to-purple-600/20 border-primary/30">
         <CardContent className="p-4">
           <div className="flex items-start space-x-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-primary font-bold text-sm">CC</span>
-            </div>
+            <img 
+              src="/coach-chassidy.jpg" 
+              alt="Coach Chassidy"
+              className="w-12 h-12 rounded-full object-cover border-2 border-primary/30"
+            />
             <div>
               <p className="text-white font-medium mb-1">Coach Chassidy</p>
               <p className="text-gray-300 text-sm">
