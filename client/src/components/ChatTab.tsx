@@ -235,9 +235,9 @@ export default function ChatTab() {
               </span>
             </div>
 
-            {!message.isAI && user?.profilePicture && (
+            {!message.isAI && (
               <img 
-                src={`/assets/${user.profilePicture}`}
+                src="/attached_assets/CE Bio Image_1749399911915.jpeg"
                 alt="Your Profile"
                 className="w-8 h-8 rounded-full object-cover flex-shrink-0"
               />

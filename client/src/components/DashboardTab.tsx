@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import MacroRings from "./MacroRings";
-import { Workout, MacroTarget, Meal } from "@/lib/types";
+import { Workout, MacroTarget } from "@/lib/types";
 import { Link } from "wouter";
 import { User, Calendar, Target } from "lucide-react";
 
@@ -17,20 +17,18 @@ export default function DashboardTab() {
     queryKey: [`/api/macro-targets?date=${today}`],
   });
 
-  const { data: meals = [] } = useQuery<Meal[]>({
-    queryKey: [`/api/meals?date=${today}`],
+  const { data: dailyMacros } = useQuery({
+    queryKey: [`/api/daily-macros?date=${today}`],
+    retry: false,
   });
 
-  // Calculate consumed macros from meals
-  const consumedMacros = meals.reduce(
-    (acc, meal) => ({
-      calories: acc.calories + meal.calories,
-      protein: acc.protein + meal.protein,
-      carbs: acc.carbs + meal.carbs,
-      fat: acc.fat + meal.fat,
-    }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
-  );
+  // Use extracted macros from screenshot if available
+  const consumedMacros = dailyMacros ? {
+    calories: (dailyMacros as any).extractedCalories || 0,
+    protein: (dailyMacros as any).extractedProtein || 0,
+    carbs: (dailyMacros as any).extractedCarbs || 0,
+    fat: (dailyMacros as any).extractedFat || 0,
+  } : { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
   const macroSummary = {
     consumed: consumedMacros,
@@ -62,7 +60,7 @@ export default function DashboardTab() {
             <div className="flex-1">
               <p className="text-white font-medium mb-1">Coach Chassidy</p>
               <p className="text-gray-300 text-sm">
-                Great work staying consistent! I'm proud of your dedication. Keep uploading your daily screenshots so I can give you the best personalized guidance.
+                Ready for another great day! Upload your MyFitnessPal screenshot so I can track your progress and provide personalized guidance.
               </p>
             </div>
             <Link href="/coach">
@@ -104,21 +102,25 @@ export default function DashboardTab() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-4">
-        <Button className="bg-surface hover:bg-gray-700 border-gray-700 p-4 h-auto text-left flex flex-col items-start space-y-2">
-          <i className="fas fa-utensils text-primary-500 text-xl"></i>
-          <div>
-            <div className="font-semibold text-white">Log Meal</div>
-            <div className="text-sm text-gray-400">Add your food</div>
-          </div>
-        </Button>
+        <Link href="/screenshot-upload">
+          <Button className="bg-primary-500 hover:bg-primary-600 border-primary-500 p-4 h-auto text-left flex flex-col items-start space-y-2 w-full">
+            <i className="fas fa-camera text-white text-xl"></i>
+            <div>
+              <div className="font-semibold text-white">Upload Screenshot</div>
+              <div className="text-sm text-primary-100">MyFitnessPal daily totals</div>
+            </div>
+          </Button>
+        </Link>
         
-        <Button className="bg-surface hover:bg-gray-700 border-gray-700 p-4 h-auto text-left flex flex-col items-start space-y-2">
-          <i className="fas fa-play text-success text-xl"></i>
-          <div>
-            <div className="font-semibold text-white">Start Workout</div>
-            <div className="text-sm text-gray-400">Begin today's plan</div>
-          </div>
-        </Button>
+        <Link href="/workout">
+          <Button className="bg-surface hover:bg-gray-700 border-gray-700 p-4 h-auto text-left flex flex-col items-start space-y-2 w-full">
+            <i className="fas fa-play text-success text-xl"></i>
+            <div>
+              <div className="font-semibold text-white">Start Workout</div>
+              <div className="text-sm text-gray-400">Begin today's plan</div>
+            </div>
+          </Button>
+        </Link>
       </div>
 
       {/* Today's Workout Preview */}
