@@ -47,10 +47,17 @@ export default function Onboarding() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: OnboardingData) => {
-      const response = await apiRequest("PUT", "/api/user/profile", {
+      // Convert string values to numbers where needed
+      const profileData = {
         ...data,
+        goal: data.goal ? parseFloat(data.goal as string) : undefined,
+        weight: data.weight ? parseFloat(data.weight.toString()) : undefined,
+        height: data.height ? parseInt(data.height.toString()) : undefined,
+        age: data.age ? parseInt(data.age.toString()) : undefined,
         onboardingCompleted: true,
-      });
+      };
+      
+      const response = await apiRequest("PUT", "/api/user/profile", profileData);
       return response.json();
     },
     onSuccess: () => {
