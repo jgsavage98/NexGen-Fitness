@@ -80,6 +80,20 @@ async function upsertUser(
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
+  
+  // Add CORS headers for session cookies
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
+    } else {
+      next();
+    }
+  });
+  
   app.use(getSession());
 
   // Development mode: create a demo user for testing
@@ -97,21 +111,27 @@ export async function setupAuth(app: Express) {
         profileImageUrl: "https://via.placeholder.com/150",
       });
       
-      // Set session data
-      (req.session as any).userId = demoUser.id;
-      (req.session as any).userEmail = demoUser.email;
-      (req.session as any).authenticated = true;
-      
-      console.log('Session data set for user:', demoUser.id);
-      
-      // Save session before redirect
-      req.session.save((err: any) => {
+      // Set session data with regeneration for browser compatibility
+      req.session.regenerate((err: any) => {
         if (err) {
-          console.error('Session save error:', err);
-          return res.status(500).json({ error: 'Session save failed' });
+          console.error('Session regeneration error:', err);
+          return res.status(500).json({ error: 'Session regeneration failed' });
         }
-        console.log('Session saved successfully, redirecting to /');
-        res.redirect('/');
+        
+        (req.session as any).userId = demoUser.id;
+        (req.session as any).userEmail = demoUser.email;
+        (req.session as any).authenticated = true;
+        
+        console.log('Session data set for user:', demoUser.id, 'new session ID:', req.sessionID);
+        
+        req.session.save((saveErr: any) => {
+          if (saveErr) {
+            console.error('Session save error:', saveErr);
+            return res.status(500).json({ error: 'Session save failed' });
+          }
+          console.log('Session saved successfully, redirecting to /');
+          res.redirect('/');
+        });
       });
     });
 

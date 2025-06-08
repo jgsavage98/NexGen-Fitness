@@ -15,9 +15,14 @@ export default function Landing() {
             <img 
               src="/ignite-logo.png" 
               alt="Ignite Logo"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain filter brightness-110"
+              onError={(e) => {
+                console.log('Logo failed to load, showing fallback');
+                e.currentTarget.outerHTML = '<div class="w-24 h-24 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto">I</div>';
+              }}
             />
           </div>
+          <h1 className="text-4xl font-bold mb-4 text-white">Ignite</h1>
           <p className="text-gray-400 text-lg">Premium Personal Training & Nutrition Coaching</p>
         </div>
 
