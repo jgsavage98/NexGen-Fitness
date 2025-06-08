@@ -15,7 +15,7 @@ interface Trainer {
 }
 
 export default function MeetYourCoach() {
-  const { data: trainer, isLoading } = useQuery({
+  const { data: trainer, isLoading } = useQuery<Trainer | null>({
     queryKey: ['/api/trainer/coach_chassidy'],
     retry: false,
   });

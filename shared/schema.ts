@@ -378,18 +378,17 @@ export const insertProgressEntrySchema = createInsertSchema(progressEntries).omi
 });
 
 // Update user profile schema for new PRD
-export const updateUserProfileSchema = createInsertSchema(users).pick({
-  goalWeight: true,
-  currentWeight: true,
-  height: true,
-  age: true,
-  gender: true,
-  activityLevel: true,
-  workoutFrequency: true,
-  injuries: true,
-  equipment: true,
-  timezone: true,
-}).extend({
+export const updateUserProfileSchema = z.object({
+  goal: z.number().optional(),
+  weight: z.number().optional(),
+  height: z.number().optional(),
+  age: z.number().optional(),
+  gender: z.string().optional(),
+  activityLevel: z.string().optional(),
+  workoutFrequency: z.number().optional(),
+  injuries: z.array(z.string()).optional(),
+  equipment: z.array(z.string()).optional(),
+  timezone: z.string().optional(),
   onboardingCompleted: z.boolean().optional(),
   programStartDate: z.date().optional(),
 });

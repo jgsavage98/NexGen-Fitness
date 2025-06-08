@@ -56,7 +56,7 @@ export default function ScreenshotUploadTab() {
   const today = new Date().toISOString().split('T')[0];
 
   // Get today's macros
-  const { data: todaysMacros, isLoading } = useQuery({
+  const { data: todaysMacros, isLoading } = useQuery<DailyMacros | null>({
     queryKey: ['/api/nutrition/daily', today],
     retry: false,
   });
