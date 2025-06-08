@@ -5,6 +5,98 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || ""
 });
 
+// Vision extraction for MyFitnessPal screenshots
+export interface NutritionExtraction {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  confidence: number;
+  extractedText?: string;
+  error?: string;
+}
+
+export async function extractNutritionFromScreenshot(imageBase64: string): Promise<NutritionExtraction> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        {
+          role: "system",
+          content: `You are a nutrition data extraction specialist. Extract macro totals from MyFitnessPal screenshots with ≥95% accuracy.
+
+CRITICAL REQUIREMENTS:
+1. Look for "Remaining" section or daily totals
+2. Extract: Calories, Protein (g), Carbs (g), Fat (g)
+3. Return ONLY the JSON object, no other text
+4. If data unclear, set confidence < 0.95
+
+JSON FORMAT (exact structure required):
+{
+  "calories": number,
+  "protein": number,
+  "carbs": number,
+  "fat": number,
+  "confidence": number (0-1),
+  "extractedText": "relevant text found"
+}`
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Extract nutrition totals from this MyFitnessPal screenshot. Focus on daily totals or remaining macros."
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${imageBase64}`
+              }
+            }
+          ]
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 500,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    
+    // Validate extraction
+    if (!result.calories || !result.protein || !result.carbs || !result.fat) {
+      return {
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        confidence: 0,
+        error: "Could not extract complete nutrition data"
+      };
+    }
+
+    return {
+      calories: Number(result.calories) || 0,
+      protein: Number(result.protein) || 0,
+      carbs: Number(result.carbs) || 0,
+      fat: Number(result.fat) || 0,
+      confidence: Number(result.confidence) || 0,
+      extractedText: result.extractedText || ""
+    };
+
+  } catch (error) {
+    console.error("Vision extraction error:", error);
+    return {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      confidence: 0,
+      error: error instanceof Error ? error.message : "Vision processing failed"
+    };
+  }
+}
+
 export interface CoachResponse {
   message: string;
   confidence: number;

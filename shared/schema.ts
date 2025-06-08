@@ -38,16 +38,20 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  // Fitness profile data
-  goal: varchar("goal"), // weight-loss, muscle-gain, maintenance
+  // Ignite-AI profile data
+  goalWeight: real("goal_weight"), // target weight in kg
+  currentWeight: real("current_weight"), // current weight in kg
   height: integer("height"), // in cm
-  weight: real("weight"), // in kg
   age: integer("age"),
   gender: varchar("gender"), // male, female
   activityLevel: varchar("activity_level"), // sedentary, light, moderate, active, very_active
+  workoutFrequency: integer("workout_frequency"), // sessions per week
   injuries: text("injuries").array().default([]),
   equipment: text("equipment").array().default([]),
   onboardingCompleted: boolean("onboarding_completed").default(false),
+  trainerId: varchar("trainer_id").default("coach_chassidy"),
+  programStartDate: timestamp("program_start_date"),
+  timezone: varchar("timezone").default("America/New_York"),
 });
 
 export const exercises = pgTable("exercises", {
@@ -93,17 +97,91 @@ export const workoutLogs = pgTable("workout_logs", {
   completedAt: timestamp("completed_at").defaultNow(),
 });
 
+// Core Ignite-AI workflow tables
+export const trainers = pgTable("trainers", {
+  id: varchar("id").primaryKey(), // coach_chassidy
+  name: varchar("name").notNull(),
+  photoUrl: varchar("photo_url"),
+  bio: text("bio"),
+  certifications: text("certifications").array().default([]),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const dailyMacros = pgTable("daily_macros", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  date: date("date").notNull(),
+  // Screenshot data
+  screenshotUrl: varchar("screenshot_url"),
+  screenshotUploadedAt: timestamp("screenshot_uploaded_at"),
+  // Vision extraction results
+  extractedCalories: real("extracted_calories"),
+  extractedProtein: real("extracted_protein"),
+  extractedCarbs: real("extracted_carbs"),
+  extractedFat: real("extracted_fat"),
+  visionConfidence: real("vision_confidence"),
+  visionProcessedAt: timestamp("vision_processed_at"),
+  // Current macro targets
+  targetCalories: real("target_calories"),
+  targetProtein: real("target_protein"),
+  targetCarbs: real("target_carbs"),
+  targetFat: real("target_fat"),
+  // Compliance tracking
+  adherenceScore: real("adherence_score"), // 0-100
+  hungerLevel: integer("hunger_level"), // 1-5 scale
+  energyLevel: integer("energy_level"), // 1-5 scale
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique().on(table.userId, table.date)
+]);
+
+export const macroChanges = pgTable("macro_changes", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  date: date("date").notNull(),
+  // Previous targets
+  oldCalories: real("old_calories"),
+  oldProtein: real("old_protein"),
+  oldCarbs: real("old_carbs"),
+  oldFat: real("old_fat"),
+  // AI proposal
+  aiProposal: jsonb("ai_proposal"), // Complete AI response
+  aiCalories: real("ai_calories"),
+  aiProtein: real("ai_protein"),
+  aiCarbs: real("ai_carbs"),
+  aiFat: real("ai_fat"),
+  aiReasoning: text("ai_reasoning"),
+  // Final approved values
+  finalCalories: real("final_calories"),
+  finalProtein: real("final_protein"),
+  finalCarbs: real("final_carbs"),
+  finalFat: real("final_fat"),
+  // Approval tracking
+  status: varchar("status").default("pending"), // pending, approved, edited
+  trainerId: varchar("trainer_id"),
+  trainerNotes: text("trainer_notes"),
+  approvedAt: timestamp("approved_at"),
+  // Audit trail
+  screenshotUrl: varchar("screenshot_url"),
+  weightTrend: real("weight_trend"),
+  programDay: integer("program_day"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Legacy tables (keeping for compatibility)
 export const meals = pgTable("meals", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   name: varchar("name").notNull(),
   calories: real("calories").notNull(),
-  protein: real("protein").notNull(), // in grams
-  carbs: real("carbs").notNull(), // in grams
-  fat: real("fat").notNull(), // in grams
+  protein: real("protein").notNull(),
+  carbs: real("carbs").notNull(),
+  fat: real("fat").notNull(),
   fiber: real("fiber"),
   sugar: real("sugar"),
-  mealType: varchar("meal_type"), // breakfast, lunch, dinner, snack
+  mealType: varchar("meal_type"),
   loggedAt: timestamp("logged_at").defaultNow(),
 });
 
@@ -142,13 +220,42 @@ export const progressEntries = pgTable("progress_entries", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   workouts: many(workouts),
   workoutLogs: many(workoutLogs),
   meals: many(meals),
   macroTargets: many(macroTargets),
   chatMessages: many(chatMessages),
   progressEntries: many(progressEntries),
+  dailyMacros: many(dailyMacros),
+  macroChanges: many(macroChanges),
+  trainer: one(trainers, {
+    fields: [users.trainerId],
+    references: [trainers.id],
+  }),
+}));
+
+export const trainersRelations = relations(trainers, ({ many }) => ({
+  clients: many(users),
+  macroChanges: many(macroChanges),
+}));
+
+export const dailyMacrosRelations = relations(dailyMacros, ({ one }) => ({
+  user: one(users, {
+    fields: [dailyMacros.userId],
+    references: [users.id],
+  }),
+}));
+
+export const macroChangesRelations = relations(macroChanges, ({ one }) => ({
+  user: one(users, {
+    fields: [macroChanges.userId],
+    references: [users.id],
+  }),
+  trainer: one(trainers, {
+    fields: [macroChanges.trainerId],
+    references: [trainers.id],
+  }),
 }));
 
 export const exercisesRelations = relations(exercises, ({ many, one }) => ({
@@ -221,6 +328,20 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+export const insertTrainerSchema = createInsertSchema(trainers).omit({
+  createdAt: true,
+});
+
+export const insertDailyMacrosSchema = createInsertSchema(dailyMacros).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMacroChangesSchema = createInsertSchema(macroChanges).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertExerciseSchema = createInsertSchema(exercises).omit({
   id: true,
   createdAt: true,
@@ -256,23 +377,32 @@ export const insertProgressEntrySchema = createInsertSchema(progressEntries).omi
   recordedAt: true,
 });
 
-// Update user profile schema
+// Update user profile schema for new PRD
 export const updateUserProfileSchema = createInsertSchema(users).pick({
-  goal: true,
+  goalWeight: true,
+  currentWeight: true,
   height: true,
-  weight: true,
   age: true,
   gender: true,
   activityLevel: true,
+  workoutFrequency: true,
   injuries: true,
   equipment: true,
+  timezone: true,
 }).extend({
   onboardingCompleted: z.boolean().optional(),
+  programStartDate: z.date().optional(),
 });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type Trainer = typeof trainers.$inferSelect;
+export type InsertTrainer = z.infer<typeof insertTrainerSchema>;
+export type DailyMacros = typeof dailyMacros.$inferSelect;
+export type InsertDailyMacros = z.infer<typeof insertDailyMacrosSchema>;
+export type MacroChanges = typeof macroChanges.$inferSelect;
+export type InsertMacroChanges = z.infer<typeof insertMacroChangesSchema>;
 export type Exercise = typeof exercises.$inferSelect;
 export type InsertExercise = z.infer<typeof insertExerciseSchema>;
 export type Workout = typeof workouts.$inferSelect;

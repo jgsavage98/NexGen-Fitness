@@ -1,0 +1,106 @@
+Product Requirements Document (PRD) – Ignite-AI
+
+Revision Date: 8 Jun 2025 (Rev B — replaces all “OCR” references with OpenAI Vision extraction)
+
+1 Purpose & Vision
+
+Ignite-AI delivers premium-level nutrition and workout coaching through a single mobile app. Clients upload a daily screenshot of their MyFitnessPal® Nutrition dashboard; an OpenAI Vision model extracts macro totals, an OpenAI GPT-4o prompt engine proposes macro changes, and Coach Chassidy approves or edits every change before it reaches the client.
+
+Only the “Virtual Agent” chat is explicitly branded as AI. All nutrition and training decisions appear to come directly from Coach Chassidy, preserving a human-led feel while automating data entry, calculations, and reminders.
+
+2 Goals & Success Metrics
+
+Goal	KPI	6-Month Target
+Daily engagement	% of clients uploading screenshot each day	≥ 80 %
+Coaching efficiency	Trainer “approve vs. edit” ratio	≥ 70 % approved without edits
+Program completion	Three-month course completion	≥ 85 %
+Unit economics	Gross margin	≥ 95 %
+Compliance	Macro-change audit entries with linked screenshots	100 % logged
+3 Personas & Journeys
+
+3.1 Client Journey
+Phase	Key Touch-points
+Onboard (Day 0)	• Account creation • Intake form (goal weight, current weight, activity, workout frequency, injuries, equipment) • Upload baseline Nutrition screenshot • “Meet Your Coach” (photo + bio)
+Daily Loop (Days 1–90)	• 08:00 push reminder • Upload Nutrition screenshot • Dashboard shows yesterday’s score + today’s macro targets • Optional chat with Virtual Agent
+Weekly Review	• Coach-approved macro update (if any) • New adaptive workout block
+Program End (Week 12)	• Final assessment • Next-phase offer
+3.2 Trainer Journey (single-trainer MVP)
+Phase	Actions
+Daily	• Review queue of AI macro proposals • Edit/approve • Follow-up on “missing screenshot” flags
+Analytics	• Weekly adherence and workout trends
+End of Cohort	• Export client progress PDFs
+3.3 Admin Journey
+Area	Capabilities
+User & Trainer Management	Create/disable clients; single immutable trainer record (coach_chassidy) editable for photo/bio
+Billing Console	View subscriptions, refunds, revenue export
+Audit Logs	Full macro-change history with screenshot links
+Exercise Catalog	Bulk upload / edit 1 000 exercise records
+4 Functional Requirements
+
+ID	Requirement
+ONB-01	Intake wizard collects demographics, goals, injuries, equipment, and baseline Nutrition screenshot.
+SCR-01	Client uploads daily Nutrition screenshot; 08:00 reminder; flag “missing” at 22:00 local.
+VIS-01	OpenAI Vision reads each screenshot and returns calories, protein, carbs, fat (≥ 95 % accuracy); raw image stored 12 months for audit.
+AI-01	GPT-4o calculateMacros() recalculates targets at least weekly using weight trend, daily macros, hunger sentiment, and program day.
+REV-01	Every AI proposal enters Pending Approval; Coach Chassidy must approve or edit before release.
+REV-02	Trainer notified by push, email, and in-app queue.
+EXR-01	Adaptive workout generator uses only the curated catalog of 1 000 exercises (GIF/MP4 demo, anatomy PNG, regressions, progressions).
+EXR-02	Generator respects injuries and equipment flags.
+PAY-01	In-app purchase (auto-renew subscription) with 7-day free trial.
+AUD-01	Macro-change log stores previous targets, AI JSON, trainer edits, trainer ID, and screenshot URL.
+UI-01	Client-facing screens attribute decisions to “Coach Chassidy”; AI mentioned only in “Virtual Agent” chat header.
+UI-02	“Meet Your Coach” screen shows photo and full bio; reachable from onboarding & Settings.
+5 Non-Functional Requirements
+
+Category	Specification
+Performance	P95 Vision extraction round-trip ≤ 3 s
+Availability	≥ 99.5 % backend uptime
+Security	Azure AD B2C JWT, AES-256 at rest, TLS 1.2+
+Compliance	GDPR; HIPAA-ready pattern
+Accessibility	WCAG 2.1 AA
+Localization	English; string keys ready for i18n
+6 Data Model (Cosmos DB)
+
+Container	Partition Key	Key Fields
+Users	/userId	profile, goals, equipment, injuries, trainerId
+DailyMacros	/userId	date, kcal, protein, carbs, fat, screenshotUrl
+MacroChanges	/userId	date, oldTargets, aiProposal, trainerFinal, trainerId
+Workouts	/userId	date, exerciseIds[], swaps[]
+Exercises	/id	name, demoUrl, anatomyUrl, muscles, regressionIds[], progressionIds[]
+Trainers	/id	single record coach_chassidy (photoUrl, bio, certs)
+7 UX / UI Specifications
+
+Element	Spec
+Device Frame	iPhone 16 Pro – 393 × 852 px
+Tokens	primary #0F63FF · surface #1A1A1A · accent #4CD964
+Components	ProgressStepper, PrimaryButton (radius 28), ExerciseVideoCard, MuscleChip
+Navigation	Tab bar: Home · Workout · Chat · Progress · Settings
+Meet Your Coach	1:1 hero photo (800 × 800 WebP), bio scrollable, CTA “Start my program”
+Coach Chassidy Bio — (verbatim text block from stakeholder, see previous revision)
+
+8 AI Prompt (Coach-Brain – excerpt)
+
+System: You are Coach Chassidy’s assistant. Use daily macro totals
+extracted by OpenAI Vision, weight trend, and hunger cues to suggest
+{kcal, protein, carbs, fat}. Always set "requiresTrainerApproval": true.
+Never reveal AI involvement to the client.
+9 Instrumentation & Metrics
+
+Screenshot upload count
+Vision extraction latency
+Macro proposal approval vs. edit ratio
+Weight delta vs. goal
+Backend uptime
+10 Timeline (MVP)
+
+Week	Deliverable
+1-2	Onboarding, Meet Coach, Vision extraction pipeline
+3	Daily screenshot flow, dashboard v1
+4	Macro engine, trainer approval console
+5	Adaptive workouts, exercise media playback
+6	Billing, audit logs, TestFlight beta
+11 Open Issues
+
+Validate Vision accuracy for dark-mode screenshots.
+Finalize subscription pricing.
+Define hunger-sentiment thresholds for early recalc.
