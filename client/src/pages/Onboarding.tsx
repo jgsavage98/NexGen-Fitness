@@ -27,6 +27,7 @@ export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showSummary, setShowSummary] = useState(false);
   const [macroSummary, setMacroSummary] = useState<any>(null);
+  const [hasAcknowledged, setHasAcknowledged] = useState(false);
   const [formData, setFormData] = useState<OnboardingData>({
     injuries: [],
     equipment: [],
@@ -276,12 +277,28 @@ export default function Onboarding() {
 
           {/* Acknowledgment Button */}
           <div className="mt-auto">
-            <Button
-              onClick={() => setLocation("/")}
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white py-4 rounded-full font-semibold"
-            >
-              Let's Start My Journey!
-            </Button>
+            {!hasAcknowledged ? (
+              <div className="space-y-4">
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                  <p className="text-sm text-yellow-200">
+                    Please review your personalized plan above and confirm you're ready to begin your journey with Coach Chassidy.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setHasAcknowledged(true)}
+                  className="w-full bg-primary-500 hover:bg-primary-600 text-white py-4 rounded-full font-semibold"
+                >
+                  I Accept My New Macro Plan
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => setLocation("/")}
+                className="w-full bg-success hover:bg-success/80 text-white py-4 rounded-full font-semibold"
+              >
+                Let's Start My Journey!
+              </Button>
+            )}
           </div>
         </div>
       </div>
