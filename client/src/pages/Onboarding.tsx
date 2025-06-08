@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, Camera, Check, Info, Dumbbell, Target, Heart } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,7 @@ interface OnboardingData {
   activityLevel?: string;
   injuries?: string[];
   equipment?: string[];
+  currentMacrosFile?: File;
 }
 
 export default function Onboarding() {
@@ -42,7 +43,7 @@ export default function Onboarding() {
     },
   });
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   const updateProfileMutation = useMutation({
@@ -57,8 +58,29 @@ export default function Onboarding() {
         onboardingCompleted: true,
       };
       
-      const response = await apiRequest("PUT", "/api/user/profile", profileData);
-      return response.json();
+      // First update the profile
+      const profileResponse = await apiRequest("PUT", "/api/user/profile", profileData);
+      
+      // If there's a current macros screenshot, upload and analyze it
+      if (data.currentMacrosFile) {
+        const formData = new FormData();
+        formData.append('screenshot', data.currentMacrosFile);
+        formData.append('date', new Date().toISOString().split('T')[0]);
+        formData.append('hungerLevel', '3'); // Default neutral
+        formData.append('energyLevel', '3'); // Default neutral
+        formData.append('notes', 'Initial onboarding screenshot from MyFitnessPal');
+        
+        try {
+          await fetch('/api/nutrition/screenshot', {
+            method: 'POST',
+            body: formData,
+          });
+        } catch (error) {
+          console.log('Screenshot analysis failed, continuing with onboarding');
+        }
+      }
+      
+      return profileResponse.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -126,6 +148,8 @@ export default function Onboarding() {
         return true; // Injuries are optional
       case 5:
         return true; // Equipment is optional
+      case 6:
+        return true; // Current macros screenshot is optional
       default:
         return false;
     }
@@ -179,7 +203,7 @@ export default function Onboarding() {
                   className="w-full p-4 bg-surface rounded-medium text-left hover:bg-gray-700 transition-colors"
                 >
                   <div className="flex items-center">
-                    <i className="fas fa-weight text-primary-500 w-6 mr-4"></i>
+                    <Target className="text-primary-500 w-6 h-6 mr-4" />
                     <div>
                       <div className="font-semibold">Lose Weight</div>
                       <div className="text-sm text-gray-400">Reduce body fat and get leaner</div>
@@ -192,7 +216,7 @@ export default function Onboarding() {
                   className="w-full p-4 bg-surface rounded-medium text-left hover:bg-gray-700 transition-colors"
                 >
                   <div className="flex items-center">
-                    <i className="fas fa-dumbbell text-primary-500 w-6 mr-4"></i>
+                    <Dumbbell className="text-primary-500 w-6 h-6 mr-4" />
                     <div>
                       <div className="font-semibold">Build Muscle</div>
                       <div className="text-sm text-gray-400">Increase strength and muscle mass</div>
@@ -384,6 +408,67 @@ export default function Onboarding() {
                     </div>
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {currentStep === 6 && (
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Current Nutrition</h1>
+              <p className="text-gray-400 mb-8">Upload a screenshot of your MyFitnessPal nutrition dashboard so I can understand your current eating habits (optional).</p>
+              
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
+                  <input
+                    type="file"
+                    id="macros-upload"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setFormData({ ...formData, currentMacrosFile: file });
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label htmlFor="macros-upload" className="cursor-pointer">
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto">
+                        <i className="fas fa-camera text-primary-500 text-2xl"></i>
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold">Upload Screenshot</p>
+                        <p className="text-sm text-gray-400">
+                          {formData.currentMacrosFile ? formData.currentMacrosFile.name : "Tap to select your MyFitnessPal screenshot"}
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+                
+                {formData.currentMacrosFile && (
+                  <div className="bg-surface rounded-lg p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-success/20 rounded-lg flex items-center justify-center">
+                        <i className="fas fa-check text-success"></i>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Screenshot uploaded</p>
+                        <p className="text-sm text-gray-400">I'll analyze this to understand your current nutrition</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <i className="fas fa-info-circle text-blue-400 mt-0.5"></i>
+                    <div className="text-sm text-blue-200">
+                      <p className="font-semibold mb-1">Pro tip:</p>
+                      <p>Take a screenshot of your MyFitnessPal daily nutrition summary showing calories, protein, carbs, and fat. This helps me create a more personalized plan.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
