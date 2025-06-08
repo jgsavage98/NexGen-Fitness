@@ -202,63 +202,68 @@ export default function ChatTab() {
         )}
 
         {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex items-start space-x-3 ${
-              message.isAI ? "" : "justify-end"
-            }`}
-          >
-            {message.isAI && (
-              <img 
-                src="/coach-chassidy.jpg" 
-                alt="Coach Chassidy"
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-              />
-            )}
-            
-            <div
-              className={`rounded-lg p-4 max-w-xs ${
-                message.isAI
-                  ? "bg-surface rounded-tl-none"
-                  : "bg-primary-500 rounded-tr-none"
-              }`}
-            >
-              <p className={`text-sm ${message.isAI ? "text-white" : "text-white"}`}>
-                {message.message}
-              </p>
-              <span className={`text-xs mt-2 block ${
-                message.isAI ? "text-gray-400" : "text-white/70"
-              }`}>
-                {formatTime(message.createdAt)}
-                {message.metadata?.isVoice && (
-                  <i className="fas fa-microphone ml-2"></i>
-                )}
-              </span>
-            </div>
-
-            {!message.isAI && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center flex-shrink-0">
-                <img 
-                  src="/attached_assets/CE Bio Image_1749399911915.jpeg"
-                  alt="Your Profile"
-                  className="w-8 h-8 rounded-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-                <span className="text-white font-semibold text-xs" style={{display: 'none'}}>U</span>
+          <div key={message.id} className="mb-4">
+            {message.isAI ? (
+              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold">C</span>
+                  </div>
+                  <div className="text-sm flex-1">
+                    <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
+                    <p className="text-primary-100 mb-2">
+                      {message.message}
+                    </p>
+                    <span className="text-xs text-primary-300">
+                      {formatTime(message.createdAt)}
+                      {message.metadata?.isVoice && (
+                        <i className="fas fa-microphone ml-2"></i>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-end">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-primary-500 rounded-lg rounded-tr-none p-4 max-w-xs">
+                    <p className="text-sm text-white">
+                      {message.message}
+                    </p>
+                    <span className="text-xs mt-2 block text-white/70">
+                      {formatTime(message.createdAt)}
+                      {message.metadata?.isVoice && (
+                        <i className="fas fa-microphone ml-2"></i>
+                      )}
+                    </span>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center flex-shrink-0">
+                    <img 
+                      src="/attached_assets/CE Bio Image_1749399911915.jpeg"
+                      alt="Your Profile"
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    <span className="text-white font-semibold text-xs" style={{display: 'none'}}>U</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         ))}
 
         {(sendMessageMutation.isPending || sendVoiceMutation.isPending) && (
-          <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            </div>
-            <div className="bg-surface rounded-lg rounded-tl-none p-4 max-w-xs">
-              <p className="text-sm text-white">AI Coach is typing...</p>
+          <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              </div>
+              <div className="text-sm flex-1">
+                <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
+                <p className="text-primary-100">typing...</p>
+              </div>
             </div>
           </div>
         )}
