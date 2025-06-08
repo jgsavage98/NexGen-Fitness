@@ -186,16 +186,17 @@ export default function ChatTab() {
       {/* Chat Messages */}
       <div className="flex-1 px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin">
         {messages.length === 0 && (
-          <div className="flex items-start space-x-3">
-            <img 
-              src="/coach-chassidy.jpg" 
-              alt="Coach Chassidy"
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-            />
-            <div className="bg-surface rounded-lg rounded-tl-none p-4 max-w-xs">
-              <p className="text-sm text-white">
-                Hey there! It's Coach Chassidy. I'm here to support you with your workouts, nutrition, and answer any questions about your fitness journey. What's on your mind today?
-              </p>
+          <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-bold">C</span>
+              </div>
+              <div className="text-sm">
+                <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
+                <p className="text-primary-100">
+                  Hey there! I'm here to support you with your workouts, nutrition, and answer any questions about your fitness journey. What's on your mind today?
+                </p>
+              </div>
             </div>
           </div>
         )}

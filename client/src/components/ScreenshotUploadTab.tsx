@@ -399,24 +399,20 @@ export default function ScreenshotUploadTab() {
       </Card>
 
       {/* Coach Message */}
-      <Card className="bg-gradient-to-r from-primary/20 to-purple-600/20 border-primary/30">
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
-            <img 
-              src="/coach-chassidy.jpg" 
-              alt="Coach Chassidy"
-              className="w-12 h-12 rounded-full object-cover border-2 border-primary/30"
-            />
-            <div>
-              <p className="text-white font-medium mb-1">Coach Chassidy</p>
-              <p className="text-gray-300 text-sm">
-                Upload your daily MyFitnessPal screenshot by 8 PM for macro tracking. 
-                I personally review every upload and adjust your targets based on your progress!
-              </p>
-            </div>
+      <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span className="text-xs font-bold">C</span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-sm">
+            <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
+            <p className="text-primary-100">
+              Upload your daily MyFitnessPal screenshot by 8 PM for macro tracking. 
+              I personally review every upload and adjust your targets based on your progress!
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

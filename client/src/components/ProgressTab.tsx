@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { ProgressEntry, WorkoutLog, MacroTarget, Meal } from "@/lib/types";
+import { ProgressEntry, MacroTarget, Meal } from "@/lib/types";
 
 export default function ProgressTab() {
   const { data: progressEntries = [] } = useQuery<ProgressEntry[]>({
     queryKey: ["/api/progress"],
   });
 
-  const { data: workoutLogs = [] } = useQuery<WorkoutLog[]>({
+  const { data: workoutLogs = [] } = useQuery<any[]>({
     queryKey: ["/api/workout-logs"],
   });
 
@@ -203,19 +203,19 @@ export default function ProgressTab() {
       </Card>
 
       {/* Coach Notes */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-medium p-6">
+      <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
         <div className="flex items-start space-x-3">
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <i className="fas fa-robot text-white"></i>
+          <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span className="text-xs font-bold">C</span>
           </div>
-          <div>
-            <div className="font-semibold text-white mb-2">Coach Notes</div>
-            <p className="text-white/90 text-sm mb-3">
+          <div className="text-sm">
+            <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
+            <p className="text-primary-100 mb-3">
               Excellent progress this month! Your consistency with workouts is paying off. 
               Consider increasing your protein intake by 10g to support your strength gains. 
               Keep up the great work!
             </p>
-            <button className="text-white/80 text-sm underline">
+            <button className="text-primary-300 text-sm underline hover:text-primary-200">
               Discuss with AI Coach →
             </button>
           </div>
