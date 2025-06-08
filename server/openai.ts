@@ -18,6 +18,7 @@ export interface NutritionExtraction {
 
 export async function extractNutritionFromScreenshot(imageBase64: string): Promise<NutritionExtraction> {
   try {
+    console.log("Starting nutrition extraction with OpenAI Vision...");
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
@@ -61,10 +62,16 @@ JSON FORMAT (exact structure required):
       max_tokens: 500,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    console.log("OpenAI response received, parsing...");
+    const rawContent = response.choices[0].message.content || '{}';
+    console.log("Raw OpenAI response:", rawContent);
+    
+    const result = JSON.parse(rawContent);
+    console.log("Parsed result:", result);
     
     // Validate extraction
     if (!result.calories || !result.protein || !result.carbs || !result.fat) {
+      console.log("Incomplete nutrition data extracted");
       return {
         calories: 0,
         protein: 0,
@@ -86,6 +93,7 @@ JSON FORMAT (exact structure required):
 
   } catch (error) {
     console.error("Vision extraction error:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
     return {
       calories: 0,
       protein: 0,
