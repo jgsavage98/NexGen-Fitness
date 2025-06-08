@@ -244,7 +244,7 @@ export default function Onboarding() {
               <div className="bg-surface rounded-lg p-6">
                 <div className="flex justify-between items-center mb-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-primary-500">{formData.weight}kg</div>
+                    <div className="text-2xl font-bold text-primary-500">{formData.weight}lbs</div>
                     <div className="text-sm text-gray-400">Current</div>
                   </div>
                   <div className="flex-1 mx-4">
@@ -254,12 +254,12 @@ export default function Onboarding() {
                     <div className="text-center text-xs text-gray-400 mt-1">12 weeks</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-success">{formData.goalWeight}kg</div>
+                    <div className="text-2xl font-bold text-success">{formData.goalWeight}lbs</div>
                     <div className="text-sm text-gray-400">Goal</div>
                   </div>
                 </div>
                 <div className="text-center text-sm text-gray-300">
-                  Target loss: {(formData.weight - formData.goalWeight).toFixed(1)}kg
+                  Target loss: {(formData.weight - formData.goalWeight).toFixed(1)}lbs
                 </div>
               </div>
             </div>
@@ -475,20 +475,21 @@ export default function Onboarding() {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="block text-sm font-medium mb-2">Height (cm)</Label>
+                    <Label className="block text-sm font-medium mb-2">Height (inches)</Label>
                     <Input
                       type="number"
-                      placeholder="170"
+                      placeholder="67"
                       value={formData.height || ''}
                       onChange={(e) => setFormData({ ...formData, height: Number(e.target.value) })}
                       className="bg-surface border-gray-600"
                     />
+                    <p className="text-xs text-gray-400 mt-1">e.g., 5'7" = 67 inches</p>
                   </div>
                   <div>
-                    <Label className="block text-sm font-medium mb-2">Current Weight (kg)</Label>
+                    <Label className="block text-sm font-medium mb-2">Current Weight (lbs)</Label>
                     <Input
                       type="number"
-                      placeholder="70"
+                      placeholder="154"
                       value={formData.weight || ''}
                       onChange={(e) => setFormData({ ...formData, weight: Number(e.target.value) })}
                       className="bg-surface border-gray-600"
@@ -497,10 +498,10 @@ export default function Onboarding() {
                   
                   {formData.goal === 'weight-loss' && (
                     <div>
-                      <Label className="block text-sm font-medium mb-2">Goal Weight (kg)</Label>
+                      <Label className="block text-sm font-medium mb-2">Goal Weight (lbs)</Label>
                       <Input
                         type="number"
-                        placeholder="60"
+                        placeholder="132"
                         value={formData.goalWeight || ''}
                         onChange={(e) => setFormData({ ...formData, goalWeight: Number(e.target.value) })}
                         className="bg-surface border-gray-600"

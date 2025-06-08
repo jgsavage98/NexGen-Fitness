@@ -273,12 +273,13 @@ ${recentMacros.slice(-7).map(day =>
   }
 
   private calculateBMR(userProfile: any): number {
-    const { currentWeight, height, age, gender } = userProfile;
+    const { weight, height, age, gender } = userProfile;
     
+    // Using Harris-Benedict equation with imperial units (pounds and inches)
     if (gender === 'male') {
-      return 88.362 + (13.397 * currentWeight) + (4.799 * height) - (5.677 * age);
+      return 88.362 + (6.077 * weight) + (12.189 * height) - (5.677 * age);
     } else {
-      return 447.593 + (9.247 * currentWeight) + (3.098 * height) - (4.330 * age);
+      return 447.593 + (4.194 * weight) + (7.869 * height) - (4.330 * age);
     }
   }
 
@@ -522,14 +523,15 @@ User Profile:
   }
 
   private calculateBasicMacros(userProfile: any): MacroRecommendation {
-    // Basic BMR calculation using Mifflin-St Jeor equation
-    const { weight = 70, height = 170, age = 30, gender = 'male', goal = 'maintenance', activityLevel = 'moderate' } = userProfile;
+    // Basic BMR calculation using Harris-Benedict equation with imperial units
+    const { weight = 154, height = 67, age = 30, gender = 'male', goal = 'maintenance', activityLevel = 'moderate' } = userProfile;
     
+    // BMR calculation with imperial units (pounds and inches)
     let bmr: number;
     if (gender === 'male') {
-      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+      bmr = 88.362 + (6.077 * weight) + (12.189 * height) - (5.677 * age);
     } else {
-      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+      bmr = 447.593 + (4.194 * weight) + (7.869 * height) - (4.330 * age);
     }
     
     // Activity multipliers
@@ -551,8 +553,8 @@ User Profile:
       calories = tdee + 300; // Moderate surplus
     }
     
-    // Macro distribution
-    const protein = weight * 2.2; // 2.2g per kg bodyweight
+    // Macro distribution using imperial weight (pounds)
+    const protein = weight * 1.0; // 1g per lb bodyweight
     const fat = calories * 0.25 / 9; // 25% of calories from fat
     const carbs = (calories - (protein * 4) - (fat * 9)) / 4; // Remaining calories from carbs
     
@@ -561,7 +563,7 @@ User Profile:
       protein: Math.round(protein),
       carbs: Math.round(carbs),
       fat: Math.round(fat),
-      reasoning: "Calculated using standard formulas",
+      reasoning: "Calculated using imperial units (pounds/inches)",
       adjustments: []
     };
   }
