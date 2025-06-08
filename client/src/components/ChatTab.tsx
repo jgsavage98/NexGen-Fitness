@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/lib/types";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +11,7 @@ export default function ChatTab() {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -80,6 +81,15 @@ export default function ChatTab() {
     if (newMessage.trim() && !sendMessageMutation.isPending) {
       sendMessageMutation.mutate(newMessage.trim());
     }
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
+    
+    // Auto-resize textarea
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -271,20 +281,22 @@ export default function ChatTab() {
 
       {/* Chat Input */}
       <div className="px-6 py-4 bg-surface border-t border-gray-700">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-end space-x-3">
           <div className="flex-1 relative">
-            <Input
+            <Textarea
+              ref={textareaRef}
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onChange={handleTextareaChange}
+              onKeyDown={handleKeyPress}
               placeholder="Type your message..."
-              className="w-full p-3 bg-dark border-gray-600 rounded-full pr-12 text-white placeholder-gray-400"
+              className="w-full p-3 bg-dark border-gray-600 rounded-2xl pr-12 text-white placeholder-gray-400 resize-none min-h-[48px] max-h-32"
               disabled={sendMessageMutation.isPending}
+              rows={1}
             />
             <button
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || sendMessageMutation.isPending}
-              className="absolute right-3 top-3 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+              className="absolute right-3 bottom-3 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
             >
               <i className="fas fa-paper-plane"></i>
             </button>

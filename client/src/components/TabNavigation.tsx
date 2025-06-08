@@ -10,7 +10,7 @@ export default function TabNavigation({ activeTab, onTabChange }: TabNavigationP
     { id: 'dashboard' as TabType, icon: 'fas fa-home', label: 'Home' },
     { id: 'nutrition' as TabType, icon: 'fas fa-camera', label: 'Nutrition' },
     { id: 'workout' as TabType, icon: 'fas fa-dumbbell', label: 'Workout' },
-    { id: 'chat' as TabType, icon: 'fas fa-comments', label: 'Assistant' },
+    { id: 'chat' as TabType, icon: 'fas fa-comments', label: 'Chat' },
     { id: 'progress' as TabType, icon: 'fas fa-chart-line', label: 'Progress' },
   ];
 
