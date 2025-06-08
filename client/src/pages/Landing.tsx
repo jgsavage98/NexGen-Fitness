@@ -59,8 +59,8 @@ export default function Landing() {
                   <i className="fas fa-utensils text-white"></i>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">Nutrition Coaching</h3>
-                  <p className="text-gray-400 text-sm">Expert guidance with every meal</p>
+                  <h3 className="font-semibold text-white">Macro Coaching</h3>
+                  <p className="text-gray-400 text-sm">Precision macro tracking and adjustments</p>
                 </div>
               </div>
             </CardContent>

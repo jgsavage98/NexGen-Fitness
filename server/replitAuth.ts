@@ -34,11 +34,11 @@ export function getSession() {
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      httpOnly: false,
+      secure: false,
       maxAge: sessionTtl,
       sameSite: 'lax',
     },
@@ -75,6 +75,8 @@ export async function setupAuth(app: Express) {
   if (process.env.NODE_ENV === 'development') {
     // Simple demo authentication for development
     app.get("/api/login", async (req, res) => {
+      console.log('Login attempt - Session ID:', req.sessionID);
+      
       // Create or get demo user
       const demoUser = await storage.upsertUser({
         id: "demo-user-123",
@@ -96,12 +98,15 @@ export async function setupAuth(app: Express) {
         }
       };
       
+      console.log('Session user set:', !!req.session.user);
+      
       // Save session before redirect
       (req as any).session.save((err: any) => {
         if (err) {
           console.error('Session save error:', err);
           return res.status(500).json({ error: 'Session save failed' });
         }
+        console.log('Session saved successfully, redirecting to /');
         res.redirect('/');
       });
     });
@@ -178,6 +183,8 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Development mode: check session
   if (process.env.NODE_ENV === 'development') {
     const sessionUser = (req as any).session?.user;
+    console.log('Session check:', { sessionExists: !!req.session, userExists: !!sessionUser, sessionId: req.sessionID });
+    
     if (!sessionUser || !sessionUser.claims) {
       return res.status(401).json({ message: "Unauthorized" });
     }
