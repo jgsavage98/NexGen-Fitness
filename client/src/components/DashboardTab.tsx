@@ -79,7 +79,10 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
             <div className="flex-1">
               <p className="text-white font-medium mb-1">Coach Chassidy</p>
               <p className="text-gray-300 text-sm">
-                Ready for another great day! Upload your MyFitnessPal screenshot so I can track your progress and provide personalized guidance.
+                {isPendingApproval 
+                  ? "I'm currently reviewing your information and creating your personalized macro plan. You'll receive notification once it's ready!"
+                  : "Ready for another great day! Upload your MyFitnessPal screenshot so I can track your progress and provide personalized guidance."
+                }
               </p>
             </div>
             <Link href="/coach">
@@ -147,33 +150,45 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
       <div className="grid grid-cols-2 gap-4">
         <Button 
           onClick={() => onTabChange?.('nutrition')}
-          disabled={hasUploadedToday}
+          disabled={hasUploadedToday || isPendingApproval}
           className={`p-4 h-auto text-left flex flex-col items-start space-y-2 w-full ${
-            hasUploadedToday 
+            (hasUploadedToday || isPendingApproval)
               ? "bg-gray-600 hover:bg-gray-600 border-gray-600 cursor-not-allowed" 
               : "bg-primary-500 hover:bg-primary-600 border-primary-500"
           }`}
         >
-          <i className={`fas fa-camera text-xl ${hasUploadedToday ? "text-gray-400" : "text-white"}`}></i>
+          <i className={`fas fa-camera text-xl ${(hasUploadedToday || isPendingApproval) ? "text-gray-400" : "text-white"}`}></i>
           <div>
-            <div className={`font-semibold ${hasUploadedToday ? "text-gray-400" : "text-white"}`}>
-              {hasUploadedToday ? "Today's Upload Complete" : "Upload Screenshot"}
+            <div className={`font-semibold ${(hasUploadedToday || isPendingApproval) ? "text-gray-400" : "text-white"}`}>
+              {hasUploadedToday ? "Today's Upload Complete" : 
+               isPendingApproval ? "Upload Disabled" : "Upload Screenshot"}
             </div>
-            <div className={`text-xs leading-tight ${hasUploadedToday ? "text-gray-500" : "text-primary-100"}`}>
-              {hasUploadedToday ? "Check back tomorrow" : "Today's MyFitnessPal"}
+            <div className={`text-xs leading-tight ${(hasUploadedToday || isPendingApproval) ? "text-gray-500" : "text-primary-100"}`}>
+              {hasUploadedToday ? "Check back tomorrow" : 
+               isPendingApproval ? "Awaiting plan approval" : "Today's MyFitnessPal"}
             </div>
           </div>
         </Button>
         
-        <Link href="/workout">
-          <Button className="bg-surface hover:bg-gray-700 border-gray-700 p-4 h-auto text-left flex flex-col items-start space-y-2 w-full">
-            <i className="fas fa-play text-success text-xl"></i>
-            <div>
-              <div className="font-semibold text-white">Start Workout</div>
-              <div className="text-sm text-gray-400">Begin today's plan</div>
+        <Button 
+          disabled={isPendingApproval}
+          className={`p-4 h-auto text-left flex flex-col items-start space-y-2 w-full ${
+            isPendingApproval 
+              ? "bg-gray-600 hover:bg-gray-600 border-gray-600 cursor-not-allowed" 
+              : "bg-surface hover:bg-gray-700 border-gray-700"
+          }`}
+          onClick={() => !isPendingApproval && onTabChange?.('workout')}
+        >
+          <i className={`fas fa-play text-xl ${isPendingApproval ? "text-gray-400" : "text-success"}`}></i>
+          <div>
+            <div className={`font-semibold ${isPendingApproval ? "text-gray-400" : "text-white"}`}>
+              {isPendingApproval ? "Workout Disabled" : "Start Workout"}
             </div>
-          </Button>
-        </Link>
+            <div className={`text-sm ${isPendingApproval ? "text-gray-500" : "text-gray-400"}`}>
+              {isPendingApproval ? "Awaiting plan approval" : "Begin today's plan"}
+            </div>
+          </div>
+        </Button>
       </div>
 
       {/* Today's Workout Preview */}
@@ -207,35 +222,41 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
           ) : (
             <div className="text-center py-8">
               <i className="fas fa-dumbbell text-gray-600 text-3xl mb-4"></i>
-              <p className="text-gray-400 mb-4">No workout scheduled for today</p>
-              <Button className="bg-primary-500 hover:bg-primary-600 text-white">
-                Generate Workout
-              </Button>
+              <p className="text-gray-400 mb-4">
+                {isPendingApproval ? "Your workout plan is being created" : "No workout scheduled for today"}
+              </p>
+              {!isPendingApproval && (
+                <Button className="bg-primary-500 hover:bg-primary-600 text-white">
+                  Generate Workout
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* AI Coach Insight */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-medium p-6">
-        <div className="flex items-start space-x-3">
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <i className="fas fa-robot text-white"></i>
-          </div>
-          <div>
-            <div className="font-semibold text-white mb-1">Coach AI Insight</div>
-            <p className="text-white/90 text-sm">
-              {macroSummary.percentages.protein > 80 
-                ? "Great job hitting your protein target! Try adding some healthy carbs before your next workout for better performance."
-                : "Consider adding more protein to your meals today. Aim for 20-30g per meal to support your goals."
-              }
-            </p>
-            <button className="text-white/80 text-sm mt-2 underline">
-              Ask a question →
-            </button>
+      {/* AI Coach Insight - Only show when plan is approved */}
+      {!isPendingApproval && !isOnboardingIncomplete && !hasNoTargets && (
+        <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-medium p-6">
+          <div className="flex items-start space-x-3">
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <i className="fas fa-robot text-white"></i>
+            </div>
+            <div>
+              <div className="font-semibold text-white mb-1">Coach AI Insight</div>
+              <p className="text-white/90 text-sm">
+                {macroSummary.percentages.protein > 80 
+                  ? "Great job hitting your protein target! Try adding some healthy carbs before your next workout for better performance."
+                  : "Consider adding more protein to your meals today. Aim for 20-30g per meal to support your goals."
+                }
+              </p>
+              <button className="text-white/80 text-sm mt-2 underline">
+                Ask a question →
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
