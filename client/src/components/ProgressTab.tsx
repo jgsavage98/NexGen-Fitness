@@ -92,15 +92,15 @@ export default function ProgressTab() {
   // Get weight entries from progress data
   const weightEntries = progressEntries.filter(entry => entry.weight !== null);
   const latestWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : null;
-  const baselineWeight = weightEntries.length > 0 ? weightEntries[0].weight : null;
+  const baselineWeight = (user as any)?.weight || null; // Use profile weight as baseline
   const goalWeight = (user as any)?.goalWeight || null;
   
   // Calculate weight progress
-  const weightProgress = latestWeight && goalWeight ? {
+  const weightProgress = latestWeight && goalWeight && baselineWeight ? {
     current: latestWeight,
     goal: goalWeight,
     baseline: baselineWeight,
-    changeFromBaseline: baselineWeight ? latestWeight - baselineWeight : 0,
+    changeFromBaseline: latestWeight - baselineWeight,
     remaining: Math.abs(latestWeight - goalWeight),
     trend: weightEntries.length >= 2 ? 
       weightEntries[weightEntries.length - 1].weight! - weightEntries[weightEntries.length - 2].weight! : 0
@@ -202,10 +202,10 @@ export default function ProgressTab() {
           {/* Baseline Reference */}
           {baselineWeight && (
             <div className="mb-4 p-3 bg-gray-800 rounded-lg border border-gray-600">
-              <div className="text-sm text-gray-400 mb-1">Starting Weight (Baseline)</div>
+              <div className="text-sm text-gray-400 mb-1">Starting Weight (From Setup)</div>
               <div className="text-lg font-semibold text-gray-300">{baselineWeight} lbs</div>
               <div className="text-xs text-gray-500 mt-1">
-                Recorded {weightEntries.length > 0 ? new Date(weightEntries[0].recordedAt).toLocaleDateString() : 'N/A'}
+                Entered during onboarding
               </div>
             </div>
           )}
