@@ -12,6 +12,7 @@ import { Settings, LogOut, User } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { formatJourneyDay, hasProgramStarted } from "@/lib/dateUtils";
 
 export type TabType = 'dashboard' | 'nutrition' | 'workout' | 'chat' | 'progress';
 export type ViewType = 'tabs' | 'profile-settings';
@@ -72,7 +73,12 @@ export default function Home() {
                 <div className="font-semibold">
                   {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Welcome!'}
                 </div>
-                <div className="text-sm text-gray-400">Day 1 of your journey</div>
+                <div className="text-sm text-gray-400">
+                  {hasProgramStarted((user as any)?.programStartDate) 
+                    ? formatJourneyDay((user as any)?.programStartDate, (user as any)?.timezone)
+                    : "Ready to begin your journey"
+                  }
+                </div>
               </div>
             </div>
             <div className="flex items-center space-x-2">
