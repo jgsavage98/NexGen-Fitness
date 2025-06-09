@@ -82,7 +82,7 @@ export default function Onboarding() {
       // Add auth parameter from URL if present
       const urlParams = new URLSearchParams(window.location.search);
       const authParam = urlParams.get('auth');
-      let url = '/api/nutrition/screenshot';
+      let url = '/api/nutrition/extract';
       if (authParam) {
         url += `?auth=${authParam}`;
       }
