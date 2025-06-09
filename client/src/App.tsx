@@ -12,6 +12,7 @@ import ExerciseUpload from "@/pages/ExerciseUpload";
 import MeetYourCoach from "@/pages/MeetYourCoach";
 import CoachBio from "@/pages/CoachBio";
 import TrainerDashboard from "@/pages/TrainerDashboard";
+import UserSwitcher from "@/components/UserSwitcher";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -29,7 +30,7 @@ function Router() {
       <Route path="/coach-chassidy-bio" component={CoachBio} />
       <Route path="/landing" component={Landing} />
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <Route path="/" component={() => <UserSwitcher />} />
       ) : user?.id === 'coach_chassidy' ? (
         <>
           <Route path="/" component={TrainerDashboard} />

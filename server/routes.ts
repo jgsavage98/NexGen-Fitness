@@ -102,14 +102,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Logout route
   app.post('/api/auth/logout', (req, res) => {
-    res.clearCookie('auth_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+        return res.status(500).json({ message: "Failed to logout" });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ success: true, message: "Logged out successfully" });
     });
-    res.json({ success: true, message: "Logged out successfully" });
   });
+
+  // Demo login routes for development
+  app.post('/api/auth/demo-login', (req, res) => {
+    const { userId } = req.body;
+    
+    if (!userId || (userId !== 'demo-user-123' && userId !== 'coach_chassidy')) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    // Set session for demo user
+    req.session.userId = userId;
+    req.session.authenticated = true;
+    
+    res.json({ success: true, message: `Logged in as ${userId}` });
+  });
+
+
 
   // User profile routes
   app.put('/api/user/profile', isAuthenticated, async (req: any, res) => {
