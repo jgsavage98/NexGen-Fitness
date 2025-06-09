@@ -291,7 +291,7 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gray-900 rounded-lg p-3 text-center">
                     <div className="text-lg font-bold text-white">
-                      {selectedDay.data.extractedCalories || selectedDay.data.extracted_calories || 0}
+                      {selectedDay.data.extractedCalories || 0}
                     </div>
                     <div className="text-sm text-gray-400">Calories</div>
                   </div>
