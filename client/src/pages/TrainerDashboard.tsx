@@ -63,8 +63,12 @@ export default function TrainerDashboard() {
 
   // Fetch pending macro changes
   const { data: pendingChanges = [] } = useQuery<PendingMacroChange[]>({
-    queryKey: ["/api/trainer/pending-macro-changes"],
-    refetchInterval: 30000, // Check every 30 seconds for new reviews
+    queryKey: ["/api/trainer/pending-macro-changes", Date.now()],
+    refetchInterval: 5000, // Check every 5 seconds for new reviews
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0, // Always consider data stale
+    cacheTime: 0, // Don't cache the data
   });
 
   // Notification effect for new pending macro changes

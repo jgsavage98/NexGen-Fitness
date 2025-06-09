@@ -1430,7 +1430,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .innerJoin(users, eq(macroChanges.userId, users.id))
         .where(eq(macroChanges.status, 'pending'));
       
-      res.json(pendingChanges);
+      // Add cache-busting timestamp to force frontend refresh
+      const responseWithTimestamp = pendingChanges.map(change => ({
+        ...change,
+        lastUpdated: new Date().toISOString()
+      }));
+      
+      // Set no-cache headers to prevent caching
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.json(responseWithTimestamp);
     } catch (error) {
       console.error("Error fetching pending macro changes:", error);
       res.status(500).json({ message: "Failed to fetch pending macro changes" });
