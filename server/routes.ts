@@ -444,6 +444,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get recent daily macros for progress tracking
+  app.get('/api/daily-macros/recent', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const days = parseInt(req.query.days as string) || 7;
+      
+      const recentMacros = await storage.getRecentMacros(userId, days);
+      res.json(recentMacros);
+    } catch (error) {
+      console.error("Error fetching recent macros:", error);
+      res.status(500).json({ message: "Failed to fetch recent macros" });
+    }
+  });
+
   app.get('/api/macro-targets', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

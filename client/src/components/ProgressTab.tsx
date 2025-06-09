@@ -83,10 +83,30 @@ export default function ProgressTab() {
     new Date(log.completedAt || '') >= thisWeekStart
   );
 
+  // Get recent macro data for adherence calculation
+  const { data: recentMacros = [] } = useQuery({
+    queryKey: ["/api/daily-macros/recent", 7],
+    queryFn: async () => {
+      const response = await fetch("/api/daily-macros/recent?days=7");
+      if (!response.ok) throw new Error("Failed to fetch recent macros");
+      return response.json();
+    }
+  });
+
+  // Calculate actual macro adherence for this week
+  const thisWeekMacros = recentMacros.filter((macro: any) => 
+    new Date(macro.date) >= thisWeekStart
+  );
+  
+  const macroAdherence = thisWeekMacros.length > 0 
+    ? Math.round(thisWeekMacros.reduce((acc: number, macro: any) => 
+        acc + (macro.adherenceScore || 0), 0) / thisWeekMacros.length)
+    : 0;
+
   const weeklyStats = {
     workoutsCompleted: thisWeekWorkouts.length,
-    workoutsPlanned: 5, // This would come from user's plan
-    avgMacroAdherence: 87, // This would be calculated from actual data
+    workoutsPlanned: (user as any)?.weeklyWorkoutGoal || 5,
+    avgMacroAdherence: macroAdherence,
   };
 
   // Get weight entries from progress data
@@ -264,46 +284,102 @@ export default function ProgressTab() {
 
           {/* Weight Progress Chart */}
           <div className="mb-4">
-            <h3 className="font-semibold mb-3 text-white">Weight Trend (4 weeks)</h3>
+            <h3 className="font-semibold mb-3 text-white">
+              Weight Trend 
+              {weightEntries.length > 0 && (
+                <span className="text-sm font-normal text-gray-400">
+                  ({weightEntries.length} {weightEntries.length === 1 ? 'entry' : 'entries'})
+                </span>
+              )}
+            </h3>
             <div className="relative h-32 bg-dark rounded-lg p-4">
-              <svg className="w-full h-full" viewBox="0 0 300 100">
-                <defs>
-                  <linearGradient id="weightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#0F63FF" stopOpacity="0.8"/>
-                    <stop offset="100%" stopColor="#0F63FF" stopOpacity="0.2"/>
-                  </linearGradient>
-                </defs>
-                
-                {/* Weight trend line */}
-                <polyline
-                  points="0,80 100,75 200,70 300,65"
-                  fill="none"
-                  stroke="#0F63FF"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                
-                {/* Data points */}
-                {[0, 100, 200, 300].map((x, index) => (
-                  <circle
-                    key={index}
-                    cx={x}
-                    cy={80 - (index * 5)}
-                    r="4"
-                    fill="#0F63FF"
-                  />
-                ))}
-                
-                {/* Gradient fill under line */}
-                <polygon
-                  points="0,80 100,75 200,70 300,65 300,100 0,100"
-                  fill="url(#weightGradient)"
-                />
-              </svg>
-              
-              <div className="absolute bottom-2 left-4 text-xs text-gray-400">
-                72.5 kg → 70.2 kg (-2.3 kg)
-              </div>
+              {weightEntries.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                  Log your first weight to see progress
+                </div>
+              ) : weightEntries.length === 1 ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary-500 mb-1">
+                      {weightEntries[0].weight} lbs
+                    </div>
+                    <div className="text-sm text-gray-400">First Entry</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Log more weights to see trends
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <svg className="w-full h-full" viewBox="0 0 300 100">
+                    <defs>
+                      <linearGradient id="weightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#0F63FF" stopOpacity="0.8"/>
+                        <stop offset="100%" stopColor="#0F63FF" stopOpacity="0.2"/>
+                      </linearGradient>
+                    </defs>
+                    
+                    {(() => {
+                      // Calculate chart points from actual weight data
+                      const chartData = weightEntries.map((entry, index) => ({
+                        weight: entry.weight!,
+                        x: (index / Math.max(weightEntries.length - 1, 1)) * 280 + 10,
+                        date: new Date(entry.recordedAt).toLocaleDateString()
+                      }));
+                      
+                      // Normalize weights to chart height (20-80 range)
+                      const weights = chartData.map(d => d.weight);
+                      const minWeight = Math.min(...weights);
+                      const maxWeight = Math.max(...weights);
+                      const weightRange = maxWeight - minWeight || 1;
+                      
+                      const points = chartData.map(d => ({
+                        ...d,
+                        y: 80 - ((d.weight - minWeight) / weightRange) * 60
+                      }));
+                      
+                      const polylinePoints = points.map(p => `${p.x},${p.y}`).join(' ');
+                      
+                      return (
+                        <>
+                          {/* Trend line */}
+                          <polyline
+                            points={polylinePoints}
+                            fill="none"
+                            stroke="#0F63FF"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                          />
+                          
+                          {/* Data points */}
+                          {points.map((point, index) => (
+                            <circle
+                              key={index}
+                              cx={point.x}
+                              cy={point.y}
+                              r="4"
+                              fill="#0F63FF"
+                            />
+                          ))}
+                          
+                          {/* Gradient fill under line */}
+                          <polygon
+                            points={`${polylinePoints} ${points[points.length - 1].x},100 ${points[0].x},100`}
+                            fill="url(#weightGradient)"
+                          />
+                        </>
+                      );
+                    })()}
+                  </svg>
+                  
+                  <div className="absolute bottom-2 left-4 text-xs text-gray-400">
+                    {weightEntries[0].weight} lbs → {latestWeight} lbs 
+                    ({weightProgress && weightProgress.changeFromBaseline !== 0 
+                      ? `${weightProgress.changeFromBaseline > 0 ? '+' : ''}${weightProgress.changeFromBaseline.toFixed(1)} lbs`
+                      : 'No change'})
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </CardContent>
