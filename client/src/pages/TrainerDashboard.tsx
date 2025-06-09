@@ -431,19 +431,24 @@ export default function TrainerDashboard() {
                       <img
                         src="/john-profile.png"
                         alt={`${chat.user.firstName} ${chat.user.lastName}`}
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                       />
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-white font-medium">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-white font-medium truncate">
                             {chat.user.firstName} {chat.user.lastName}
                           </span>
-                          <span className="text-gray-400 text-sm">
+                          <span className="text-gray-400 text-sm flex-shrink-0">
                             {new Date(chat.createdAt).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="text-gray-300 text-sm mt-1 truncate">
-                          {chat.isAI ? "Coach: " : "Client: "}{chat.message}
+                        <p className="text-gray-300 text-sm break-words overflow-hidden">
+                          <span className="font-medium">
+                            {chat.isAI ? "Coach: " : "Client: "}
+                          </span>
+                          <span className="break-all">
+                            {chat.message}
+                          </span>
                         </p>
                       </div>
                     </div>
