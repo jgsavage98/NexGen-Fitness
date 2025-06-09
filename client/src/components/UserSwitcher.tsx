@@ -107,8 +107,8 @@ export default function UserSwitcher() {
           {/* Demo User Card */}
           <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-blue-300">
             <CardHeader className="text-center">
-              <div className="mx-auto h-20 w-20 mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-                <img src={johnProfileImage} alt="John" className="h-16 w-16 rounded-full object-cover" />
+              <div className="mx-auto h-20 w-20 mb-4 rounded-full overflow-hidden">
+                <img src={johnProfileImage} alt="John" className="w-full h-full object-cover" />
               </div>
               <CardTitle>John (Demo User)</CardTitle>
               <CardDescription>
@@ -128,8 +128,8 @@ export default function UserSwitcher() {
           {/* Coach Chassidy Card */}
           <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-purple-300">
             <CardHeader className="text-center">
-              <div className="mx-auto h-20 w-20 mb-4 rounded-full bg-purple-100 flex items-center justify-center">
-                <span className="text-lg font-semibold text-purple-700">CC</span>
+              <div className="mx-auto h-20 w-20 mb-4 rounded-full overflow-hidden">
+                <img src="/chassidy-profile.jpeg" alt="Coach Chassidy" className="w-full h-full object-cover" />
               </div>
               <CardTitle>Coach Chassidy</CardTitle>
               <CardDescription>
