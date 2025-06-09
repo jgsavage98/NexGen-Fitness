@@ -1465,6 +1465,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/macro-changes/:changeId/regenerate', isAuthenticated, async (req: any, res) => {
+    try {
+      const changeId = parseInt(req.params.changeId);
+      
+      // Get the existing macro change record
+      const [existingChange] = await db
+        .select()
+        .from(macroChanges)
+        .where(eq(macroChanges.id, changeId));
+      
+      if (!existingChange) {
+        return res.status(404).json({ message: "Macro change not found" });
+      }
+      
+      // Get user profile for AI calculation
+      const user = await storage.getUser(existingChange.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Generate fresh AI macro calculation
+      const macroRecommendation = await aiCoach.calculateMacroTargets(user);
+      
+      // Extract baseline macros from existing change
+      const baselineMacros = {
+        calories: existingChange.oldCalories || 2000,
+        protein: existingChange.oldProtein || 150,
+        carbs: existingChange.oldCarbs || 200,
+        fat: existingChange.oldFat || 65
+      };
+      
+      // Apply Chassidy's gradual approach - max 50 calorie reduction
+      const adjustedCalories = Math.max(baselineMacros.calories - 50, 1200);
+      
+      // Update the existing macro change with new AI calculations
+      const [updatedChange] = await db
+        .update(macroChanges)
+        .set({
+          aiCalories: adjustedCalories,
+          aiProtein: macroRecommendation.protein,
+          aiCarbs: macroRecommendation.carbs,
+          aiFat: macroRecommendation.fat,
+          aiReasoning: macroRecommendation.reasoning,
+          aiProposal: {
+            type: 'regenerated_plan',
+            reasoning: macroRecommendation.reasoning,
+            baseline: baselineMacros,
+            adjustments: macroRecommendation.adjustments || []
+          }
+        })
+        .where(eq(macroChanges.id, changeId))
+        .returning();
+      
+      res.json({ 
+        message: "Macro change regenerated successfully",
+        change: updatedChange
+      });
+    } catch (error) {
+      console.error("Error regenerating macro change:", error);
+      res.status(500).json({ message: "Failed to regenerate macro change" });
+    }
+  });
+
   app.get('/api/trainer/recent-chats', isAuthenticated, async (req: any, res) => {
     try {
       const { limit = 50 } = req.query;
