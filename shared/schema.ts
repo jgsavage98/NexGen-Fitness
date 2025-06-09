@@ -386,6 +386,10 @@ export const insertProgressEntrySchema = createInsertSchema(progressEntries).omi
 
 // Update user profile schema for new PRD
 export const updateUserProfileSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  email: z.string().email().optional(),
+  profileImageUrl: z.string().optional(),
   goal: z.string().optional(),
   weight: z.number().optional(),
   goalWeight: z.number().optional(),
