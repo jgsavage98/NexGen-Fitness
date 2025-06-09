@@ -152,6 +152,7 @@ export default function UserSwitcher() {
             variant="outline" 
             onClick={() => logoutMutation.mutate()}
             disabled={logoutMutation.isPending}
+            className="border-gray-300 text-gray-900 bg-white hover:bg-gray-100 hover:border-gray-400 font-medium"
           >
             {logoutMutation.isPending ? 'Logging out...' : 'Logout Current User'}
           </Button>

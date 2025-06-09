@@ -352,7 +352,7 @@ export default function Onboarding() {
                 variant="ghost"
                 size="sm"
                 onClick={() => logoutMutation.mutate()}
-                className="text-gray-400 hover:text-white text-xs"
+                className="text-gray-300 hover:text-white hover:bg-gray-700 text-xs font-medium"
                 disabled={logoutMutation.isPending}
               >
                 Exit
