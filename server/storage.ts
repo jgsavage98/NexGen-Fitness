@@ -222,6 +222,17 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(macroChanges.id, id))
       .returning();
+
+    // Create active macro targets from approved plan
+    await this.setMacroTargets({
+      userId: approvedChange.userId,
+      date: approvedChange.date,
+      calories: approvedChange.aiCalories!,
+      protein: approvedChange.aiProtein!,
+      carbs: approvedChange.aiCarbs!,
+      fat: approvedChange.aiFat!,
+    });
+
     return approvedChange;
   }
 
@@ -240,6 +251,17 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(macroChanges.id, id))
       .returning();
+
+    // Create active macro targets from edited/approved plan
+    await this.setMacroTargets({
+      userId: editedChange.userId,
+      date: editedChange.date,
+      calories: finalMacros.calories,
+      protein: finalMacros.protein,
+      carbs: finalMacros.carbs,
+      fat: finalMacros.fat,
+    });
+
     return editedChange;
   }
 

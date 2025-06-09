@@ -19,7 +19,7 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
     queryKey: ["/api/workout/today"],
   });
 
-  const { data: macroTargets } = useQuery<MacroTarget>({
+  const { data: macroTargets } = useQuery<MacroTarget | any>({
     queryKey: [`/api/macro-targets?date=${today}`],
   });
 
@@ -44,19 +44,24 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
     fat: (dailyMacros as any).extractedFat || 0,
   } : { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
+  // Check if macro targets are pending trainer approval
+  const isPendingApproval = macroTargets?.status === 'pending_trainer_approval';
+  const isOnboardingIncomplete = macroTargets?.status === 'onboarding_incomplete';
+  const hasNoTargets = macroTargets?.status === 'no_targets';
+
   const macroSummary = {
     consumed: consumedMacros,
-    targets: macroTargets ? {
+    targets: (macroTargets && !isPendingApproval && !isOnboardingIncomplete && !hasNoTargets) ? {
       calories: macroTargets.calories,
       protein: macroTargets.protein,
       carbs: macroTargets.carbs,
       fat: macroTargets.fat,
-    } : { calories: 2000, protein: 150, carbs: 200, fat: 65 },
+    } : { calories: 0, protein: 0, carbs: 0, fat: 0 },
     percentages: {
-      calories: macroTargets ? (consumedMacros.calories / macroTargets.calories) * 100 : 0,
-      protein: macroTargets ? (consumedMacros.protein / macroTargets.protein) * 100 : 0,
-      carbs: macroTargets ? (consumedMacros.carbs / macroTargets.carbs) * 100 : 0,
-      fat: macroTargets ? (consumedMacros.fat / macroTargets.fat) * 100 : 0,
+      calories: (macroTargets && !isPendingApproval && !isOnboardingIncomplete && !hasNoTargets) ? (consumedMacros.calories / macroTargets.calories) * 100 : 0,
+      protein: (macroTargets && !isPendingApproval && !isOnboardingIncomplete && !hasNoTargets) ? (consumedMacros.protein / macroTargets.protein) * 100 : 0,
+      carbs: (macroTargets && !isPendingApproval && !isOnboardingIncomplete && !hasNoTargets) ? (consumedMacros.carbs / macroTargets.carbs) * 100 : 0,
+      fat: (macroTargets && !isPendingApproval && !isOnboardingIncomplete && !hasNoTargets) ? (consumedMacros.fat / macroTargets.fat) * 100 : 0,
     }
   };
 
@@ -85,6 +90,30 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pending Approval Notification */}
+      {isPendingApproval && (
+        <Card className="bg-yellow-900/20 border-yellow-500/30">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-yellow-400 font-semibold mb-1">Macro Plan Under Review</h3>
+                <p className="text-gray-300 text-sm">
+                  {macroTargets.message}
+                </p>
+                {macroTargets.pendingMacros && (
+                  <div className="mt-2 text-xs text-gray-400">
+                    Proposed: {macroTargets.pendingMacros.calories} cal, {macroTargets.pendingMacros.protein}g protein
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Daily Overview Card */}
       <Card className="bg-surface border-gray-700">

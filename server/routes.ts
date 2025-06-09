@@ -269,7 +269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedUser = await storage.updateUserProfile(userId, profileData);
       
-      // If this is onboarding completion, generate initial macro targets
+      // If this is onboarding completion, generate initial macro plan for trainer approval
       let macroData = null;
       if (profileData.onboardingCompleted) {
         const macroRecommendation = await aiCoach.calculateMacroTargets(updatedUser);
@@ -291,28 +291,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Apply Chassidy's gradual approach - max 50 calorie reduction
         const adjustedCalories = Math.max(baselineMacros.calories - 50, 1200);
         
-        await storage.setMacroTargets({
+        // Create pending macro change for trainer approval instead of setting active targets
+        await storage.createMacroChange({
           userId,
           date: new Date().toISOString().split('T')[0],
-          calories: adjustedCalories,
-          protein: macroRecommendation.protein,
-          carbs: macroRecommendation.carbs,
-          fat: macroRecommendation.fat,
+          oldCalories: baselineMacros.calories,
+          oldProtein: baselineMacros.protein,
+          oldCarbs: baselineMacros.carbs,
+          oldFat: baselineMacros.fat,
+          aiProposal: {
+            type: 'initial_plan',
+            reasoning: macroRecommendation.reasoning,
+            baseline: baselineMacros,
+            adjustments: macroRecommendation.adjustments || []
+          },
+          aiCalories: adjustedCalories,
+          aiProtein: macroRecommendation.protein,
+          aiCarbs: macroRecommendation.carbs,
+          aiFat: macroRecommendation.fat,
+          aiReasoning: `Initial macro plan for new client. Baseline: ${baselineMacros.calories} calories. Recommended: ${adjustedCalories} calories (-50 cal reduction). ${macroRecommendation.reasoning}`,
+          status: 'pending',
+          trainerId: null // Will be filled when trainer reviews
         });
 
         macroData = {
+          status: 'pending_trainer_approval',
           baselineCalories: baselineMacros.calories,
-          newCalories: adjustedCalories,
+          proposedCalories: adjustedCalories,
           baselineMacros: {
             protein: baselineMacros.protein,
             carbs: baselineMacros.carbs,
             fat: baselineMacros.fat
           },
-          newMacros: {
+          proposedMacros: {
             protein: macroRecommendation.protein,
             carbs: macroRecommendation.carbs,
             fat: macroRecommendation.fat
-          }
+          },
+          message: 'Your macro plan has been generated and is pending trainer approval.'
         };
       }
       
@@ -722,23 +738,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { date } = req.query;
       
       const targetDate = date ? new Date(date as string) : new Date();
+      
+      // Check if user has pending macro changes awaiting trainer approval
+      const pendingChanges = await storage.getPendingMacroChanges();
+      const userPendingChange = pendingChanges.find(change => change.userId === userId);
+      
+      if (userPendingChange) {
+        // User has pending macro plan awaiting trainer approval
+        return res.json({
+          status: 'pending_trainer_approval',
+          message: 'Your macro plan is being reviewed by your trainer and will be available soon.',
+          pendingMacros: {
+            calories: userPendingChange.aiCalories,
+            protein: userPendingChange.aiProtein,
+            carbs: userPendingChange.aiCarbs,
+            fat: userPendingChange.aiFat
+          },
+          reasoning: userPendingChange.aiReasoning,
+          submittedAt: userPendingChange.createdAt
+        });
+      }
+      
       const targets = await storage.getUserMacroTargets(userId, targetDate);
       
       if (!targets) {
-        // Generate targets if they don't exist
+        // No targets exist and no pending approval - this shouldn't happen for completed onboarding
         const user = await storage.getUser(userId);
-        if (user) {
-          const macroRecommendation = await aiCoach.calculateMacroTargets(user);
-          const newTargets = await storage.setMacroTargets({
-            userId,
-            date: targetDate.toISOString().split('T')[0],
-            calories: macroRecommendation.calories,
-            protein: macroRecommendation.protein,
-            carbs: macroRecommendation.carbs,
-            fat: macroRecommendation.fat,
+        if (user && !user.onboardingCompleted) {
+          return res.json({
+            status: 'onboarding_incomplete',
+            message: 'Please complete your onboarding to receive your personalized macro plan.'
           });
-          return res.json(newTargets);
         }
+        
+        // Fallback: Return message indicating they need trainer setup
+        return res.json({
+          status: 'no_targets',
+          message: 'No macro targets available. Please contact your trainer.'
+        });
       }
       
       res.json(targets);
