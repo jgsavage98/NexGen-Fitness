@@ -118,7 +118,7 @@ export default function UserSwitcher() {
             <CardContent>
               <Button 
                 className="w-full" 
-                onClick={() => window.location.href = '/api/auth/switch/demo-user-123'}
+                onClick={() => window.location.href = '/api/auth/demo-user'}
               >
                 Login as John
               </Button>
@@ -139,7 +139,7 @@ export default function UserSwitcher() {
             <CardContent>
               <Button 
                 className="w-full bg-purple-600 hover:bg-purple-700" 
-                onClick={() => window.location.href = '/api/auth/switch/coach_chassidy'}
+                onClick={() => window.location.href = '/api/auth/coach'}
               >
                 Login as Coach
               </Button>
