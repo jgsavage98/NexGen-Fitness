@@ -174,28 +174,31 @@ export default function Onboarding() {
       console.log('Onboarding complete response:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Use standard baseline values for onboarding summary
-      // User will upload their actual daily nutrition data via Screenshot Upload tab
-      const baselineData = { calories: 2000, protein: 120, carbs: 200, fat: 65 };
-      const newCalories = Math.max(baselineData.calories - 50, 1200);
+      // Only set macro summary if we don't already have one from nutrition extraction
+      if (!macroSummary) {
+        // Use standard baseline values only if no screenshot was uploaded
+        const baselineData = { calories: 2000, protein: 120, carbs: 200, fat: 65 };
+        const newCalories = Math.max(baselineData.calories - 50, 1200);
+        
+        const macroData = {
+          baselineCalories: baselineData.calories,
+          newCalories,
+          baselineMacros: { 
+            protein: baselineData.protein, 
+            carbs: baselineData.carbs, 
+            fat: baselineData.fat 
+          },
+          newMacros: { 
+            protein: Math.round(newCalories * 0.25 / 4), 
+            carbs: Math.round(newCalories * 0.45 / 4), 
+            fat: Math.round(newCalories * 0.30 / 9) 
+          }
+        };
+        
+        console.log('Setting standard macro summary for onboarding (no screenshot):', macroData);
+        setMacroSummary(macroData);
+      }
       
-      const macroData = {
-        baselineCalories: baselineData.calories,
-        newCalories,
-        baselineMacros: { 
-          protein: baselineData.protein, 
-          carbs: baselineData.carbs, 
-          fat: baselineData.fat 
-        },
-        newMacros: { 
-          protein: Math.round(newCalories * 0.25 / 4), 
-          carbs: Math.round(newCalories * 0.45 / 4), 
-          fat: Math.round(newCalories * 0.30 / 9) 
-        }
-      };
-      
-      console.log('Setting standard macro summary for onboarding:', macroData);
-      setMacroSummary(macroData);
       setShowSummary(true);
     },
     onError: (error) => {
