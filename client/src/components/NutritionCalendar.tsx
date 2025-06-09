@@ -63,30 +63,24 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
     const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     const programStart = programStartDate ? new Date(programStartDate) : null;
     
-    // Debug logging for June 8th
-    if (day === 8) {
-      console.log('June 8th debug:', {
-        dateStr,
-        dayData,
-        hasScreenshot: dayData ? (dayData.screenshotUrl || dayData.screenshot_url) : null,
-        programStart,
-        dayDate
-      });
-    }
-    
-    // Check if this day is before program start
-    if (programStart && dayDate < programStart) {
-      return { status: 'before-program', data: null };
-    }
-    
     // Check if this day is in the future
     if (dayDate > today) {
       return { status: 'future', data: null };
     }
     
-    // Check if data exists for this day
+    // Check if data exists for this day (prioritize this check)
     if (dayData && (dayData.screenshotUrl || dayData.screenshot_url)) {
       return { status: 'uploaded', data: dayData };
+    }
+    
+    // Check if this day is before program start (only for dates without data)
+    if (programStart) {
+      const programStartDate = new Date(programStart.getFullYear(), programStart.getMonth(), programStart.getDate());
+      const currentDayDate = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
+      
+      if (currentDayDate < programStartDate) {
+        return { status: 'before-program', data: null };
+      }
     }
     
     // Day is within program dates but no upload

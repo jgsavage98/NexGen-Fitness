@@ -239,7 +239,11 @@ export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTab
             variant={currentView === 'calendar' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setCurrentView('calendar')}
-            className="flex items-center space-x-1"
+            className={`flex items-center space-x-1 ${
+              currentView === 'calendar' 
+                ? 'bg-primary-500 text-white hover:bg-primary-600' 
+                : 'bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+            }`}
           >
             <Calendar className="w-4 h-4" />
             <span>History</span>
