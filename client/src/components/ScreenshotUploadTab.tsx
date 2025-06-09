@@ -164,6 +164,16 @@ export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTab
   const handleUpload = () => {
     if (!selectedFile) return;
     
+    // Check if already uploaded today
+    if (todaysMacros?.screenshotUrl) {
+      toast({
+        title: "Already Uploaded Today",
+        description: "You can only upload one screenshot per day. Come back tomorrow!",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     uploadMutation.mutate({
       file: selectedFile,
       hungerLevel,
@@ -376,10 +386,15 @@ export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTab
           {/* Upload Button */}
           <Button
             onClick={handleUpload}
-            disabled={!selectedFile || uploadMutation.isPending}
-            className="w-full bg-primary hover:bg-primary/90"
+            disabled={!selectedFile || uploadMutation.isPending || !!todaysMacros?.screenshotUrl}
+            className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-600 disabled:text-gray-400"
           >
-            {uploadMutation.isPending ? (
+            {todaysMacros?.screenshotUrl ? (
+              <>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Already Uploaded Today
+              </>
+            ) : uploadMutation.isPending ? (
               <>
                 <Clock className="w-4 h-4 mr-2 animate-spin" />
                 Processing...

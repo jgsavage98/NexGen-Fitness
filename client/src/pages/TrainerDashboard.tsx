@@ -316,7 +316,7 @@ export default function TrainerDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={() => window.location.href = '/'}
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                className="border-white/30 text-white hover:bg-white/10 hover:border-white/50"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Switch Account
