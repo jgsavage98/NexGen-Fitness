@@ -412,35 +412,26 @@ export default function Onboarding() {
             </div>
           </div>
 
-          {/* Acknowledgment Button */}
+          {/* Continue Button */}
           <div className="mt-auto">
-            {!hasAcknowledged ? (
-              <div className="space-y-4">
-                <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
-                  <p className="text-sm text-primary-200">
-                    Your information has been submitted successfully. Coach Chassidy will review everything and create your personalized plan.
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setHasAcknowledged(true)}
-                  className="w-full bg-primary-500 hover:bg-primary-600 text-white py-4 rounded-full font-semibold"
-                >
-                  Continue to Dashboard
-                </Button>
+            <div className="space-y-4">
+              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
+                <p className="text-sm text-primary-200">
+                  Your information has been submitted successfully. Coach Chassidy will review everything and create your personalized plan.
+                </p>
               </div>
-            ) : (
               <Button
                 onClick={async () => {
-                  // Mark onboarding as truly completed
+                  // Mark onboarding as truly completed and go to dashboard
                   await apiRequest("PUT", "/api/user/profile", { onboardingCompleted: true });
                   queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
                   setLocation("/");
                 }}
-                className="w-full bg-success hover:bg-success/80 text-white py-4 rounded-full font-semibold"
+                className="w-full bg-primary-500 hover:bg-primary-600 text-white py-4 rounded-full font-semibold"
               >
-                Go to Dashboard
+                Continue to Dashboard
               </Button>
-            )}
+            </div>
           </div>
         </div>
       </div>
