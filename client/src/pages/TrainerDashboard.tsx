@@ -150,7 +150,7 @@ export default function TrainerDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img
-                src={change.user.profileImageUrl || "/default-avatar.png"}
+                src="/john-profile.png"
                 alt={`${change.user.firstName} ${change.user.lastName}`}
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -402,7 +402,7 @@ export default function TrainerDashboard() {
                   {recentChats.slice(0, 5).map((chat) => (
                     <div key={chat.id} className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
                       <img
-                        src={chat.user.profileImageUrl || "/default-avatar.png"}
+                        src="/john-profile.png"
                         alt={`${chat.user.firstName} ${chat.user.lastName}`}
                         className="w-8 h-8 rounded-full object-cover"
                       />
@@ -477,7 +477,7 @@ export default function TrainerDashboard() {
                     .map((chat) => (
                     <div key={chat.id} className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
                       <img
-                        src={chat.user.profileImageUrl || "/default-avatar.png"}
+                        src="/john-profile.png"
                         alt={`${chat.user.firstName} ${chat.user.lastName}`}
                         className="w-8 h-8 rounded-full object-cover"
                       />
@@ -513,7 +513,7 @@ export default function TrainerDashboard() {
                     <CardHeader>
                       <div className="flex items-center space-x-3">
                         <img
-                          src={client.profileImageUrl || "/default-avatar.png"}
+                          src="/john-profile.png"
                           alt={`${client.firstName} ${client.lastName}`}
                           className="w-10 h-10 rounded-full object-cover"
                         />

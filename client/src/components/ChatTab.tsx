@@ -241,19 +241,12 @@ export default function ChatTab() {
                       )}
                     </span>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center flex-shrink-0">
-                    {(user?.profileImageUrl || user?.profilePicture) ? (
-                      <img 
-                        src={user.profileImageUrl || user.profilePicture}
-                        alt="Your Profile"
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-semibold text-xs">
-                        {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 
-                         user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
-                      </span>
-                    )}
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                    <img 
+                      src="/john-profile.png"
+                      alt="Your Profile"
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
                   </div>
                 </div>
               </div>
@@ -265,7 +258,7 @@ export default function ChatTab() {
           <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
             <div className="flex items-start space-x-3">
               <img 
-                src="/attached_assets/CE%20Bio%20Image_1749399911915.jpeg" 
+                src="/chassidy-profile.jpeg" 
                 alt="Coach Chassidy"
                 className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
               />
