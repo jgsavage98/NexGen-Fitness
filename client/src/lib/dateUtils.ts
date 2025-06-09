@@ -8,16 +8,21 @@ export function calculateJourneyDay(programStartDate: string | Date, timezone?: 
   if (!programStartDate) return 1;
 
   const startDate = new Date(programStartDate);
-  const now = new Date();
+  const today = new Date();
   
-  // If timezone is provided, adjust for user's timezone
+  // If timezone is provided, get dates in user's timezone
   if (timezone) {
     try {
-      const userNow = new Date(now.toLocaleString("en-US", { timeZone: timezone }));
-      const userStart = new Date(startDate.toLocaleString("en-US", { timeZone: timezone }));
+      // Get the calendar date in user's timezone
+      const todayInTimezone = new Date(today.toLocaleString("en-US", { timeZone: timezone }));
+      const startInTimezone = new Date(startDate.toLocaleString("en-US", { timeZone: timezone }));
       
-      // Calculate days difference
-      const diffTime = userNow.getTime() - userStart.getTime();
+      // Reset time to midnight for both dates to calculate calendar days
+      const todayCalendar = new Date(todayInTimezone.getFullYear(), todayInTimezone.getMonth(), todayInTimezone.getDate());
+      const startCalendar = new Date(startInTimezone.getFullYear(), startInTimezone.getMonth(), startInTimezone.getDate());
+      
+      // Calculate calendar days difference
+      const diffTime = todayCalendar.getTime() - startCalendar.getTime();
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       
       return Math.max(1, diffDays + 1); // +1 because day 1 is the start date
@@ -26,8 +31,11 @@ export function calculateJourneyDay(programStartDate: string | Date, timezone?: 
     }
   }
   
-  // Fallback to local timezone calculation
-  const diffTime = now.getTime() - startDate.getTime();
+  // Fallback to local timezone calculation using calendar dates
+  const todayCalendar = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startCalendar = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  
+  const diffTime = todayCalendar.getTime() - startCalendar.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
   return Math.max(1, diffDays + 1);
