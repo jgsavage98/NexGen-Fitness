@@ -44,8 +44,8 @@ export function getSession() {
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     name: 'connect.sid',
     cookie: {
       httpOnly: true,
@@ -209,7 +209,9 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     console.log('Auth check:', { 
       hasCookie: !!authToken, 
       hasSession: !!session?.userId,
-      sessionAuth: session?.authenticated 
+      sessionAuth: session?.authenticated,
+      sessionId: req.sessionID,
+      sessionData: session
     });
     
     // Check session first (for demo login)

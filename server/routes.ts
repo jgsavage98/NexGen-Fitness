@@ -137,7 +137,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to save session" });
       }
       console.log('Demo login session saved:', { userId, sessionId: req.sessionID });
-      res.json({ success: true, message: `Logged in as ${userId}` });
+      
+      // Reload session to ensure it's properly persisted
+      req.session.reload((reloadErr) => {
+        if (reloadErr) {
+          console.error('Session reload error:', reloadErr);
+        }
+        res.json({ success: true, message: `Logged in as ${userId}` });
+      });
     });
   });
 
