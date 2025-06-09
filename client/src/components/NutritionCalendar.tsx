@@ -7,20 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ChevronLeft, ChevronRight, Calendar, CheckCircle, X, Camera, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { calculateJourneyDay } from "@/lib/dateUtils";
-
-interface DailyMacros {
-  id: number;
-  userId: string;
-  date: string;
-  screenshotUrl?: string;
-  screenshot_url?: string; // Database field name
-  extractedCalories?: number;
-  extracted_calories?: number; // Database field name
-  extractedProtein?: number;
-  extractedCarbs?: number;
-  extractedFat?: number;
-  visionProcessedAt?: string;
-}
+import type { DailyMacros } from "@shared/schema";
 
 interface NutritionCalendarProps {
   onBack?: () => void;
@@ -328,6 +315,65 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
                   </div>
                 </div>
               </div>
+              
+              {/* Wellness Levels */}
+              {(selectedDay.data.hungerLevel || selectedDay.data.energyLevel) && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-300">Wellness Levels</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedDay.data.hungerLevel && (
+                      <div className="bg-gray-900 rounded-lg p-3">
+                        <div className="text-sm text-gray-400 mb-1">Hunger Level</div>
+                        <div className="flex items-center space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-3 h-3 rounded-full ${
+                                i < selectedDay.data.hungerLevel! 
+                                  ? 'bg-orange-500' 
+                                  : 'bg-gray-600'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-sm text-white ml-2">
+                            {selectedDay.data.hungerLevel}/5
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {selectedDay.data.energyLevel && (
+                      <div className="bg-gray-900 rounded-lg p-3">
+                        <div className="text-sm text-gray-400 mb-1">Energy Level</div>
+                        <div className="flex items-center space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-3 h-3 rounded-full ${
+                                i < selectedDay.data.energyLevel! 
+                                  ? 'bg-blue-500' 
+                                  : 'bg-gray-600'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-sm text-white ml-2">
+                            {selectedDay.data.energyLevel}/5
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {selectedDay.data.notes && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-300">Notes</h4>
+                  <div className="bg-gray-900 rounded-lg p-3">
+                    <p className="text-sm text-gray-300">{selectedDay.data.notes}</p>
+                  </div>
+                </div>
+              )}
               
               {/* Additional Info */}
               {selectedDay.data.visionProcessedAt && (
