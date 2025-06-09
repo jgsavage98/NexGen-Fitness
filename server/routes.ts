@@ -154,6 +154,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new user account
+  app.post('/api/auth/create-user', async (req, res) => {
+    try {
+      const { firstName, lastName, email, goal, isTrainer } = req.body;
+      
+      if (!firstName || !lastName || !email) {
+        return res.status(400).json({ message: "First name, last name, and email are required" });
+      }
+      
+      // Generate unique user ID
+      const userId = Math.random().toString(36).substring(2, 15);
+      
+      const userData = {
+        id: userId,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        goal: goal?.trim() || null,
+        trainerId: isTrainer ? null : 'coach_chassidy',
+        onboardingCompleted: false,
+        programStartDate: null,
+      };
+      
+      const newUser = await storage.upsertUser(userData);
+      
+      // If creating a trainer, also create trainer record
+      if (isTrainer) {
+        await storage.upsertTrainer({
+          id: userId,
+          bio: `${firstName} ${lastName} - Personal Trainer`,
+          specialties: ["Weight Loss", "Strength Training", "Nutrition Coaching"],
+          experience: "1+ years",
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: "User created successfully",
+        user: newUser
+      });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
   // Dynamic account switching by user ID
   app.get('/api/auth/switch/:userId', async (req, res) => {
     try {
