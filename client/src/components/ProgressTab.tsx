@@ -92,12 +92,15 @@ export default function ProgressTab() {
   // Get weight entries from progress data
   const weightEntries = progressEntries.filter(entry => entry.weight !== null);
   const latestWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : null;
+  const baselineWeight = weightEntries.length > 0 ? weightEntries[0].weight : null;
   const goalWeight = (user as any)?.goalWeight || null;
   
   // Calculate weight progress
   const weightProgress = latestWeight && goalWeight ? {
     current: latestWeight,
     goal: goalWeight,
+    baseline: baselineWeight,
+    changeFromBaseline: baselineWeight ? latestWeight - baselineWeight : 0,
     remaining: Math.abs(latestWeight - goalWeight),
     trend: weightEntries.length >= 2 ? 
       weightEntries[weightEntries.length - 1].weight! - weightEntries[weightEntries.length - 2].weight! : 0
@@ -154,13 +157,29 @@ export default function ProgressTab() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {/* Current Weight */}
             <div className="bg-dark rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-white mb-1">
                 {latestWeight ? `${latestWeight} lbs` : "—"}
               </div>
               <div className="text-sm text-gray-400">Current Weight</div>
+            </div>
+
+            {/* Change from Baseline */}
+            <div className="bg-dark rounded-lg p-4 text-center">
+              <div className={`text-2xl font-bold mb-1 ${
+                weightProgress && weightProgress.changeFromBaseline !== 0
+                  ? weightProgress.changeFromBaseline > 0 
+                    ? "text-red-400" 
+                    : "text-green-400"
+                  : "text-gray-400"
+              }`}>
+                {weightProgress && baselineWeight ? 
+                  `${weightProgress.changeFromBaseline > 0 ? '+' : ''}${weightProgress.changeFromBaseline.toFixed(1)} lbs` 
+                  : "—"}
+              </div>
+              <div className="text-sm text-gray-400">vs. Starting Weight</div>
             </div>
 
             {/* Goal Weight */}
@@ -179,6 +198,17 @@ export default function ProgressTab() {
               <div className="text-sm text-gray-400">To Goal</div>
             </div>
           </div>
+
+          {/* Baseline Reference */}
+          {baselineWeight && (
+            <div className="mb-4 p-3 bg-gray-800 rounded-lg border border-gray-600">
+              <div className="text-sm text-gray-400 mb-1">Starting Weight (Baseline)</div>
+              <div className="text-lg font-semibold text-gray-300">{baselineWeight} lbs</div>
+              <div className="text-xs text-gray-500 mt-1">
+                Recorded {weightEntries.length > 0 ? new Date(weightEntries[0].recordedAt).toLocaleDateString() : 'N/A'}
+              </div>
+            </div>
+          )}
 
           {/* Weight Entry Form */}
           <div className="flex gap-3">
