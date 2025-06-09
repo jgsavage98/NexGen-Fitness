@@ -23,11 +23,24 @@ interface OnboardingData {
   currentMacrosFile?: File;
 }
 
+interface NutritionExtraction {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  confidence: number;
+  extractedText?: string;
+  error?: string;
+}
+
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showSummary, setShowSummary] = useState(false);
   const [macroSummary, setMacroSummary] = useState<any>(null);
   const [hasAcknowledged, setHasAcknowledged] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [nutritionData, setNutritionData] = useState<NutritionExtraction | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [formData, setFormData] = useState<OnboardingData>({
     injuries: [],
     equipment: [],
@@ -50,6 +63,58 @@ export default function Onboarding() {
   const totalSteps = 6;
   const progressPercentage = (currentStep / totalSteps) * 100;
 
+  const handleImageUpload = async (file: File) => {
+    setFormData({ ...formData, currentMacrosFile: file });
+    
+    // Create image preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Analyze nutrition data
+    setIsAnalyzing(true);
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('screenshot', file);
+      
+      // Add auth parameter from URL if present
+      const urlParams = new URLSearchParams(window.location.search);
+      const authParam = urlParams.get('auth');
+      let url = '/api/nutrition/extract';
+      if (authParam) {
+        url += `?auth=${authParam}`;
+      }
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formDataToSend,
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNutritionData(data);
+        toast({
+          title: "Screenshot analyzed",
+          description: `Found ${data.calories} calories with ${data.protein}g protein`,
+        });
+      } else {
+        throw new Error('Failed to analyze screenshot');
+      }
+    } catch (error) {
+      console.error('Error analyzing screenshot:', error);
+      toast({
+        title: "Analysis failed",
+        description: "Could not extract nutrition data. You can continue without it.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const updateProfileMutation = useMutation({
     mutationFn: async (data: OnboardingData) => {
       // Convert string values to numbers where needed
@@ -66,9 +131,31 @@ export default function Onboarding() {
       // First update the profile
       const profileResponse = await apiRequest("PUT", "/api/user/profile", profileData);
       
-      // If there's a current macros screenshot, upload and analyze it
-      // Note: Baseline screenshot is stored but not processed for nutrition data
-      // Nutrition extraction only happens on the Screenshot Upload tab for daily tracking
+      // If there's a current macros screenshot, upload and analyze it for baseline data
+      if (data.currentMacrosFile && nutritionData) {
+        // Use the extracted nutrition data for baseline calculations
+        const baselineData = {
+          calories: nutritionData.calories,
+          protein: nutritionData.protein,
+          carbs: nutritionData.carbs,
+          fat: nutritionData.fat
+        };
+        
+        // Store baseline data for macro calculations
+        const newCalories = Math.max(baselineData.calories - 200, 1200);
+        const macroData = {
+          baselineCalories: baselineData.calories,
+          newCalories,
+          baselineMacros: baselineData,
+          newMacros: { 
+            protein: Math.round(newCalories * 0.25 / 4), 
+            carbs: Math.round(newCalories * 0.45 / 4), 
+            fat: Math.round(newCalories * 0.30 / 9) 
+          }
+        };
+        
+        setMacroSummary(macroData);
+      }
       
       return profileResponse.json();
     },
@@ -613,7 +700,7 @@ export default function Onboarding() {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        setFormData({ ...formData, currentMacrosFile: file });
+                        handleImageUpload(file);
                       }
                     }}
                     className="hidden"
@@ -634,16 +721,84 @@ export default function Onboarding() {
                 </div>
                 
                 {formData.currentMacrosFile && (
-                  <div className="bg-surface rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-success/20 rounded-lg flex items-center justify-center">
-                        <Check className="text-success w-5 h-5" />
+                  <div className="space-y-4">
+                    {/* Image Preview */}
+                    {imagePreview && (
+                      <div className="bg-surface rounded-lg p-4">
+                        <p className="font-semibold mb-3">Screenshot Preview</p>
+                        <div className="relative">
+                          <img 
+                            src={imagePreview} 
+                            alt="Nutrition screenshot preview" 
+                            className="w-full h-48 object-cover rounded-lg border border-gray-600"
+                          />
+                          {isAnalyzing && (
+                            <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                              <div className="flex items-center space-x-2 text-white">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span className="text-sm">Analyzing nutrition data...</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold">Screenshot uploaded</p>
-                        <p className="text-sm text-gray-400">I'll analyze this to understand your current nutrition</p>
+                    )}
+
+                    {/* Nutrition Data Results */}
+                    {nutritionData && (
+                      <div className="bg-success/10 border border-success/20 rounded-lg p-4">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <div className="w-10 h-10 bg-success/20 rounded-lg flex items-center justify-center">
+                            <Check className="text-success w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">Nutrition data extracted</p>
+                            <p className="text-sm text-gray-400">Your current baseline from MyFitnessPal</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          <div className="text-center bg-gray-800 rounded-lg p-3">
+                            <div className="text-xl font-bold text-success">{nutritionData.calories}</div>
+                            <div className="text-sm text-gray-400">Calories</div>
+                          </div>
+                          <div className="text-center bg-gray-800 rounded-lg p-3">
+                            <div className="text-xl font-bold text-blue-400">{nutritionData.protein}g</div>
+                            <div className="text-sm text-gray-400">Protein</div>
+                          </div>
+                          <div className="text-center bg-gray-800 rounded-lg p-3">
+                            <div className="text-xl font-bold text-yellow-400">{nutritionData.carbs}g</div>
+                            <div className="text-sm text-gray-400">Carbs</div>
+                          </div>
+                          <div className="text-center bg-gray-800 rounded-lg p-3">
+                            <div className="text-xl font-bold text-purple-400">{nutritionData.fat}g</div>
+                            <div className="text-sm text-gray-400">Fat</div>
+                          </div>
+                        </div>
+                        
+                        {nutritionData.confidence < 0.8 && (
+                          <div className="mt-3 text-sm text-yellow-300">
+                            <Info className="w-4 h-4 inline mr-1" />
+                            Low confidence extraction - please verify the numbers look correct
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    )}
+
+                    {/* Fallback success message if no nutrition data */}
+                    {!nutritionData && !isAnalyzing && (
+                      <div className="bg-surface rounded-lg p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-success/20 rounded-lg flex items-center justify-center">
+                            <Check className="text-success w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">Screenshot uploaded</p>
+                            <p className="text-sm text-gray-400">I'll use standard baseline values for your plan</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 
