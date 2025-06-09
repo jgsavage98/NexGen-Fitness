@@ -12,7 +12,16 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Add auth parameter from URL if present
+  const urlParams = new URLSearchParams(window.location.search);
+  const authParam = urlParams.get('auth');
+  let finalUrl = url;
+  if (authParam) {
+    const separator = url.includes('?') ? '&' : '?';
+    finalUrl += `${separator}auth=${authParam}`;
+  }
+
+  const res = await fetch(finalUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
