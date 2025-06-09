@@ -278,7 +278,7 @@ export default function Onboarding() {
           <div className="mb-8 bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
             <div className="flex items-start space-x-3">
               <img 
-                src="/attached_assets/CE Bio Image_1749399911915.jpeg" 
+                src="/attached_assets/CE%20Bio%20Image_1749399911915.jpeg" 
                 alt="Coach Chassidy"
                 className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
               />
