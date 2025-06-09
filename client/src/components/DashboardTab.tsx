@@ -191,49 +191,47 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
         </Button>
       </div>
 
-      {/* Today's Workout Preview */}
-      <Card className="bg-surface border-gray-700">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-white">Today's Workout</h3>
-            <span className="text-sm text-gray-400">
-              {workout?.name || 'No workout planned'}
-            </span>
-          </div>
-          
-          {workout ? (
-            <div className="space-y-3">
-              {workout.exercises.slice(0, 3).map((exercise, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 bg-dark rounded-lg hover:bg-gray-800 transition-colors">
-                  <AnimatedExerciseThumbnail exerciseName={exercise.name} />
-                  <div className="flex-1">
-                    <div className="font-medium text-white">{exercise.name}</div>
-                    <div className="text-sm text-gray-400">
-                      {exercise.sets} sets × {exercise.reps} reps
+      {/* Today's Workout Preview - Only show when plan is approved */}
+      {!isPendingApproval && !isOnboardingIncomplete && !hasNoTargets && (
+        <Card className="bg-surface border-gray-700">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Today's Workout</h3>
+              <span className="text-sm text-gray-400">
+                {workout?.name || 'No workout planned'}
+              </span>
+            </div>
+            
+            {workout ? (
+              <div className="space-y-3">
+                {workout.exercises.slice(0, 3).map((exercise, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 bg-dark rounded-lg hover:bg-gray-800 transition-colors">
+                    <AnimatedExerciseThumbnail exerciseName={exercise.name} />
+                    <div className="flex-1">
+                      <div className="font-medium text-white">{exercise.name}</div>
+                      <div className="text-sm text-gray-400">
+                        {exercise.sets} sets × {exercise.reps} reps
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
-              <Button className="w-full mt-4 bg-primary-500 hover:bg-primary-600 text-white py-3 rounded-full font-semibold">
-                View Full Workout
-              </Button>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <i className="fas fa-dumbbell text-gray-600 text-3xl mb-4"></i>
-              <p className="text-gray-400 mb-4">
-                {isPendingApproval ? "Your workout plan is being created" : "No workout scheduled for today"}
-              </p>
-              {!isPendingApproval && (
+                <Button className="w-full mt-4 bg-primary-500 hover:bg-primary-600 text-white py-3 rounded-full font-semibold">
+                  View Full Workout
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <i className="fas fa-dumbbell text-gray-600 text-3xl mb-4"></i>
+                <p className="text-gray-400 mb-4">No workout scheduled for today</p>
                 <Button className="bg-primary-500 hover:bg-primary-600 text-white">
                   Generate Workout
                 </Button>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* AI Coach Insight - Only show when plan is approved */}
       {!isPendingApproval && !isOnboardingIncomplete && !hasNoTargets && (
