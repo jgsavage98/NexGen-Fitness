@@ -56,6 +56,7 @@ export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTab
   const [hungerLevel, setHungerLevel] = useState(3);
   const [energyLevel, setEnergyLevel] = useState(3);
   const [notes, setNotes] = useState("");
+  const [currentView, setCurrentView] = useState<'upload' | 'calendar'>('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -211,12 +212,39 @@ export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTab
     return Math.round(calorieAdherence);
   };
 
+  // If calendar view is selected, show the calendar
+  if (currentView === 'calendar') {
+    return <NutritionCalendar />;
+  }
+
   return (
     <div className="p-4 space-y-4">
-      {/* Header */}
+      {/* Header with View Toggle */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-white mb-2">Daily Nutrition</h1>
-        <p className="text-gray-400">Upload your MyFitnessPal screenshot</p>
+        <p className="text-gray-400 mb-4">Upload your MyFitnessPal screenshot</p>
+        
+        {/* View Toggle */}
+        <div className="flex justify-center space-x-2">
+          <Button
+            variant={currentView === 'upload' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setCurrentView('upload')}
+            className="flex items-center space-x-1"
+          >
+            <Camera className="w-4 h-4" />
+            <span>Upload</span>
+          </Button>
+          <Button
+            variant={currentView === 'calendar' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setCurrentView('calendar')}
+            className="flex items-center space-x-1"
+          >
+            <Calendar className="w-4 h-4" />
+            <span>History</span>
+          </Button>
+        </div>
       </div>
 
       {/* Status Card */}

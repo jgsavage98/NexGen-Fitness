@@ -19,7 +19,7 @@ import {
   dailyMacros
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -569,7 +569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             lte(dailyMacros.date, lastDay.toISOString().split('T')[0])
           )
         )
-        .orderBy(dailyMacros.date);
+        .orderBy(desc(dailyMacros.date));
       
       res.json(macros);
     } catch (error) {
