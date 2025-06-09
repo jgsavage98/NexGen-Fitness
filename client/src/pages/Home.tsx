@@ -28,9 +28,10 @@ export default function Home() {
   const today = new Date().toISOString().split('T')[0];
   const { data: macroTargets } = useQuery<any>({
     queryKey: [`/api/macro-targets?date=${today}`],
+    retry: false,
   });
 
-  const isPendingApproval = macroTargets?.status === 'pending_trainer_approval';
+  const isPendingApproval = macroTargets?.status === 'pending_trainer_approval' || false;
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
