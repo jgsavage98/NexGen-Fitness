@@ -56,6 +56,11 @@ export default function TrainerDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Force cache invalidation on component mount to get fresh data
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-macro-changes"] });
+  }, [queryClient]);
+
   // Fetch all clients
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/trainer/clients"],
@@ -63,12 +68,14 @@ export default function TrainerDashboard() {
 
   // Fetch pending macro changes
   const { data: pendingChanges = [] } = useQuery<PendingMacroChange[]>({
-    queryKey: ["/api/trainer/pending-macro-changes", Date.now()],
-    refetchInterval: 5000, // Check every 5 seconds for new reviews
+    queryKey: ["/api/trainer/pending-macro-changes"],
+    refetchInterval: 10000, // Check every 10 seconds for new reviews
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache the data
+    onSuccess: (data) => {
+      console.log("Pending changes data received:", data);
+    },
   });
 
   // Notification effect for new pending macro changes
