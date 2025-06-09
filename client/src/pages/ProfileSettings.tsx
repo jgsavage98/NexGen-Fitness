@@ -19,6 +19,7 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [bio, setBio] = useState("");
+  const [specialties, setSpecialties] = useState<string[]>([]);
   const [isCoach, setIsCoach] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -44,18 +45,21 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
       // Use trainer bio if user is a coach, otherwise use user bio
       if (userData?.id === "coach_chassidy" && trainerData) {
         setBio((trainerData as any).bio || "");
+        setSpecialties((trainerData as any).specialties || []);
       } else {
         setBio(userData?.bio || "");
+        setSpecialties([]);
       }
     }
   }, [user, trainerData]);
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; bio?: string; profileImage?: File }) => {
+    mutationFn: async (data: { firstName: string; lastName: string; bio?: string; specialties?: string[]; profileImage?: File }) => {
       const formData = new FormData();
       formData.append('firstName', data.firstName);
       formData.append('lastName', data.lastName);
       if (data.bio) formData.append('bio', data.bio);
+      if (data.specialties) formData.append('specialties', JSON.stringify(data.specialties));
       if (data.profileImage) formData.append('profileImage', data.profileImage);
 
       // Use trainer-specific endpoint if user is a coach

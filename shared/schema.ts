@@ -105,6 +105,7 @@ export const trainers = pgTable("trainers", {
   name: varchar("name").notNull(),
   photoUrl: varchar("photo_url"),
   bio: text("bio"),
+  specialties: text("specialties").array().default([]),
   certifications: text("certifications").array().default([]),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
