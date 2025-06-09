@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle, X, Camera } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle, X, Camera, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { calculateJourneyDay } from "@/lib/dateUtils";
 
@@ -21,7 +21,11 @@ interface DailyMacros {
   visionProcessedAt?: string;
 }
 
-export default function NutritionCalendar() {
+interface NutritionCalendarProps {
+  onBack?: () => void;
+}
+
+export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { user } = useAuth();
 
@@ -58,6 +62,17 @@ export default function NutritionCalendar() {
     const dayData = monthlyMacros.find(m => m.date === dateStr);
     const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     const programStart = programStartDate ? new Date(programStartDate) : null;
+    
+    // Debug logging for June 8th
+    if (day === 8) {
+      console.log('June 8th debug:', {
+        dateStr,
+        dayData,
+        hasScreenshot: dayData ? (dayData.screenshotUrl || dayData.screenshot_url) : null,
+        programStart,
+        dayDate
+      });
+    }
     
     // Check if this day is before program start
     if (programStart && dayDate < programStart) {
@@ -124,7 +139,18 @@ export default function NutritionCalendar() {
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-6 relative">
+        {onBack && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="absolute left-0 top-0 text-gray-400 hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        )}
         <h1 className="text-2xl font-bold text-white mb-2">Upload History</h1>
         <p className="text-gray-400">Track your daily nutrition uploads</p>
       </div>

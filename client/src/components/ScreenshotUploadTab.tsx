@@ -214,7 +214,7 @@ export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTab
 
   // If calendar view is selected, show the calendar
   if (currentView === 'calendar') {
-    return <NutritionCalendar />;
+    return <NutritionCalendar onBack={() => setCurrentView('upload')} />;
   }
 
   return (
