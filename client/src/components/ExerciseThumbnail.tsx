@@ -156,19 +156,36 @@ const getExerciseThumbnail = (exerciseName: string): JSX.Element => {
 };
 
 export default function ExerciseThumbnail({ exerciseName, className = "w-12 h-12" }: ExerciseThumbnailProps) {
+  const lowercaseName = exerciseName.toLowerCase();
+  const coreExercises = ['crunch', 'plank', 'abs', 'core', 'sit-up', 'twist'];
+  const isCore = coreExercises.some(exercise => lowercaseName.includes(exercise));
+  
+  // For core exercises, show the GIF prominently
+  if (isCore) {
+    return (
+      <div className={`${className} bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center text-white flex-shrink-0 overflow-hidden`}>
+        <img
+          src="/attached_assets/twisting-crunch_1749432251767.gif?v=2"
+          alt={exerciseName}
+          className="w-full h-full object-cover rounded"
+        />
+      </div>
+    );
+  }
+  
   return (
     <div className={`${className} bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center text-white flex-shrink-0 relative overflow-hidden`}>
-      {/* Animated GIF background overlay */}
-      <div className="absolute inset-0 opacity-20">
+      {/* Animated GIF background overlay for all exercises */}
+      <div className="absolute inset-0 opacity-30">
         <img
-          src="/attached_assets/twisting-crunch_1749432251767.gif"
+          src="/attached_assets/twisting-crunch_1749432251767.gif?v=2"
           alt="Exercise motion"
           className="w-full h-full object-cover"
         />
       </div>
       
       {/* Exercise-specific icon overlay */}
-      <div className="relative z-10">
+      <div className="relative z-10 opacity-90">
         {getExerciseThumbnail(exerciseName)}
       </div>
     </div>
