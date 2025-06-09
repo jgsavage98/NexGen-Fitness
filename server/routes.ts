@@ -183,9 +183,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isTrainer) {
         await storage.upsertTrainer({
           id: userId,
+          name: `${firstName} ${lastName}`,
           bio: `${firstName} ${lastName} - Personal Trainer`,
           specialties: ["Weight Loss", "Strength Training", "Nutrition Coaching"],
-          experience: "1+ years",
+          yearsExperience: 1,
         });
       }
       

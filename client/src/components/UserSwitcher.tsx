@@ -1,9 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { User, Crown } from "lucide-react";
+import { User, Crown, Plus, UserPlus } from "lucide-react";
+import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
 
 interface UserData {
   id: string;
@@ -18,6 +24,14 @@ interface UserData {
 export default function UserSwitcher() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    goal: '',
+    isTrainer: false
+  });
 
   // Fetch available users from the database
   const { data: availableUsers = [], isLoading } = useQuery<UserData[]>({
@@ -111,6 +125,51 @@ export default function UserSwitcher() {
     },
   });
 
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: typeof newUserData) => {
+      return await apiRequest('POST', '/api/auth/create-user', userData);
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "User created successfully",
+        description: `${newUserData.firstName} ${newUserData.lastName} has been added to the system`,
+      });
+      
+      // Clear form and hide it
+      setNewUserData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        goal: '',
+        isTrainer: false
+      });
+      setShowCreateForm(false);
+      
+      // Refresh the users list
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/available-users"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create user",
+        description: error.message || "An error occurred while creating the user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateUser = () => {
+    if (!newUserData.firstName || !newUserData.lastName || !newUserData.email) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createUserMutation.mutate(newUserData);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8 flex items-center justify-center">
       <div className="max-w-2xl w-full space-y-6">
@@ -188,6 +247,119 @@ export default function UserSwitcher() {
             })}
           </div>
         )}
+
+        {/* Create New User Section */}
+        <Card className="border-2 border-dashed border-gray-300">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Add New User
+            </CardTitle>
+            <CardDescription>
+              Create a new client or trainer account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!showCreateForm ? (
+              <Button 
+                onClick={() => setShowCreateForm(true)}
+                className="w-full"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Account
+              </Button>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="firstName">First Name *</Label>
+                    <Input
+                      id="firstName"
+                      value={newUserData.firstName}
+                      onChange={(e) => setNewUserData(prev => ({ ...prev, firstName: e.target.value }))}
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Input
+                      id="lastName"
+                      value={newUserData.lastName}
+                      onChange={(e) => setNewUserData(prev => ({ ...prev, lastName: e.target.value }))}
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newUserData.email}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="Enter email address"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="userType">Account Type</Label>
+                  <Select 
+                    value={newUserData.isTrainer ? 'trainer' : 'client'} 
+                    onValueChange={(value) => setNewUserData(prev => ({ ...prev, isTrainer: value === 'trainer' }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select account type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="client">Client</SelectItem>
+                      <SelectItem value="trainer">Trainer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {!newUserData.isTrainer && (
+                  <div>
+                    <Label htmlFor="goal">Fitness Goal</Label>
+                    <Textarea
+                      id="goal"
+                      value={newUserData.goal}
+                      onChange={(e) => setNewUserData(prev => ({ ...prev, goal: e.target.value }))}
+                      placeholder="Enter fitness goals (optional)"
+                      rows={3}
+                    />
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleCreateUser}
+                    disabled={createUserMutation.isPending}
+                    className="flex-1"
+                  >
+                    {createUserMutation.isPending ? 'Creating...' : 'Create Account'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowCreateForm(false);
+                      setNewUserData({
+                        firstName: '',
+                        lastName: '',
+                        email: '',
+                        goal: '',
+                        isTrainer: false
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="text-center">
           <Button 

@@ -177,7 +177,7 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map((day, index) => {
               if (day === null) {
-                return <div key={index} className="aspect-square" />;
+                return <div key={`empty-${index}`} className="aspect-square" />;
               }
               
               const { status, data } = getDayStatus(day);
@@ -187,7 +187,7 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
               
               return (
                 <div
-                  key={day}
+                  key={`day-${day}`}
                   className={`
                     aspect-square border rounded-lg flex flex-col items-center justify-center text-sm relative
                     ${getStatusColor(status)}
