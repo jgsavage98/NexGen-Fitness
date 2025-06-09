@@ -290,6 +290,11 @@ export default function TrainerDashboard() {
     );
   };
 
+  // Show profile settings if requested
+  if (showProfileSettings) {
+    return <ProfileSettings onBack={() => setShowProfileSettings(false)} />;
+  }
+
   return (
     <div className="min-h-screen bg-dark text-white">
       {/* Header */}
@@ -314,6 +319,15 @@ export default function TrainerDashboard() {
               <Badge variant="outline" className="text-yellow-400 border-yellow-400">
                 {pendingChanges.length} Pending Reviews
               </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowProfileSettings(true)}
+                className="border-gray-300 text-gray-900 bg-white hover:bg-gray-100 hover:border-gray-400 font-medium"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Profile Settings
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
