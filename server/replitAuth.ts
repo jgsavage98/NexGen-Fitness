@@ -208,24 +208,11 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     
     console.log('Auth check:', { 
       hasCookie: !!authToken, 
-      hasSession: !!session?.userId,
-      sessionAuth: session?.authenticated,
-      sessionId: req.sessionID,
-      sessionData: session
+      cookieValue: authToken?.substring(0, 20) + '...',
+      path: req.path
     });
     
-    // Check session first (for demo login)
-    if (session?.userId && session?.authenticated) {
-      (req as any).user = {
-        claims: {
-          sub: session.userId,
-          email: session.userId === 'coach_chassidy' ? 'chassidy@igniteai.com' : 'demo@example.com',
-        }
-      };
-      return next();
-    }
-    
-    // Fallback to cookie-based auth
+    // Check cookie-based auth
     if (!authToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -239,11 +226,13 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
+      console.log('Auth successful for user:', userId);
+      
       // Attach user info to request for compatibility
       (req as any).user = {
         claims: {
           sub: userId,
-          email: "demo@example.com",
+          email: userId === 'coach_chassidy' ? 'chassidy@igniteai.com' : 'demo@example.com',
         }
       };
       return next();

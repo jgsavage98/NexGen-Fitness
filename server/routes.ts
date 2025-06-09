@@ -123,29 +123,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Invalid user ID" });
     }
 
-    // Clear any existing auth cookies
+    // Clear any existing cookies
     res.clearCookie('auth_token');
+    res.clearCookie('connect.sid');
     
-    // Set session for demo user
-    (req.session as any).userId = userId;
-    (req.session as any).authenticated = true;
-    
-    // Save session explicitly
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.status(500).json({ message: "Failed to save session" });
-      }
-      console.log('Demo login session saved:', { userId, sessionId: req.sessionID });
-      
-      // Reload session to ensure it's properly persisted
-      req.session.reload((reloadErr) => {
-        if (reloadErr) {
-          console.error('Session reload error:', reloadErr);
-        }
-        res.json({ success: true, message: `Logged in as ${userId}` });
-      });
+    // Create auth token and set as cookie
+    const authToken = Buffer.from(`${userId}:${Date.now()}`).toString('base64');
+    res.cookie('auth_token', authToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+      sameSite: 'lax',
+      path: '/'
     });
+    
+    console.log('Demo login auth token set:', { userId, token: authToken });
+    res.json({ success: true, message: `Logged in as ${userId}` });
   });
 
 
