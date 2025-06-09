@@ -416,16 +416,16 @@ export default function Onboarding() {
           <div className="mt-auto">
             {!hasAcknowledged ? (
               <div className="space-y-4">
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                  <p className="text-sm text-yellow-200">
-                    Please review your personalized plan above and confirm you're ready to begin your journey with Coach Chassidy.
+                <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
+                  <p className="text-sm text-primary-200">
+                    Your information has been submitted successfully. Coach Chassidy will review everything and create your personalized plan.
                   </p>
                 </div>
                 <Button
                   onClick={() => setHasAcknowledged(true)}
                   className="w-full bg-primary-500 hover:bg-primary-600 text-white py-4 rounded-full font-semibold"
                 >
-                  I Accept My New Macro Plan
+                  Continue to Dashboard
                 </Button>
               </div>
             ) : (
@@ -438,7 +438,7 @@ export default function Onboarding() {
                 }}
                 className="w-full bg-success hover:bg-success/80 text-white py-4 rounded-full font-semibold"
               >
-                Let's Start My Journey!
+                Go to Dashboard
               </Button>
             )}
           </div>
