@@ -102,6 +102,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Start user program - sets program start date to current timestamp
+  app.post('/api/program/start', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Update user's program start date to current timestamp
+      await db.update(users)
+        .set({ 
+          programStartDate: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+      
+      // Fetch updated user data
+      const updatedUser = await storage.getUser(userId);
+      
+      res.json({ 
+        message: "Program started successfully", 
+        user: updatedUser,
+        programStartDate: updatedUser?.programStartDate
+      });
+    } catch (error) {
+      console.error("Error starting program:", error);
+      res.status(500).json({ message: "Failed to start program" });
+    }
+  });
+
   // Logout route
   app.post('/api/auth/logout', (req, res) => {
     req.session.destroy((err) => {

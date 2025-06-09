@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut } from "lucide-react";
 import ProfileSettings from "@/pages/ProfileSettings";
+import { calculateJourneyDay } from "@/lib/dateUtils";
 
 interface Client {
   id: string;
@@ -127,9 +128,9 @@ export default function TrainerDashboard() {
   });
 
   const getClientProgress = (client: Client) => {
-    const daysInProgram = Math.floor(
-      (new Date().getTime() - new Date(client.programStartDate).getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const daysInProgram = client.programStartDate 
+      ? calculateJourneyDay(client.programStartDate)
+      : 1;
     const weightLossProgress = client.weight && client.goalWeight 
       ? ((client.weight - client.goalWeight) / (client.weight - client.goalWeight)) * 100
       : 0;
