@@ -74,49 +74,79 @@ export async function seedTestData(userId: string, days: number = 14) {
     // Generate weight progression
     const weights = generateWeightProgression(startWeight, goalWeight, days);
     
-    // Create progress entries (weight logs)
+    let progressCreated = 0;
+    
+    // Create progress entries (weight logs) - only for past dates
     for (let i = 0; i < days; i++) {
       const date = getDaysAgo(days - 1 - i);
       
       // Skip some days randomly (people don't always log daily)
       if (Math.random() < 0.15) continue; // 15% chance to skip
       
-      await storage.createProgressEntry({
-        userId,
-        weight: weights[i],
-        notes: `Daily weigh-in - Day ${i + 1}`,
-      });
+      // Skip today to avoid conflicts with current data
+      if (date.toDateString() === new Date().toDateString()) continue;
+      
+      try {
+        await storage.createProgressEntry({
+          userId,
+          weight: weights[i],
+          notes: `Historical data - Day ${i + 1}`,
+        });
+        progressCreated++;
+      } catch (error) {
+        // Silently skip duplicates or errors
+        continue;
+      }
     }
     
-    // Create daily macro entries
+    let macrosCreated = 0;
+    
+    // Create daily macro entries - only for past dates
     for (let i = 0; i < days; i++) {
       const date = getDaysAgo(days - 1 - i);
       const dateStr = date.toISOString().split('T')[0];
       
       // Skip some days (not everyone uploads screenshots daily)
-      if (Math.random() < 0.2) continue; // 20% chance to skip
+      if (Math.random() < 0.2) continue;
+      
+      // Skip today to avoid conflicts with current data
+      if (date.toDateString() === new Date().toDateString()) continue;
+      
+      // Check if entry already exists for this date
+      try {
+        const existingEntry = await storage.getDailyMacros(userId, date);
+        if (existingEntry) continue;
+      } catch (error) {
+        // Entry doesn't exist, continue with creation
+      }
       
       const actualCalories = generateCalorieIntake(targetCalories);
       const macros = generateMacros(actualCalories);
       const adherence = generateMacroAdherence();
       
-      await storage.createDailyMacros({
-        userId,
-        date: dateStr,
-        extractedCalories: actualCalories,
-        extractedProtein: macros.protein,
-        extractedCarbs: macros.carbs,
-        extractedFat: macros.fat,
-        targetCalories,
-        targetProtein: 150,
-        targetCarbs: 200,
-        targetFat: 67,
-        adherenceScore: adherence,
-        visionConfidence: 85 + Math.random() * 10, // 85-95%
-        hungerLevel: Math.floor(Math.random() * 5) + 1, // 1-5
-        energyLevel: Math.floor(Math.random() * 5) + 1, // 1-5
-        screenshotUrl: `/screenshots/demo-${date.getTime()}.jpg`,
-      });
+      try {
+        await storage.createDailyMacros({
+          userId,
+          date: dateStr,
+          extractedCalories: actualCalories,
+          extractedProtein: macros.protein,
+          extractedCarbs: macros.carbs,
+          extractedFat: macros.fat,
+          targetCalories,
+          targetProtein: 150,
+          targetCarbs: 200,
+          targetFat: 67,
+          adherenceScore: adherence,
+          visionConfidence: 85 + Math.random() * 10, // 85-95%
+          hungerLevel: Math.floor(Math.random() * 5) + 1, // 1-5
+          energyLevel: Math.floor(Math.random() * 5) + 1, // 1-5
+          screenshotUrl: `/screenshots/historical-${date.getTime()}.jpg`,
+        });
+        macrosCreated++;
+      } catch (error) {
+        // Silently skip duplicates or errors
+        continue;
+      }
     }
     
     // Create some workout logs
@@ -143,15 +173,19 @@ export async function seedTestData(userId: string, days: number = 14) {
           const weight = baseWeight + Math.floor(Math.random() * 20);
           const reps = 8 + Math.floor(Math.random() * 5); // 8-12 reps
           
-          await storage.logWorkoutExercise({
-            userId,
-            workoutId: 1, // Default workout
-            exerciseId: j + 1,
-            setNumber: set,
-            reps,
-            weight,
-            notes: `Set ${set} of ${exercise}`,
-          });
+          try {
+            await storage.logWorkoutExercise({
+              userId,
+              workoutId: 1, // Default workout
+              exerciseId: j + 1,
+              reps,
+              weight,
+              notes: `Set ${set} of ${exercise}`,
+            });
+          } catch (error) {
+            console.log(`Skipping workout log for ${exercise} set ${set}:`, error);
+            continue;
+          }
         }
       }
     }
@@ -188,8 +222,16 @@ export async function seedTestData(userId: string, days: number = 14) {
       });
     }
     
-    console.log(`Successfully seeded ${days} days of test data!`);
-    return { success: true, message: `Seeded ${days} days of realistic test data` };
+    console.log(`Successfully seeded test data: ${progressCreated} weight entries, ${macrosCreated} macro entries`);
+    return { 
+      success: true, 
+      message: `Created ${progressCreated} weight entries and ${macrosCreated} macro entries from ${days} days requested`,
+      details: {
+        progressEntries: progressCreated,
+        macroEntries: macrosCreated,
+        daysRequested: days
+      }
+    };
     
   } catch (error) {
     console.error("Error seeding test data:", error);
