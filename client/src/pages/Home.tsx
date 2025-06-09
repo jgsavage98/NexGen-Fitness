@@ -59,7 +59,8 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Redirect to base URL without auth tokens to clear authentication
+      // Clear the URL completely and redirect to Choose Account page
+      window.history.replaceState({}, document.title, window.location.origin);
       window.location.href = window.location.origin;
     },
   });
