@@ -115,31 +115,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Simple demo account switching
+  // URL-based demo account switching
   app.get('/api/auth/demo-user', (req, res) => {
     const authToken = Buffer.from(`demo-user-123:${Date.now()}`).toString('base64');
-    res.cookie('auth_token', authToken, {
-      httpOnly: true,
-      secure: false,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'lax',
-      path: '/'
-    });
-    console.log('Set demo user token:', authToken);
-    res.redirect('/');
+    console.log('Redirecting with demo user token:', authToken);
+    res.redirect(`/?auth=${authToken}`);
   });
 
   app.get('/api/auth/coach', (req, res) => {
     const authToken = Buffer.from(`coach_chassidy:${Date.now()}`).toString('base64');
-    res.cookie('auth_token', authToken, {
-      httpOnly: true,
-      secure: false,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'lax',
-      path: '/'
-    });
-    console.log('Set coach token:', authToken);
-    res.redirect('/');
+    console.log('Redirecting with coach token:', authToken);
+    res.redirect(`/?auth=${authToken}`);
   });
 
 

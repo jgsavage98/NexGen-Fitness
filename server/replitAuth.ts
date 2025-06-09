@@ -201,18 +201,42 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Development mode: check session-based authentication
+  // Development mode: check multiple auth sources
   if (process.env.NODE_ENV === 'development') {
     const session = req.session as any;
     const authToken = req.cookies?.auth_token;
+    const urlAuth = req.query.auth as string;
     
     console.log('Auth check:', { 
       hasCookie: !!authToken, 
       cookieValue: authToken?.substring(0, 20) + '...',
+      hasUrlAuth: !!urlAuth,
       path: req.path
     });
     
-    // Check cookie-based auth
+    // Check URL-based auth first (for demo switching)
+    if (urlAuth) {
+      try {
+        const decoded = Buffer.from(urlAuth, 'base64').toString();
+        const [userId] = decoded.split(':');
+        
+        if (userId === 'demo-user-123' || userId === 'coach_chassidy') {
+          console.log('Auth successful via URL for user:', userId);
+          
+          (req as any).user = {
+            claims: {
+              sub: userId,
+              email: userId === 'coach_chassidy' ? 'chassidy@igniteai.com' : 'demo@example.com',
+            }
+          };
+          return next();
+        }
+      } catch (error) {
+        console.error('URL auth decode error:', error);
+      }
+    }
+    
+    // Fallback to cookie-based auth
     if (!authToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -226,7 +250,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      console.log('Auth successful for user:', userId);
+      console.log('Auth successful via cookie for user:', userId);
       
       // Attach user info to request for compatibility
       (req as any).user = {
