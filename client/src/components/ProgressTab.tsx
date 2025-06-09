@@ -517,6 +517,74 @@ export default function ProgressTab() {
           </div>
         </div>
       </div>
+
+      {/* Testing Panel for Development */}
+      <Card className="bg-gray-800 border-yellow-600 border-2">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-yellow-300">Development Testing</h3>
+            <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded">
+              Demo Mode
+            </span>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-300 mb-3">
+                Simulate multiple days of realistic usage data including weight logs, macro tracking, and workout history.
+              </p>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Button
+                  onClick={() => handleSeedData(7)}
+                  disabled={isSeeding}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  {isSeeding ? "Generating..." : "1 Week"}
+                </Button>
+                
+                <Button
+                  onClick={() => handleSeedData(14)}
+                  disabled={isSeeding}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  {isSeeding ? "Generating..." : "2 Weeks"}
+                </Button>
+                
+                <Button
+                  onClick={() => handleSeedData(30)}
+                  disabled={isSeeding}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  {isSeeding ? "Generating..." : "1 Month"}
+                </Button>
+                
+                <Button
+                  onClick={() => handleSeedData(60)}
+                  disabled={isSeeding}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  {isSeeding ? "Generating..." : "2 Months"}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="text-xs text-gray-400 bg-gray-900 p-3 rounded">
+              <p className="font-semibold mb-1">Generated data includes:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Daily weight entries with realistic fluctuations and overall trend toward goal</li>
+                <li>Nutrition screenshot uploads with macro tracking and adherence scores</li>
+                <li>Workout logs with progressive overload and consistent training patterns</li>
+                <li>Chat history with Coach Chassidy showing progress feedback</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
