@@ -19,7 +19,7 @@ import {
   dailyMacros
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { eq, desc, and, gte, lte, not } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -1174,7 +1174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const trainerId = req.user.claims.sub;
       
-      // For Coach Chassidy, show all clients assigned to her
+      // For Coach Chassidy, show all clients assigned to her (excluding the trainer themselves)
       const clients = await db.select({
         id: users.id,
         firstName: users.firstName,
@@ -1186,7 +1186,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         goalWeight: users.goalWeight,
         programStartDate: users.programStartDate,
         onboardingCompleted: users.onboardingCompleted,
-      }).from(users).where(eq(users.trainerId, 'coach_chassidy'));
+      }).from(users).where(
+        and(
+          eq(users.trainerId, 'coach_chassidy'),
+          not(eq(users.id, 'coach_chassidy'))
+        )
+      );
       
       res.json(clients);
     } catch (error) {
