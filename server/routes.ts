@@ -309,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           aiProtein: macroRecommendation.protein,
           aiCarbs: macroRecommendation.carbs,
           aiFat: macroRecommendation.fat,
-          aiReasoning: `Initial macro plan for new client. Baseline: ${baselineMacros.calories} calories. Recommended: ${adjustedCalories} calories (-50 cal reduction). ${macroRecommendation.reasoning}`,
+          aiReasoning: macroRecommendation.reasoning,
           status: 'pending',
           trainerId: null // Will be filled when trainer reviews
         });
