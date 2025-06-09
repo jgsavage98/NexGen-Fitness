@@ -329,7 +329,7 @@ export default function TrainerDashboard() {
                   <Button
                     onClick={() => setEditMode(true)}
                     variant="outline"
-                    className="border-gray-600 text-gray-300"
+                    className="border-gray-600 text-white hover:bg-gray-700 hover:text-white"
                   >
                     Edit & Approve
                   </Button>
