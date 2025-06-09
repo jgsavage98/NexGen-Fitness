@@ -231,7 +231,7 @@ export default function NutritionCalendar() {
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-500">
-                {monthlyMacros.filter(m => m.screenshotUrl).length}
+                {monthlyMacros.filter(m => m.screenshotUrl || m.screenshot_url).length}
               </div>
               <div className="text-sm text-gray-400">Days Logged</div>
             </div>
