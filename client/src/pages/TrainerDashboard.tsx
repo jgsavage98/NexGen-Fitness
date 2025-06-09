@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut } from "lucide-react";
 import ProfileSettings from "@/pages/ProfileSettings";
+import ClientUploadHistory from "@/components/ClientUploadHistory";
 import { calculateJourneyDay } from "@/lib/dateUtils";
 
 interface Client {
@@ -358,6 +359,10 @@ export default function TrainerDashboard() {
               <User className="w-4 h-4 mr-2" />
               Client Progress
             </TabsTrigger>
+            <TabsTrigger value="client-history" className="data-[state=active]:bg-primary-500">
+              <Calendar className="w-4 h-4 mr-2" />
+              Upload History
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -572,6 +577,60 @@ export default function TrainerDashboard() {
                   </Card>
                 );
               })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="client-history" className="space-y-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Client Upload History</h3>
+                <p className="text-gray-400 mb-6">View nutrition tracking compliance and upload details for your clients.</p>
+              </div>
+
+              {/* Client Selection */}
+              <Card className="bg-surface border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Select Client</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {clients.map((client) => (
+                      <Card
+                        key={client.id}
+                        className={`cursor-pointer transition-all border-2 ${
+                          selectedClient === client.id
+                            ? 'border-primary-500 bg-primary-500/10'
+                            : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                        }`}
+                        onClick={() => setSelectedClient(client.id)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center">
+                              <span className="text-white font-semibold">
+                                {client.firstName[0]}{client.lastName[0]}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-white font-semibold">
+                                {client.firstName} {client.lastName}
+                              </p>
+                              <p className="text-gray-400 text-sm">
+                                Day {client.programStartDate ? calculateJourneyDay(client.programStartDate, 'America/Los_Angeles') : 1}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Client Upload History Display */}
+              {selectedClient && (
+                <ClientUploadHistory clientId={selectedClient} />
+              )}
             </div>
           </TabsContent>
         </Tabs>
