@@ -1,12 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import johnProfileImage from "@assets/John_1749433573534.png";
+import { User, Crown } from "lucide-react";
+
+interface UserData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profileImageUrl?: string;
+  goal?: string;
+  trainerId?: string;
+}
 
 export default function UserSwitcher() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch available users from the database
+  const { data: availableUsers = [], isLoading } = useQuery<UserData[]>({
+    queryKey: ["/api/auth/available-users"],
+  });
 
   const loginMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -103,49 +119,75 @@ export default function UserSwitcher() {
           <p className="text-gray-600">Select which account you'd like to access</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Demo User Card */}
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-blue-300">
-            <CardHeader className="text-center">
-              <div className="mx-auto h-20 w-20 mb-4 rounded-full overflow-hidden">
-                <img src={johnProfileImage} alt="John" className="w-full h-full object-cover" />
-              </div>
-              <CardTitle>John (Demo User)</CardTitle>
-              <CardDescription>
-                Fitness client working towards weight loss goals
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                className="w-full" 
-                onClick={() => window.location.href = '/api/auth/demo-user'}
-              >
-                Login as John
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Coach Chassidy Card */}
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-purple-300">
-            <CardHeader className="text-center">
-              <div className="mx-auto h-20 w-20 mb-4 rounded-full overflow-hidden">
-                <img src="/chassidy-profile.jpeg" alt="Coach Chassidy" className="w-full h-full object-cover" />
-              </div>
-              <CardTitle>Coach Chassidy</CardTitle>
-              <CardDescription>
-                Personal trainer managing client programs and progress
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                className="w-full bg-purple-600 hover:bg-purple-700" 
-                onClick={() => window.location.href = '/api/auth/coach'}
-              >
-                Login as Coach
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        {isLoading ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">Loading available accounts...</p>
+          </div>
+        ) : availableUsers.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">No accounts available</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {availableUsers.map((user) => {
+              const isTrainer = user.id === 'coach_chassidy' || user.trainerId === null;
+              const userType = isTrainer ? 'Trainer' : 'Client';
+              const borderColor = isTrainer ? 'hover:border-purple-300' : 'hover:border-blue-300';
+              const buttonColor = isTrainer ? 'bg-purple-600 hover:bg-purple-700' : '';
+              
+              return (
+                <Card 
+                  key={user.id} 
+                  className={`hover:shadow-lg transition-shadow cursor-pointer border-2 ${borderColor}`}
+                >
+                  <CardHeader className="text-center">
+                    <div className="mx-auto h-20 w-20 mb-4 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                      {user.profileImageUrl ? (
+                        <img 
+                          src={user.profileImageUrl} 
+                          alt={`${user.firstName} ${user.lastName}`} 
+                          className="w-full h-full object-cover" 
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                          {isTrainer ? (
+                            <Crown className="w-8 h-8 text-white" />
+                          ) : (
+                            <User className="w-8 h-8 text-white" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <CardTitle className="flex items-center justify-center gap-2">
+                        {user.firstName} {user.lastName}
+                        {isTrainer && (
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                            {userType}
+                          </Badge>
+                        )}
+                      </CardTitle>
+                      <CardDescription>
+                        {isTrainer 
+                          ? "Personal trainer managing client programs and progress"
+                          : user.goal || "Fitness client working towards their goals"
+                        }
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Button 
+                      className={`w-full ${buttonColor}`}
+                      onClick={() => window.location.href = `/api/auth/switch/${user.id}`}
+                    >
+                      Login as {user.firstName}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
         <div className="text-center">
           <Button 
