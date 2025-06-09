@@ -24,8 +24,11 @@ export default function UserSwitcher() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate user query to refresh auth state
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      // Force a page reload to ensure the new auth cookie takes effect
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      
       toast({
         title: "Switched accounts",
         description: "Successfully switched to the selected account",
