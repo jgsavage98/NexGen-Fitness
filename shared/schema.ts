@@ -11,6 +11,7 @@ import {
   boolean,
   date,
   unique,
+  decimal,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -107,6 +108,9 @@ export const trainers = pgTable("trainers", {
   bio: text("bio"),
   specialties: text("specialties").array().default([]),
   certifications: text("certifications").array().default([]),
+  yearsExperience: integer("years_experience").default(0),
+  clientsHelped: integer("clients_helped").default(0),
+  rating: real("rating").default(0.0),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
