@@ -220,13 +220,15 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
         const decoded = Buffer.from(urlAuth, 'base64').toString();
         const [userId] = decoded.split(':');
         
-        if (userId === 'demo-user-123' || userId === 'coach_chassidy') {
+        // Validate user exists in database
+        const user = await storage.getUser(userId);
+        if (user) {
           console.log('Auth successful via URL for user:', userId);
           
           (req as any).user = {
             claims: {
               sub: userId,
-              email: userId === 'coach_chassidy' ? 'chassidy@igniteai.com' : 'demo@example.com',
+              email: user.email || `${userId}@example.com`,
             }
           };
           return next();
@@ -250,13 +252,19 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
+      // Validate user exists in database
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       console.log('Auth successful via cookie for user:', userId);
       
       // Attach user info to request for compatibility
       (req as any).user = {
         claims: {
           sub: userId,
-          email: userId === 'coach_chassidy' ? 'chassidy@igniteai.com' : 'demo@example.com',
+          email: user.email || `${userId}@example.com`,
         }
       };
       return next();
