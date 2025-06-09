@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { WorkoutExercise, WorkoutSet } from "@/lib/types";
 import { Plus, Minus } from "lucide-react";
 import WeightProgressChart from "./WeightProgressChart";
+import ExerciseThumbnail from "./ExerciseThumbnail";
 
 interface ExerciseVideoCardProps {
   exercise: WorkoutExercise;
@@ -75,12 +76,18 @@ export default function ExerciseVideoCard({
     <Card className="bg-surface border-gray-700 overflow-hidden">
       {/* Video Section */}
       <div className="relative">
-        <div className="relative h-48 bg-gray-800">
-          <img
-            src={getExercisePoster()}
-            alt={`${exercise.name} demonstration`}
-            className="w-full h-full object-contain bg-gray-900"
-          />
+        <div className="relative h-48 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <ExerciseThumbnail exerciseName={exercise.name} className="w-24 h-24" />
+            <div className="text-center">
+              <h4 className="text-white font-semibold mb-2">{exercise.name}</h4>
+              <img
+                src="/attached_assets/twisting-crunch_1749432251767.gif"
+                alt="Exercise demonstration"
+                className="w-20 h-20 object-cover rounded-lg mx-auto opacity-75"
+              />
+            </div>
+          </div>
           
           {/* Exercise demo label */}
           <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
