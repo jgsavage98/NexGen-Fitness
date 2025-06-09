@@ -66,18 +66,9 @@ export default function ExerciseVideoCard({
     return isPrimary ? "bg-muscle-primary" : "bg-muscle-secondary";
   };
 
-  // Generate placeholder video poster based on exercise type
+  // Use animated GIF placeholder for all exercises
   const getExercisePoster = () => {
-    const exerciseName = exercise.name.toLowerCase();
-    if (exerciseName.includes('push')) {
-      return "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=200&fit=crop";
-    } else if (exerciseName.includes('row') || exerciseName.includes('pull')) {
-      return "https://images.unsplash.com/photo-1594381898411-846e7d193883?w=400&h=200&fit=crop";
-    } else if (exerciseName.includes('squat') || exerciseName.includes('leg')) {
-      return "https://images.unsplash.com/photo-1566241477147-ba9c8c2e2b13?w=400&h=200&fit=crop";
-    } else {
-      return "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=200&fit=crop";
-    }
+    return "/placeholder-exercise.gif";
   };
 
   return (
@@ -88,19 +79,13 @@ export default function ExerciseVideoCard({
           <img
             src={getExercisePoster()}
             alt={`${exercise.name} demonstration`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain bg-gray-900"
           />
           
-          {!isVideoPlaying && (
-            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-              <Button
-                onClick={handlePlayVideo}
-                className="w-16 h-16 bg-white/90 hover:bg-white rounded-full flex items-center justify-center p-0"
-              >
-                <i className="fas fa-play text-gray-800 ml-1 text-xl"></i>
-              </Button>
-            </div>
-          )}
+          {/* Exercise demo label */}
+          <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
+            Exercise Demo
+          </div>
           
           <div className="absolute top-4 right-4">
             <Button
