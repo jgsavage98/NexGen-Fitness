@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import MacroRings from "./MacroRings";
-import ExerciseThumbnail from "./ExerciseThumbnail";
+import AnimatedExerciseThumbnail from "./AnimatedExerciseThumbnail";
 import { Workout, MacroTarget } from "@/lib/types";
 import { Link } from "wouter";
 import { User, Calendar, Target } from "lucide-react";
@@ -161,7 +161,7 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
             <div className="space-y-3">
               {workout.exercises.slice(0, 3).map((exercise, index) => (
                 <div key={index} className="flex items-center space-x-3 p-3 bg-dark rounded-lg hover:bg-gray-800 transition-colors">
-                  <ExerciseThumbnail exerciseName={exercise.name} />
+                  <AnimatedExerciseThumbnail exerciseName={exercise.name} />
                   <div className="flex-1">
                     <div className="font-medium text-white">{exercise.name}</div>
                     <div className="text-sm text-gray-400">

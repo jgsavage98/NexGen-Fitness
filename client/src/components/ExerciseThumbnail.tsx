@@ -174,18 +174,19 @@ export default function ExerciseThumbnail({ exerciseName, className = "w-12 h-12
   }
   
   return (
-    <div className={`${className} bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center text-white flex-shrink-0 relative overflow-hidden`}>
-      {/* Animated GIF background overlay for all exercises */}
-      <div className="absolute inset-0 opacity-30">
-        <img
-          src="/attached_assets/twisting-crunch_1749432251767.gif?v=2"
-          alt="Exercise motion"
-          className="w-full h-full object-cover"
-        />
-      </div>
+    <div className={`${className} rounded-lg flex items-center justify-center text-white flex-shrink-0 relative overflow-hidden`}>
+      {/* Animated GIF as main background */}
+      <img
+        src="/attached_assets/twisting-crunch_1749432251767.gif?v=3"
+        alt="Exercise motion"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      
+      {/* Dark overlay for contrast */}
+      <div className="absolute inset-0 bg-black/40"></div>
       
       {/* Exercise-specific icon overlay */}
-      <div className="relative z-10 opacity-90">
+      <div className="relative z-10 w-8 h-8">
         {getExerciseThumbnail(exerciseName)}
       </div>
     </div>
