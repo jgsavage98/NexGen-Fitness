@@ -96,19 +96,9 @@ export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTab
       formData.append('date', data.date);
 
       console.log('Uploading to /api/nutrition/screenshot');
-      const response = await fetch('/api/nutrition/screenshot', {
-        method: 'POST',
-        body: formData,
-      });
-
-      console.log('Upload response status:', response.status);
       
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Upload error:', error);
-        throw new Error(error.message || 'Upload failed');
-      }
-
+      // Use apiRequest with FormData for proper authentication
+      const response = await apiRequest('POST', '/api/nutrition/screenshot', formData);
       const result = await response.json();
       console.log('Upload successful:', result);
       return result as ScreenshotUploadResult;
