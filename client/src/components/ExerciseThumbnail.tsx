@@ -117,13 +117,27 @@ const exerciseThumbnails: Record<string, JSX.Element> = {
 };
 
 const getExerciseThumbnail = (exerciseName: string): JSX.Element => {
+  // For core/ab exercises, use the animated GIF directly
+  const lowercaseName = exerciseName.toLowerCase();
+  const coreExercises = ['crunch', 'plank', 'abs', 'core', 'sit-up', 'twist'];
+  const isCore = coreExercises.some(exercise => lowercaseName.includes(exercise));
+  
+  if (isCore) {
+    return (
+      <img
+        src="/attached_assets/twisting-crunch_1749432251767.gif"
+        alt={exerciseName}
+        className="w-full h-full object-cover rounded"
+      />
+    );
+  }
+  
   // Try exact match first
   if (exerciseThumbnails[exerciseName]) {
     return exerciseThumbnails[exerciseName];
   }
   
   // Try partial matching for variations
-  const lowercaseName = exerciseName.toLowerCase();
   for (const [key, thumbnail] of Object.entries(exerciseThumbnails)) {
     if (lowercaseName.includes(key.toLowerCase()) || key.toLowerCase().includes(lowercaseName)) {
       return thumbnail;
@@ -143,8 +157,20 @@ const getExerciseThumbnail = (exerciseName: string): JSX.Element => {
 
 export default function ExerciseThumbnail({ exerciseName, className = "w-12 h-12" }: ExerciseThumbnailProps) {
   return (
-    <div className={`${className} bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center text-white flex-shrink-0`}>
-      {getExerciseThumbnail(exerciseName)}
+    <div className={`${className} bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center text-white flex-shrink-0 relative overflow-hidden`}>
+      {/* Animated GIF background overlay */}
+      <div className="absolute inset-0 opacity-20">
+        <img
+          src="/attached_assets/twisting-crunch_1749432251767.gif"
+          alt="Exercise motion"
+          className="w-full h-full object-cover"
+        />
+      </div>
+      
+      {/* Exercise-specific icon overlay */}
+      <div className="relative z-10">
+        {getExerciseThumbnail(exerciseName)}
+      </div>
     </div>
   );
 }
