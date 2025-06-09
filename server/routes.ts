@@ -116,23 +116,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Demo login routes for development
-  app.post('/api/auth/demo-login', (req, res) => {
-    const { userId } = req.body;
+  app.get('/api/auth/switch/:userId', (req, res) => {
+    const { userId } = req.params;
     
     if (!userId || (userId !== 'demo-user-123' && userId !== 'coach_chassidy')) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
 
-    // Return auth token for client-side storage
+    // Clear existing cookies completely
+    res.clearCookie('auth_token', { path: '/' });
+    res.clearCookie('connect.sid', { path: '/' });
+    
+    // Create new auth token
     const authToken = Buffer.from(`${userId}:${Date.now()}`).toString('base64');
     
-    console.log('Demo login auth token generated:', { userId, token: authToken });
-    res.json({ 
-      success: true, 
-      message: `Logged in as ${userId}`,
-      authToken: authToken,
-      userId: userId
+    // Set new cookie with immediate expiration for old one
+    res.cookie('auth_token', authToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: 'lax',
+      path: '/'
     });
+    
+    console.log('Demo auth switch:', { userId, token: authToken });
+    
+    // Redirect to home page to force cookie refresh
+    res.redirect('/');
   });
 
 

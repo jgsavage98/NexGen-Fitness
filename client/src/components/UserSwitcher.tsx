@@ -118,10 +118,9 @@ export default function UserSwitcher() {
             <CardContent>
               <Button 
                 className="w-full" 
-                onClick={() => loginMutation.mutate('demo-user-123')}
-                disabled={loginMutation.isPending}
+                onClick={() => window.location.href = '/api/auth/switch/demo-user-123'}
               >
-                {loginMutation.isPending ? 'Switching...' : 'Login as John'}
+                Login as John
               </Button>
             </CardContent>
           </Card>
@@ -140,10 +139,9 @@ export default function UserSwitcher() {
             <CardContent>
               <Button 
                 className="w-full bg-purple-600 hover:bg-purple-700" 
-                onClick={() => loginMutation.mutate('coach_chassidy')}
-                disabled={loginMutation.isPending}
+                onClick={() => window.location.href = '/api/auth/switch/coach_chassidy'}
               >
-                {loginMutation.isPending ? 'Switching...' : 'Login as Coach'}
+                Login as Coach
               </Button>
             </CardContent>
           </Card>
