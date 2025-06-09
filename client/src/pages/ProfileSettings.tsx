@@ -90,7 +90,13 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
 
       // Use trainer-specific endpoint if user is a coach
       const endpoint = isCoach ? '/api/trainer/update-profile' : '/api/profile/update';
-      const response = await fetch(endpoint, {
+      
+      // Get auth token from URL parameters for authenticated requests
+      const urlParams = new URLSearchParams(window.location.search);
+      const authToken = urlParams.get('auth');
+      const finalEndpoint = authToken ? `${endpoint}?auth=${authToken}` : endpoint;
+      
+      const response = await fetch(finalEndpoint, {
         method: 'POST',
         body: formData,
       });
