@@ -402,31 +402,34 @@ export default function Onboarding() {
                 </div>
               </div>
 
-              {/* New Target Section */}
-              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
-                <div className="text-sm font-medium mb-3 text-primary-300">New Daily Target</div>
+              {/* Proposed Target Section */}
+              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+                <div className="text-sm font-medium mb-3 text-yellow-300">Proposed Daily Target (Pending Trainer Review)</div>
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-lg font-semibold text-primary-100">{macroSummary?.newCalories || 1950} calories</span>
-                  <span className="text-xs bg-success/20 text-success px-2 py-1 rounded">
-                    -{((macroSummary?.baselineCalories || 2000) - (macroSummary?.newCalories || 1950))} cal
+                  <span className="text-lg font-semibold text-yellow-100">{macroSummary?.proposedCalories || macroSummary?.newCalories || 1950} calories</span>
+                  <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">
+                    -{((macroSummary?.baselineCalories || 2000) - (macroSummary?.proposedCalories || macroSummary?.newCalories || 1950))} cal
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="text-center">
-                    <div className="text-primary-400">Protein</div>
-                    <div className="font-semibold text-primary-100">{macroSummary?.newMacros?.protein || 122}g</div>
+                    <div className="text-yellow-400">Protein</div>
+                    <div className="font-semibold text-yellow-100">{macroSummary?.proposedMacros?.protein || macroSummary?.newMacros?.protein || 122}g</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-primary-400">Carbs</div>
-                    <div className="font-semibold text-primary-100">{macroSummary?.newMacros?.carbs || 219}g</div>
+                    <div className="text-yellow-400">Carbs</div>
+                    <div className="font-semibold text-yellow-100">{macroSummary?.proposedMacros?.carbs || macroSummary?.newMacros?.carbs || 219}g</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-primary-400">Fat</div>
-                    <div className="font-semibold text-primary-100">{macroSummary?.newMacros?.fat || 65}g</div>
+                    <div className="text-yellow-400">Fat</div>
+                    <div className="font-semibold text-yellow-100">{macroSummary?.proposedMacros?.fat || macroSummary?.newMacros?.fat || 65}g</div>
                   </div>
                 </div>
-                <div className="mt-3 text-xs text-blue-200 bg-blue-500/10 rounded p-2">
-                  I'm starting you with a gentle reduction. We'll adjust gradually as you progress!
+                <div className="mt-3 text-xs text-yellow-200 bg-yellow-500/10 rounded p-2">
+                  {macroSummary?.status === 'pending_trainer_approval' 
+                    ? 'This plan is awaiting your trainer\'s review and approval.'
+                    : 'I\'m starting you with a gentle reduction. We\'ll adjust gradually as you progress!'
+                  }
                 </div>
               </div>
             </div>
@@ -443,8 +446,9 @@ export default function Onboarding() {
               <div className="text-sm">
                 <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
                 <p className="text-primary-100">
-                  Welcome to your personalized fitness journey! I've created a gentle starting plan that focuses on sustainable progress. 
-                  Remember, we're not rushing - slow and steady wins the race. I'll adjust your plan every week based on your progress.
+                  Welcome to your personalized fitness journey! I've generated your initial macro plan based on your MyFitnessPal data and goals. 
+                  I'll review and approve this plan shortly, making any necessary adjustments to ensure it's perfect for you. Once approved, 
+                  you'll see your active targets in the dashboard.
                 </p>
               </div>
             </div>
