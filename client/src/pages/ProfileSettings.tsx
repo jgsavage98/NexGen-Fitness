@@ -339,6 +339,97 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
             </Card>
           )}
 
+          {/* Coach Stats */}
+          {isCoach && (
+            <Card className="bg-surface border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Professional Stats</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-gray-300">Years Experience</Label>
+                    <Input
+                      type="number"
+                      value={yearsExperience}
+                      onChange={(e) => setYearsExperience(parseInt(e.target.value) || 0)}
+                      className="bg-gray-700 border-gray-600 text-white mt-2"
+                      placeholder="8"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-gray-300">Clients Helped</Label>
+                    <Input
+                      type="number"
+                      value={clientsHelped}
+                      onChange={(e) => setClientsHelped(parseInt(e.target.value) || 0)}
+                      className="bg-gray-700 border-gray-600 text-white mt-2"
+                      placeholder="500"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-gray-300">Rating</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="5"
+                      value={rating}
+                      onChange={(e) => setRating(parseFloat(e.target.value) || 0)}
+                      className="bg-gray-700 border-gray-600 text-white mt-2"
+                      placeholder="4.9"
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400">
+                  These stats will be displayed on your coach profile
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Coach Certifications */}
+          {isCoach && (
+            <Card className="bg-surface border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Certifications</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {certifications.map((certification, index) => (
+                  <div key={index} className="flex space-x-2">
+                    <Input
+                      value={certification}
+                      onChange={(e) => updateCertification(index, e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white flex-1"
+                      placeholder="e.g., NASM-CPT"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCertification(index)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addCertification}
+                  className="border-gray-600 text-gray-300 hover:text-white"
+                >
+                  + Add Certification
+                </Button>
+                <p className="text-sm text-gray-400">
+                  List your professional certifications and credentials
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Save Button */}
           <Button
             onClick={handleSubmit}
