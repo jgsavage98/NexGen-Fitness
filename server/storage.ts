@@ -438,6 +438,21 @@ export class DatabaseStorage implements IStorage {
     const [newEntry] = await db.insert(progressEntries).values(entry).returning();
     return newEntry;
   }
+  async getClientMacrosForMonth(clientId: string, startDate: Date, endDate: Date): Promise<DailyMacros[]> {
+    const macros = await db
+      .select()
+      .from(dailyMacros)
+      .where(
+        and(
+          eq(dailyMacros.userId, clientId),
+          gte(dailyMacros.date, startDate.toISOString().split('T')[0]),
+          lte(dailyMacros.date, endDate.toISOString().split('T')[0])
+        )
+      )
+      .orderBy(asc(dailyMacros.date));
+    
+    return macros;
+  }
 }
 
 export const storage = new DatabaseStorage();
