@@ -3,15 +3,16 @@ import { TabType } from "@/pages/Home";
 interface TabNavigationProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  isPendingApproval?: boolean;
 }
 
-export default function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
+export default function TabNavigation({ activeTab, onTabChange, isPendingApproval }: TabNavigationProps) {
   const tabs = [
-    { id: 'dashboard' as TabType, icon: 'fas fa-home', label: 'Home' },
-    { id: 'nutrition' as TabType, icon: 'fas fa-camera', label: 'Nutrition' },
-    { id: 'workout' as TabType, icon: 'fas fa-dumbbell', label: 'Workout' },
-    { id: 'chat' as TabType, icon: 'fas fa-comments', label: 'Chat' },
-    { id: 'progress' as TabType, icon: 'fas fa-chart-line', label: 'Progress' },
+    { id: 'dashboard' as TabType, icon: 'fas fa-home', label: 'Home', disabled: false },
+    { id: 'nutrition' as TabType, icon: 'fas fa-camera', label: 'Nutrition', disabled: isPendingApproval },
+    { id: 'workout' as TabType, icon: 'fas fa-dumbbell', label: 'Workout', disabled: isPendingApproval },
+    { id: 'chat' as TabType, icon: 'fas fa-comments', label: 'Chat', disabled: false },
+    { id: 'progress' as TabType, icon: 'fas fa-chart-line', label: 'Progress', disabled: isPendingApproval },
   ];
 
   return (
@@ -21,13 +22,18 @@ export default function TabNavigation({ activeTab, onTabChange }: TabNavigationP
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => onTabChange(tab.id)}
+              onClick={() => !tab.disabled && onTabChange(tab.id)}
+              disabled={tab.disabled}
               className={`flex-1 py-3 px-4 text-center tab-btn ${
                 activeTab === tab.id ? 'active' : ''
-              }`}
+              } ${tab.disabled ? 'disabled' : ''}`}
             >
-              <i className={`${tab.icon} text-xl mb-1 block`}></i>
-              <span className="text-xs">{tab.label}</span>
+              <i className={`${tab.icon} text-xl mb-1 block ${
+                tab.disabled ? 'text-gray-600' : ''
+              }`}></i>
+              <span className={`text-xs ${
+                tab.disabled ? 'text-gray-600' : ''
+              }`}>{tab.label}</span>
             </button>
           ))}
         </div>

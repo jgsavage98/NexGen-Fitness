@@ -9,7 +9,7 @@ import ProfileSettings from "@/pages/ProfileSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Settings, LogOut, User } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { formatJourneyDay, hasProgramStarted } from "@/lib/dateUtils";
@@ -23,6 +23,14 @@ export default function Home() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+
+  // Get macro targets status for tab restrictions
+  const today = new Date().toISOString().split('T')[0];
+  const { data: macroTargets } = useQuery<any>({
+    queryKey: [`/api/macro-targets?date=${today}`],
+  });
+
+  const isPendingApproval = macroTargets?.status === 'pending_trainer_approval';
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -111,7 +119,11 @@ export default function Home() {
 
         {/* Tab Navigation - only show when not in profile settings */}
         {currentView === 'tabs' && (
-          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+          <TabNavigation 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+            isPendingApproval={isPendingApproval}
+          />
         )}
       </div>
     </div>
