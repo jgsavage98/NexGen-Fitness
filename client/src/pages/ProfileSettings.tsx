@@ -27,16 +27,28 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
     queryKey: ["/api/auth/user"],
   });
 
+  // Fetch trainer data if user is a coach
+  const { data: trainerData } = useQuery({
+    queryKey: ["/api/trainer/profile"],
+    enabled: (user as any)?.id === "coach_chassidy",
+  });
+
   // Update form when user data loads
   useEffect(() => {
     if (user) {
       const userData = user as any;
       setFirstName(userData?.firstName || "");
       setLastName(userData?.lastName || "");
-      setBio(userData?.bio || "");
       setIsCoach(userData?.id === "coach_chassidy");
+      
+      // Use trainer bio if user is a coach, otherwise use user bio
+      if (userData?.id === "coach_chassidy" && trainerData) {
+        setBio((trainerData as any).bio || "");
+      } else {
+        setBio(userData?.bio || "");
+      }
     }
-  }, [user]);
+  }, [user, trainerData]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { firstName: string; lastName: string; bio?: string; profileImage?: File }) => {
@@ -46,7 +58,9 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
       if (data.bio) formData.append('bio', data.bio);
       if (data.profileImage) formData.append('profileImage', data.profileImage);
 
-      const response = await fetch('/api/profile/update', {
+      // Use trainer-specific endpoint if user is a coach
+      const endpoint = isCoach ? '/api/trainer/update-profile' : '/api/profile/update';
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });

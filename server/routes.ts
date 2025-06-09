@@ -1002,6 +1002,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trainer dashboard routes
+  app.get('/api/trainer/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const trainer = await storage.getTrainer(trainerId);
+      if (!trainer) {
+        return res.status(404).json({ message: "Trainer profile not found" });
+      }
+      
+      res.json(trainer);
+    } catch (error) {
+      console.error("Error fetching trainer profile:", error);
+      res.status(500).json({ message: "Failed to fetch trainer profile" });
+    }
+  });
+
+  app.post('/api/trainer/update-profile', isAuthenticated, upload.single('profileImage'), async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { firstName, lastName, bio } = req.body;
+      
+      // Update user record for basic info
+      await storage.updateUserProfile(trainerId, {
+        firstName,
+        lastName,
+      });
+
+      // Update trainer record for bio and other trainer-specific data
+      const trainerUpdates: any = {};
+      if (bio !== undefined) trainerUpdates.bio = bio;
+      
+      if (req.file) {
+        const photoUrl = `/uploads/${req.file.filename}`;
+        trainerUpdates.photoUrl = photoUrl;
+        
+        // Also update user profile image
+        await storage.updateUserProfile(trainerId, {
+          profileImageUrl: photoUrl,
+        });
+      }
+
+      // Update trainer data if there are trainer-specific updates
+      if (Object.keys(trainerUpdates).length > 0) {
+        await storage.upsertTrainer({
+          id: trainerId,
+          name: `${firstName} ${lastName}`,
+          ...trainerUpdates,
+        });
+      }
+
+      res.json({ message: "Profile updated successfully" });
+    } catch (error) {
+      console.error("Error updating trainer profile:", error);
+      res.status(500).json({ message: "Failed to update trainer profile" });
+    }
+  });
+
   app.get('/api/trainer/clients', isAuthenticated, async (req: any, res) => {
     try {
       const trainerId = req.user.claims.sub;
