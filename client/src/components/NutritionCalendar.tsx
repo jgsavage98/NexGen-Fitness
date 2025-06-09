@@ -262,7 +262,7 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
 
       {/* Upload Details Modal */}
       <Dialog open={!!selectedDay} onOpenChange={() => setSelectedDay(null)}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
+        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white">
               Upload Details - June {selectedDay?.day}
