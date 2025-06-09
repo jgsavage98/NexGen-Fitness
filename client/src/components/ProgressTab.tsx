@@ -11,6 +11,7 @@ import { Scale, TrendingDown, TrendingUp } from "lucide-react";
 
 export default function ProgressTab() {
   const [currentWeight, setCurrentWeight] = useState("");
+  const [isSeeding, setIsSeeding] = useState(false);
   const { toast } = useToast();
 
   const { data: progressEntries = [] } = useQuery<ProgressEntry[]>({
@@ -73,6 +74,48 @@ export default function ProgressTab() {
       return;
     }
     logWeightMutation.mutate(weight);
+  };
+
+  // Seed test data mutation
+  const seedDataMutation = useMutation({
+    mutationFn: async (days: number) => {
+      const response = await fetch("/api/test/seed-data", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ days })
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to seed test data");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Test Data Generated",
+        description: "Historical progress data has been created successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-macros/recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workout-logs"] });
+      setIsSeeding(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsSeeding(false);
+    },
+  });
+
+  const handleSeedData = (days: number) => {
+    setIsSeeding(true);
+    seedDataMutation.mutate(days);
   };
 
   // Calculate this week's stats

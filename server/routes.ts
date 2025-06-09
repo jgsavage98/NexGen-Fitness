@@ -5,6 +5,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { aiCoach, extractNutritionFromScreenshot } from "./openai";
+import { seedTestData, clearTestData } from "./testData";
 import { 
   updateUserProfileSchema, 
   insertMealSchema, 
@@ -910,6 +911,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 </body>
 </html>
     `);
+  });
+
+  // Testing endpoints for simulating multiple days of usage
+  app.post('/api/test/seed-data', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { days = 14 } = req.body;
+      
+      const result = await seedTestData(userId, days);
+      res.json(result);
+    } catch (error) {
+      console.error("Error seeding test data:", error);
+      res.status(500).json({ message: "Failed to seed test data" });
+    }
+  });
+
+  app.post('/api/test/clear-data', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const result = await clearTestData(userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error clearing test data:", error);
+      res.status(500).json({ message: "Failed to clear test data" });
+    }
   });
 
   const httpServer = createServer(app);
