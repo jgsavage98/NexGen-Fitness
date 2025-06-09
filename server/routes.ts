@@ -976,12 +976,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select({
           id: macroChanges.id,
           userId: macroChanges.userId,
-          proposedCalories: macroChanges.proposedCalories,
-          proposedProtein: macroChanges.proposedProtein,
-          proposedCarbs: macroChanges.proposedCarbs,
-          proposedFat: macroChanges.proposedFat,
-          reasoning: macroChanges.reasoning,
-          requestDate: macroChanges.requestDate,
+          proposedCalories: macroChanges.aiCalories,
+          proposedProtein: macroChanges.aiProtein,
+          proposedCarbs: macroChanges.aiCarbs,
+          proposedFat: macroChanges.aiFat,
+          reasoning: macroChanges.aiReasoning,
+          requestDate: macroChanges.createdAt,
           user: {
             id: users.id,
             firstName: users.firstName,
