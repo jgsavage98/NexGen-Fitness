@@ -123,8 +123,23 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
       firstName,
       lastName,
       bio: isCoach ? bio : undefined,
+      specialties: isCoach ? specialties : undefined,
       profileImage: selectedFile || undefined,
     });
+  };
+
+  const addSpecialty = () => {
+    setSpecialties([...specialties, ""]);
+  };
+
+  const updateSpecialty = (index: number, value: string) => {
+    const updated = [...specialties];
+    updated[index] = value;
+    setSpecialties(updated);
+  };
+
+  const removeSpecialty = (index: number) => {
+    setSpecialties(specialties.filter((_, i) => i !== index));
   };
 
   const getCurrentProfileImage = () => {
@@ -225,16 +240,56 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
                 <CardTitle className="text-white">Professional Bio</CardTitle>
               </CardHeader>
               <CardContent>
-                <Label className="text-gray-300">Bio</Label>
+                <Label className="text-gray-300">About Coach Bio</Label>
                 <Textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   className="bg-gray-700 border-gray-600 text-white mt-2"
                   placeholder="Tell your clients about your experience and approach..."
-                  rows={4}
+                  rows={6}
                 />
                 <p className="text-sm text-gray-400 mt-2">
-                  This will be shown to your clients on the dashboard
+                  This will be shown to your clients on the "Meet Your Coach" page
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Coach Specialties */}
+          {isCoach && (
+            <Card className="bg-surface border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">My Specialties</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {specialties.map((specialty, index) => (
+                  <div key={index} className="flex space-x-2">
+                    <Input
+                      value={specialty}
+                      onChange={(e) => updateSpecialty(index, e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white flex-1"
+                      placeholder="Enter a specialty area..."
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeSpecialty(index)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addSpecialty}
+                  className="border-gray-600 text-gray-300 hover:text-white"
+                >
+                  + Add Specialty
+                </Button>
+                <p className="text-sm text-gray-400">
+                  List your areas of expertise and specialization
                 </p>
               </CardContent>
             </Card>

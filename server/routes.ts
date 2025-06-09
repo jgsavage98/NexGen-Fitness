@@ -1030,7 +1030,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const { firstName, lastName, bio } = req.body;
+      const { firstName, lastName, bio, specialties } = req.body;
       
       // Update user record for basic info using direct DB update
       const userUpdates: any = {};
@@ -1051,6 +1051,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update trainer record for bio and other trainer-specific data
       const trainerUpdates: any = {};
       if (bio !== undefined) trainerUpdates.bio = bio;
+      if (specialties !== undefined) {
+        trainerUpdates.specialties = JSON.parse(specialties);
+      }
       
       if (req.file) {
         const photoUrl = `/uploads/${req.file.filename}`;
