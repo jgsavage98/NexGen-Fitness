@@ -142,31 +142,7 @@ export default function Onboarding() {
       // First update the profile
       const profileResponse = await apiRequest("PUT", "/api/user/profile", profileData);
       
-      // If there's a current macros screenshot, upload and analyze it for baseline data
-      if (data.currentMacrosFile && nutritionData) {
-        // Use the extracted nutrition data for baseline calculations
-        const baselineData = {
-          calories: nutritionData.calories,
-          protein: nutritionData.protein,
-          carbs: nutritionData.carbs,
-          fat: nutritionData.fat
-        };
-        
-        // Store baseline data for macro calculations
-        const newCalories = Math.max(baselineData.calories - 200, 1200);
-        const macroData = {
-          baselineCalories: baselineData.calories,
-          newCalories,
-          baselineMacros: baselineData,
-          newMacros: { 
-            protein: Math.round(newCalories * 0.25 / 4), 
-            carbs: Math.round(newCalories * 0.45 / 4), 
-            fat: Math.round(newCalories * 0.30 / 9) 
-          }
-        };
-        
-        setMacroSummary(macroData);
-      }
+      // Note: Macro summary will be calculated in onSuccess after profile update
       
       return profileResponse.json();
     },
@@ -174,31 +150,43 @@ export default function Onboarding() {
       console.log('Onboarding complete response:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Only set macro summary if we don't already have one from nutrition extraction
-      if (!macroSummary) {
-        // Use standard baseline values only if no screenshot was uploaded
-        const baselineData = { calories: 2000, protein: 120, carbs: 200, fat: 65 };
-        const newCalories = Math.max(baselineData.calories - 50, 1200);
-        
-        const macroData = {
-          baselineCalories: baselineData.calories,
-          newCalories,
-          baselineMacros: { 
-            protein: baselineData.protein, 
-            carbs: baselineData.carbs, 
-            fat: baselineData.fat 
-          },
-          newMacros: { 
-            protein: Math.round(newCalories * 0.25 / 4), 
-            carbs: Math.round(newCalories * 0.45 / 4), 
-            fat: Math.round(newCalories * 0.30 / 9) 
-          }
+      // Calculate macro summary based on whether we have nutrition data
+      let baselineData;
+      let newCalories;
+      
+      if (nutritionData && formData.currentMacrosFile) {
+        // Use extracted nutrition data from screenshot
+        baselineData = {
+          calories: nutritionData.calories,
+          protein: nutritionData.protein,
+          carbs: nutritionData.carbs,
+          fat: nutritionData.fat
         };
-        
-        console.log('Setting standard macro summary for onboarding (no screenshot):', macroData);
-        setMacroSummary(macroData);
+        newCalories = Math.max(baselineData.calories - 200, 1200);
+        console.log('Using extracted nutrition data for macro summary:', baselineData);
+      } else {
+        // Use standard baseline values if no screenshot was uploaded
+        baselineData = { calories: 2000, protein: 120, carbs: 200, fat: 65 };
+        newCalories = Math.max(baselineData.calories - 50, 1200);
+        console.log('Using standard baseline for macro summary (no screenshot):', baselineData);
       }
       
+      const macroData = {
+        baselineCalories: baselineData.calories,
+        newCalories,
+        baselineMacros: { 
+          protein: baselineData.protein, 
+          carbs: baselineData.carbs, 
+          fat: baselineData.fat 
+        },
+        newMacros: { 
+          protein: Math.round(newCalories * 0.25 / 4), 
+          carbs: Math.round(newCalories * 0.45 / 4), 
+          fat: Math.round(newCalories * 0.30 / 9) 
+        }
+      };
+      
+      setMacroSummary(macroData);
       setShowSummary(true);
     },
     onError: (error) => {
