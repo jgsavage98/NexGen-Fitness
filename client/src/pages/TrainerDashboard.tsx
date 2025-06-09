@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut } from "lucide-react";
+import ProfileSettings from "@/pages/ProfileSettings";
 
 interface Client {
   id: string;
@@ -47,6 +48,7 @@ interface ChatMessage {
 
 export default function TrainerDashboard() {
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [trainerNotes, setTrainerNotes] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();

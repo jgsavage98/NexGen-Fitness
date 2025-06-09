@@ -5,6 +5,7 @@ import WorkoutTab from "@/components/WorkoutTab";
 import ChatTab from "@/components/ChatTab";
 import ProgressTab from "@/components/ProgressTab";
 import ScreenshotUploadTab from "@/components/ScreenshotUploadTab";
+import ProfileSettings from "@/pages/ProfileSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Settings, LogOut, User } from "lucide-react";
@@ -13,9 +14,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
 export type TabType = 'dashboard' | 'nutrition' | 'workout' | 'chat' | 'progress';
+export type ViewType = 'tabs' | 'profile-settings';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [currentView, setCurrentView] = useState<ViewType>('tabs');
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -68,6 +71,14 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setCurrentView('profile-settings')}
+                className="text-gray-400 hover:text-white"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
               <img 
                 src="/ignite-logo.png" 
                 alt="Ignite" 
@@ -86,13 +97,19 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Tab Content */}
+        {/* Content */}
         <div className="pb-20">
-          {renderTabContent()}
+          {currentView === 'profile-settings' ? (
+            <ProfileSettings onBack={() => setCurrentView('tabs')} />
+          ) : (
+            renderTabContent()
+          )}
         </div>
 
-        {/* Tab Navigation */}
-        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        {/* Tab Navigation - only show when not in profile settings */}
+        {currentView === 'tabs' && (
+          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        )}
       </div>
     </div>
   );
