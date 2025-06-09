@@ -495,6 +495,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Nutrition extraction for onboarding (doesn't save to database)
+  app.post('/api/nutrition/extract', isAuthenticated, screenshotUpload.single('screenshot'), async (req: any, res) => {
+    try {
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: "Screenshot file is required" });
+      }
+      
+      // Read the saved file and convert to base64 for OpenAI
+      const imagePath = file.path;
+      const imageBuffer = fs.readFileSync(imagePath);
+      const imageBase64 = imageBuffer.toString('base64');
+      
+      // Import and use OpenAI nutrition extraction
+      const openaiModule = await import('./openai');
+      const extraction = await openaiModule.extractNutritionFromScreenshot(imageBase64);
+      
+      // Clean up temporary file
+      fs.unlinkSync(imagePath);
+      
+      res.json(extraction);
+    } catch (error) {
+      console.error("Error extracting nutrition data:", error);
+      res.status(500).json({ 
+        calories: 0, 
+        protein: 0, 
+        carbs: 0, 
+        fat: 0, 
+        confidence: 0, 
+        error: "Failed to extract nutrition data" 
+      });
+    }
+  });
+
   // Nutrition screenshot upload
   app.post('/api/nutrition/screenshot', isAuthenticated, screenshotUpload.single('screenshot'), async (req: any, res) => {
     try {

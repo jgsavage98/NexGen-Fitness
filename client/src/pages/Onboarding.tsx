@@ -82,7 +82,7 @@ export default function Onboarding() {
       // Add auth parameter from URL if present
       const urlParams = new URLSearchParams(window.location.search);
       const authParam = urlParams.get('auth');
-      let url = '/api/nutrition/extract';
+      let url = '/api/nutrition/screenshot';
       if (authParam) {
         url += `?auth=${authParam}`;
       }
@@ -95,13 +95,24 @@ export default function Onboarding() {
 
       if (response.ok) {
         const data = await response.json();
-        setNutritionData(data);
-        toast({
-          title: "Screenshot analyzed",
-          description: `Found ${data.calories} calories with ${data.protein}g protein`,
-        });
+        console.log('Nutrition extraction response:', data);
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        if (data.protein !== undefined) {
+          setNutritionData(data);
+          toast({
+            title: "Screenshot analyzed",
+            description: `Found ${data.calories} calories with ${data.protein}g protein`,
+          });
+        } else {
+          throw new Error('No nutrition data found in screenshot');
+        }
       } else {
-        throw new Error('Failed to analyze screenshot');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.message || errorData.error || `Failed to analyze screenshot (${response.status})`);
       }
     } catch (error) {
       console.error('Error analyzing screenshot:', error);
@@ -730,7 +741,7 @@ export default function Onboarding() {
                           <img 
                             src={imagePreview} 
                             alt="Nutrition screenshot preview" 
-                            className="w-full h-48 object-cover rounded-lg border border-gray-600"
+                            className="w-full h-48 object-contain rounded-lg border border-gray-600 bg-gray-800"
                           />
                           {isAnalyzing && (
                             <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
