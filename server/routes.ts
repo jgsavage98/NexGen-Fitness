@@ -18,6 +18,7 @@ import {
   chatMessages
 } from "@shared/schema";
 import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
