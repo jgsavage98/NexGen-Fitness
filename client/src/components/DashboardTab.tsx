@@ -233,28 +233,7 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
         </Card>
       )}
 
-      {/* AI Coach Insight - Only show when plan is approved */}
-      {!isPendingApproval && !isOnboardingIncomplete && !hasNoTargets && (
-        <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-medium p-6">
-          <div className="flex items-start space-x-3">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-              <i className="fas fa-robot text-white"></i>
-            </div>
-            <div>
-              <div className="font-semibold text-white mb-1">Coach AI Insight</div>
-              <p className="text-white/90 text-sm">
-                {macroSummary.percentages.protein > 80 
-                  ? "Great job hitting your protein target! Try adding some healthy carbs before your next workout for better performance."
-                  : "Consider adding more protein to your meals today. Aim for 20-30g per meal to support your goals."
-                }
-              </p>
-              <button className="text-white/80 text-sm mt-2 underline">
-                Ask a question →
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
