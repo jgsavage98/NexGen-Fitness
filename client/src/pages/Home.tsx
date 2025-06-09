@@ -56,7 +56,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img 
-                src={user?.profileImageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"} 
+                src="/john-profile.png" 
                 alt="User profile" 
                 className="w-10 h-10 rounded-full object-cover"
               />

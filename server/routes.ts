@@ -195,6 +195,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile image update route
+  app.post('/api/profile/update', isAuthenticated, screenshotUpload.single('profileImage'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { firstName, lastName, bio } = req.body;
+      const file = req.file;
+      
+      const updateData: any = {
+        firstName: firstName?.trim(),
+        lastName: lastName?.trim(),
+      };
+
+      // Add bio for trainers
+      if (userId === 'coach_chassidy' && bio !== undefined) {
+        updateData.bio = bio.trim();
+      }
+
+      // Handle profile image upload
+      if (file) {
+        updateData.profileImageUrl = `profiles/${file.filename}`;
+      }
+
+      const updatedUser = await storage.updateUserProfile(userId, updateData);
+      
+      res.json({
+        success: true,
+        message: "Profile updated successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to update profile" 
+      });
+    }
+  });
+
   // Exercise routes
   app.get('/api/exercises', isAuthenticated, async (req, res) => {
     try {
