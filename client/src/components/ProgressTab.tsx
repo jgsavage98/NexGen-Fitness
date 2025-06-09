@@ -1,8 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { ProgressEntry, MacroTarget, Meal } from "@/lib/types";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Scale, TrendingDown, TrendingUp } from "lucide-react";
 
 export default function ProgressTab() {
+  const [currentWeight, setCurrentWeight] = useState("");
+  const { toast } = useToast();
+
   const { data: progressEntries = [] } = useQuery<ProgressEntry[]>({
     queryKey: ["/api/progress"],
   });
@@ -10,6 +20,60 @@ export default function ProgressTab() {
   const { data: workoutLogs = [] } = useQuery<any[]>({
     queryKey: ["/api/workout-logs"],
   });
+
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+  });
+
+  // Log weight mutation
+  const logWeightMutation = useMutation({
+    mutationFn: async (weight: number) => {
+      const response = await fetch("/api/progress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          weight: weight,
+          notes: `Weight: ${weight} lbs`
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to log weight");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Weight Logged!",
+        description: "Your weight has been recorded successfully.",
+      });
+      setCurrentWeight("");
+      queryClient.invalidateQueries({ queryKey: ["/api/progress"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleWeightSubmit = () => {
+    const weight = parseFloat(currentWeight);
+    if (!weight || weight <= 0) {
+      toast({
+        title: "Invalid Weight",
+        description: "Please enter a valid weight in pounds.",
+        variant: "destructive",
+      });
+      return;
+    }
+    logWeightMutation.mutate(weight);
+  };
 
   // Calculate this week's stats
   const thisWeekStart = new Date();
@@ -25,13 +89,19 @@ export default function ProgressTab() {
     avgMacroAdherence: 87, // This would be calculated from actual data
   };
 
-  // Mock weight progress data - in real app this would come from progressEntries
-  const weightData = [
-    { date: "Week 1", weight: 72.5 },
-    { date: "Week 2", weight: 72.0 },
-    { date: "Week 3", weight: 71.5 },
-    { date: "Week 4", weight: 70.2 },
-  ];
+  // Get weight entries from progress data
+  const weightEntries = progressEntries.filter(entry => entry.weight !== null);
+  const latestWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : null;
+  const goalWeight = (user as any)?.goalWeight || null;
+  
+  // Calculate weight progress
+  const weightProgress = latestWeight && goalWeight ? {
+    current: latestWeight,
+    goal: goalWeight,
+    remaining: Math.abs(latestWeight - goalWeight),
+    trend: weightEntries.length >= 2 ? 
+      weightEntries[weightEntries.length - 1].weight! - weightEntries[weightEntries.length - 2].weight! : 0
+  } : null;
 
   const achievements = [
     {
@@ -62,6 +132,81 @@ export default function ProgressTab() {
 
   return (
     <div className="px-6 py-6 space-y-6">
+      {/* Weight Tracking */}
+      <Card className="bg-surface border-gray-700">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white flex items-center">
+              <Scale className="w-5 h-5 mr-2 text-primary-500" />
+              Weight Progress
+            </h2>
+            {weightProgress && (
+              <div className="flex items-center text-sm">
+                {weightProgress.trend > 0 ? (
+                  <TrendingUp className="w-4 h-4 text-red-400 mr-1" />
+                ) : weightProgress.trend < 0 ? (
+                  <TrendingDown className="w-4 h-4 text-green-400 mr-1" />
+                ) : null}
+                <span className={weightProgress.trend > 0 ? "text-red-400" : weightProgress.trend < 0 ? "text-green-400" : "text-gray-400"}>
+                  {weightProgress.trend > 0 ? "+" : ""}{weightProgress.trend.toFixed(1)} lbs
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Current Weight */}
+            <div className="bg-dark rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-white mb-1">
+                {latestWeight ? `${latestWeight} lbs` : "—"}
+              </div>
+              <div className="text-sm text-gray-400">Current Weight</div>
+            </div>
+
+            {/* Goal Weight */}
+            <div className="bg-dark rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-primary-500 mb-1">
+                {goalWeight ? `${goalWeight} lbs` : "—"}
+              </div>
+              <div className="text-sm text-gray-400">Goal Weight</div>
+            </div>
+
+            {/* Remaining */}
+            <div className="bg-dark rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-success mb-1">
+                {weightProgress ? `${weightProgress.remaining.toFixed(1)} lbs` : "—"}
+              </div>
+              <div className="text-sm text-gray-400">To Goal</div>
+            </div>
+          </div>
+
+          {/* Weight Entry Form */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <Label htmlFor="weight" className="text-gray-300 text-sm">Log Today's Weight (lbs)</Label>
+              <Input
+                id="weight"
+                type="number"
+                step="0.1"
+                placeholder="Enter weight..."
+                value={currentWeight}
+                onChange={(e) => setCurrentWeight(e.target.value)}
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+              />
+            </div>
+            <div className="flex flex-col justify-end">
+              <Button
+                onClick={handleWeightSubmit}
+                disabled={!currentWeight || logWeightMutation.isPending}
+                className="bg-primary-500 hover:bg-primary-600"
+              >
+                {logWeightMutation.isPending ? "Logging..." : "Log Weight"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Weekly Overview */}
       <Card className="bg-surface border-gray-700">
         <CardContent className="p-6">
