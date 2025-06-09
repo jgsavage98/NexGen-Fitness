@@ -35,13 +35,14 @@ export default function Home() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // Clear localStorage
-      localStorage.removeItem('demo_auth_token');
-      localStorage.removeItem('demo_user_id');
+      // Clear localStorage and sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
       
-      // Clear cookies
-      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      document.cookie = 'connect.sid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      // Clear all cookies
+      document.cookie.split(";").forEach(function(c) {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
       
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
@@ -58,10 +59,8 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Force reload to clear auth state
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+      // Redirect to base URL without auth tokens to clear authentication
+      window.location.href = window.location.origin;
     },
   });
 
