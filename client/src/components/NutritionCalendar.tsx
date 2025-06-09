@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Calendar, CheckCircle, X, Camera, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { calculateJourneyDay } from "@/lib/dateUtils";
@@ -27,6 +28,7 @@ interface NutritionCalendarProps {
 
 export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState<{ day: number; data: DailyMacros } | null>(null);
   const { user } = useAuth();
 
   // Get all daily macros for the current month
@@ -203,7 +205,13 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
                     aspect-square border rounded-lg flex flex-col items-center justify-center text-sm relative
                     ${getStatusColor(status)}
                     ${isToday ? 'ring-2 ring-primary-500' : ''}
+                    ${status === 'uploaded' ? 'cursor-pointer hover:bg-green-800/40' : ''}
                   `}
+                  onClick={() => {
+                    if (status === 'uploaded' && data) {
+                      setSelectedDay({ day, data });
+                    }
+                  }}
                 >
                   <div className="font-medium">{day}</div>
                   <div className="absolute top-1 right-1">
@@ -264,6 +272,73 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Upload Details Modal */}
+      <Dialog open={!!selectedDay} onOpenChange={() => setSelectedDay(null)}>
+        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Upload Details - June {selectedDay?.day}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedDay?.data && (
+            <div className="space-y-4">
+              {/* Screenshot Display */}
+              {(selectedDay.data.screenshotUrl || selectedDay.data.screenshot_url) && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-300">MyFitnessPal Screenshot</h4>
+                  <div className="bg-gray-900 rounded-lg p-2">
+                    <img 
+                      src={`/${selectedDay.data.screenshotUrl || selectedDay.data.screenshot_url}`}
+                      alt="MyFitnessPal Screenshot"
+                      className="w-full rounded-lg"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {/* Extracted Nutrition Data */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-gray-300">Extracted Nutrition</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gray-900 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-white">
+                      {selectedDay.data.extractedCalories || selectedDay.data.extracted_calories || 0}
+                    </div>
+                    <div className="text-sm text-gray-400">Calories</div>
+                  </div>
+                  <div className="bg-gray-900 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-blue-400">
+                      {selectedDay.data.extractedProtein || 0}g
+                    </div>
+                    <div className="text-sm text-gray-400">Protein</div>
+                  </div>
+                  <div className="bg-gray-900 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-yellow-400">
+                      {selectedDay.data.extractedCarbs || 0}g
+                    </div>
+                    <div className="text-sm text-gray-400">Carbs</div>
+                  </div>
+                  <div className="bg-gray-900 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-green-400">
+                      {selectedDay.data.extractedFat || 0}g
+                    </div>
+                    <div className="text-sm text-gray-400">Fat</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Additional Info */}
+              {selectedDay.data.visionProcessedAt && (
+                <div className="text-xs text-gray-500 text-center">
+                  Processed: {new Date(selectedDay.data.visionProcessedAt).toLocaleString()}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
