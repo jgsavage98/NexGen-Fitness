@@ -1076,6 +1076,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public endpoint for trainer info (used by Meet Your Coach page)
+  app.get('/api/trainer/coach_chassidy', async (req, res) => {
+    try {
+      const trainer = await storage.getTrainer('coach_chassidy');
+      
+      if (!trainer) {
+        return res.status(404).json({ message: "Trainer not found" });
+      }
+      
+      res.json(trainer);
+    } catch (error) {
+      console.error("Error fetching trainer:", error);
+      res.status(500).json({ message: "Failed to fetch trainer" });
+    }
+  });
+
   app.get('/api/trainer/clients', isAuthenticated, async (req: any, res) => {
     try {
       const trainerId = req.user.claims.sub;
