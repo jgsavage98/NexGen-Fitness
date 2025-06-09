@@ -31,7 +31,7 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setLocation("/landing");
+      setLocation("/");
     },
   });
 
