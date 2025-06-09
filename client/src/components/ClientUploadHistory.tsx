@@ -8,6 +8,19 @@ import { ChevronLeft, ChevronRight, Calendar, CheckCircle, X, Camera } from "luc
 import { calculateJourneyDay } from "@/lib/dateUtils";
 import type { DailyMacros } from "@shared/schema";
 
+interface Client {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profileImageUrl?: string;
+  goal: string;
+  weight: number;
+  goalWeight: number;
+  programStartDate: string;
+  onboardingCompleted: boolean;
+}
+
 interface ClientUploadHistoryProps {
   clientId: string;
 }
@@ -17,7 +30,7 @@ export default function ClientUploadHistory({ clientId }: ClientUploadHistoryPro
   const [selectedDay, setSelectedDay] = useState<{ day: number; data: DailyMacros } | null>(null);
 
   // Get client data for program start date
-  const { data: client } = useQuery({
+  const { data: client } = useQuery<Client>({
     queryKey: [`/api/trainer/client/${clientId}`],
     enabled: !!clientId,
   });

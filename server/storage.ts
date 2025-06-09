@@ -35,7 +35,7 @@ import {
   type UpdateUserProfile,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, asc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -88,6 +88,9 @@ export interface IStorage {
   // Progress operations
   getUserProgressEntries(userId: string): Promise<ProgressEntry[]>;
   createProgressEntry(entry: InsertProgressEntry): Promise<ProgressEntry>;
+  
+  // Client data operations for trainers
+  getClientMacrosForMonth(clientId: string, startDate: Date, endDate: Date): Promise<DailyMacros[]>;
 }
 
 export class DatabaseStorage implements IStorage {

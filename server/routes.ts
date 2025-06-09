@@ -1327,6 +1327,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get individual client data for trainer
+  app.get('/api/trainer/client/:clientId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { clientId } = req.params;
+      const client = await storage.getUser(clientId);
+      
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      res.json(client);
+    } catch (error) {
+      console.error("Error fetching client:", error);
+      res.status(500).json({ message: "Failed to fetch client" });
+    }
+  });
+
   app.get('/api/trainer/client/:clientId/daily-macros/month', isAuthenticated, async (req: any, res) => {
     try {
       const { clientId } = req.params;
