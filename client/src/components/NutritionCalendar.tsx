@@ -58,7 +58,7 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
     }
     
     // Check if data exists for this day (prioritize this check)
-    if (dayData && (dayData.screenshotUrl || dayData.screenshot_url)) {
+    if (dayData && dayData.screenshotUrl) {
       return { status: 'uploaded', data: dayData };
     }
     
@@ -206,7 +206,7 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
                   </div>
                   {data && (
                     <div className="text-xs text-center mt-1">
-                      {(data.extractedCalories || data.extracted_calories)}cal
+                      {data.extractedCalories}cal
                     </div>
                   )}
                 </div>
@@ -246,7 +246,7 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-500">
-                {monthlyMacros.filter(m => m.screenshotUrl || m.screenshot_url).length}
+                {monthlyMacros.filter(m => m.screenshotUrl).length}
               </div>
               <div className="text-sm text-gray-400">Days Logged</div>
             </div>
@@ -272,12 +272,12 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
           {selectedDay?.data && (
             <div className="space-y-4">
               {/* Screenshot Display */}
-              {(selectedDay.data.screenshotUrl || selectedDay.data.screenshot_url) && (
+              {selectedDay.data.screenshotUrl && (
                 <div className="space-y-2">
                   <h4 className="font-medium text-gray-300">MyFitnessPal Screenshot</h4>
                   <div className="bg-gray-900 rounded-lg p-2">
                     <img 
-                      src={`/${selectedDay.data.screenshotUrl || selectedDay.data.screenshot_url}`}
+                      src={`/${selectedDay.data.screenshotUrl}`}
                       alt="MyFitnessPal Screenshot"
                       className="w-full rounded-lg"
                     />
