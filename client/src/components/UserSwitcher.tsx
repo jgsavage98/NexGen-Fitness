@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { User, Crown, Plus, UserPlus } from "lucide-react";
+import { User, Crown, Plus, UserPlus, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -25,12 +25,21 @@ export default function UserSwitcher() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [accountType, setAccountType] = useState<'client' | 'trainer' | null>(null);
   const [newUserData, setNewUserData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     goal: '',
     isTrainer: false
+  });
+  const [trainerData, setTrainerData] = useState({
+    bio: '',
+    specialties: [] as string[],
+    certifications: [] as string[],
+    yearsExperience: 1,
+    clientsHelped: 0,
+    photoUrl: ''
   });
 
   // Fetch available users from the database
@@ -137,20 +146,14 @@ export default function UserSwitcher() {
       });
       
       // Clear form and hide it
-      setNewUserData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        goal: '',
-        isTrainer: false
-      });
-      setShowCreateForm(false);
+      resetForm();
       
       // Refresh the users list
       queryClient.invalidateQueries({ queryKey: ["/api/auth/available-users"] });
       
       // Auto-login the new user if they're a client (to start onboarding)
-      if (!newUserData.isTrainer && data && data.user) {
+      // For trainers, stay on this page to show success message
+      if (accountType === 'client' && data && data.user) {
         setTimeout(() => {
           window.location.href = `/api/auth/switch/${data.user.id}`;
         }, 1500);
@@ -175,7 +178,70 @@ export default function UserSwitcher() {
       return;
     }
     
-    createUserMutation.mutate(newUserData);
+    // For trainers, validate additional required fields
+    if (accountType === 'trainer') {
+      if (!trainerData.bio || trainerData.specialties.length === 0) {
+        toast({
+          title: "Missing trainer information",
+          description: "Please fill in bio and at least one specialty",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    const userData = {
+      ...newUserData,
+      isTrainer: accountType === 'trainer',
+      trainerInfo: accountType === 'trainer' ? trainerData : undefined
+    };
+    
+    createUserMutation.mutate(userData);
+  };
+
+  const resetForm = () => {
+    setNewUserData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      goal: '',
+      isTrainer: false
+    });
+    setTrainerData({
+      bio: '',
+      specialties: [],
+      certifications: [],
+      yearsExperience: 1,
+      clientsHelped: 0,
+      photoUrl: ''
+    });
+    setAccountType(null);
+    setShowCreateForm(false);
+  };
+
+  const handleSpecialtyToggle = (specialty: string) => {
+    setTrainerData(prev => ({
+      ...prev,
+      specialties: prev.specialties.includes(specialty)
+        ? prev.specialties.filter(s => s !== specialty)
+        : [...prev.specialties, specialty]
+    }));
+  };
+
+  const handleCertificationAdd = (cert: string) => {
+    if (cert.trim() && !trainerData.certifications.includes(cert.trim())) {
+      setTrainerData(prev => ({
+        ...prev,
+        certifications: [...prev.certifications, cert.trim()]
+      }));
+    }
+  };
+
+  const handleCertificationRemove = (cert: string) => {
+    setTrainerData(prev => ({
+      ...prev,
+      certifications: prev.certifications.filter(c => c !== cert)
+    }));
   };
 
   return (
@@ -277,8 +343,57 @@ export default function UserSwitcher() {
                 <Plus className="w-4 h-4 mr-2" />
                 Create New Account
               </Button>
+            ) : !accountType ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold mb-2">Select Account Type</h3>
+                  <p className="text-gray-600 text-sm mb-4">Choose what type of account to create</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col items-center justify-center space-y-2 border-2 hover:border-blue-500"
+                    onClick={() => setAccountType('client')}
+                  >
+                    <User className="w-8 h-8 text-blue-500" />
+                    <span className="font-medium">Client</span>
+                    <span className="text-xs text-gray-500">Fitness participant</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col items-center justify-center space-y-2 border-2 hover:border-purple-500"
+                    onClick={() => setAccountType('trainer')}
+                  >
+                    <Crown className="w-8 h-8 text-purple-500" />
+                    <span className="font-medium">Trainer</span>
+                    <span className="text-xs text-gray-500">Fitness coach</span>
+                  </Button>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowCreateForm(false)}
+                  className="w-full"
+                >
+                  Cancel
+                </Button>
+              </div>
             ) : (
               <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAccountType(null)}
+                    className="p-1"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <h3 className="text-lg font-semibold">
+                    Create {accountType === 'client' ? 'Client' : 'Trainer'} Account
+                  </h3>
+                </div>
+
+                {/* Basic Information */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">First Name *</Label>
@@ -311,23 +426,8 @@ export default function UserSwitcher() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="userType">Account Type</Label>
-                  <Select 
-                    value={newUserData.isTrainer ? 'trainer' : 'client'} 
-                    onValueChange={(value) => setNewUserData(prev => ({ ...prev, isTrainer: value === 'trainer' }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select account type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="client">Client</SelectItem>
-                      <SelectItem value="trainer">Trainer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {!newUserData.isTrainer && (
+                {/* Client-specific fields */}
+                {accountType === 'client' && (
                   <div>
                     <Label htmlFor="goal">Fitness Goal</Label>
                     <Textarea
@@ -340,6 +440,72 @@ export default function UserSwitcher() {
                   </div>
                 )}
 
+                {/* Trainer-specific fields */}
+                {accountType === 'trainer' && (
+                  <>
+                    <div>
+                      <Label htmlFor="bio">Professional Bio *</Label>
+                      <Textarea
+                        id="bio"
+                        value={trainerData.bio}
+                        onChange={(e) => setTrainerData(prev => ({ ...prev, bio: e.target.value }))}
+                        placeholder="Describe your background, approach, and what makes you unique as a trainer"
+                        rows={4}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Specialties * (Select at least one)</Label>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        {['Weight Loss', 'Strength Training', 'Nutrition Coaching', 'Cardio Training', 'Bodybuilding', 'Athletic Performance', 'Injury Rehabilitation', 'Senior Fitness'].map(specialty => (
+                          <Button
+                            key={specialty}
+                            variant={trainerData.specialties.includes(specialty) ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleSpecialtyToggle(specialty)}
+                            className="justify-start text-sm"
+                          >
+                            {specialty}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="experience">Years of Experience</Label>
+                        <Input
+                          id="experience"
+                          type="number"
+                          min="0"
+                          value={trainerData.yearsExperience}
+                          onChange={(e) => setTrainerData(prev => ({ ...prev, yearsExperience: parseInt(e.target.value) || 0 }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="clientsHelped">Clients Helped</Label>
+                        <Input
+                          id="clientsHelped"
+                          type="number"
+                          min="0"
+                          value={trainerData.clientsHelped}
+                          onChange={(e) => setTrainerData(prev => ({ ...prev, clientsHelped: parseInt(e.target.value) || 0 }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="photoUrl">Profile Photo URL (Optional)</Label>
+                      <Input
+                        id="photoUrl"
+                        value={trainerData.photoUrl}
+                        onChange={(e) => setTrainerData(prev => ({ ...prev, photoUrl: e.target.value }))}
+                        placeholder="https://example.com/photo.jpg"
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleCreateUser}
@@ -350,16 +516,7 @@ export default function UserSwitcher() {
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={() => {
-                      setShowCreateForm(false);
-                      setNewUserData({
-                        firstName: '',
-                        lastName: '',
-                        email: '',
-                        goal: '',
-                        isTrainer: false
-                      });
-                    }}
+                    onClick={resetForm}
                   >
                     Cancel
                   </Button>

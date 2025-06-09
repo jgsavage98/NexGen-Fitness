@@ -157,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new user account
   app.post('/api/auth/create-user', async (req, res) => {
     try {
-      const { firstName, lastName, email, goal, isTrainer } = req.body;
+      const { firstName, lastName, email, goal, isTrainer, trainerInfo } = req.body;
       
       if (!firstName || !lastName || !email) {
         return res.status(400).json({ message: "First name, last name, and email are required" });
@@ -173,20 +173,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: email.trim(),
         goal: goal?.trim() || null,
         trainerId: isTrainer ? null : 'coach_chassidy',
-        onboardingCompleted: false,
-        programStartDate: null,
+        onboardingCompleted: isTrainer ? true : false, // Trainers don't need onboarding
+        programStartDate: isTrainer ? new Date() : null,
       };
       
       const newUser = await storage.upsertUser(userData);
       
-      // If creating a trainer, also create trainer record
-      if (isTrainer) {
+      // If creating a trainer, also create trainer record with provided info
+      if (isTrainer && trainerInfo) {
         await storage.upsertTrainer({
           id: userId,
           name: `${firstName} ${lastName}`,
-          bio: `${firstName} ${lastName} - Personal Trainer`,
-          specialties: ["Weight Loss", "Strength Training", "Nutrition Coaching"],
-          yearsExperience: 1,
+          bio: trainerInfo.bio || `${firstName} ${lastName} - Personal Trainer`,
+          specialties: trainerInfo.specialties || ["Weight Loss", "Strength Training", "Nutrition Coaching"],
+          certifications: trainerInfo.certifications || [],
+          yearsExperience: trainerInfo.yearsExperience || 1,
+          clientsHelped: trainerInfo.clientsHelped || 0,
+          photoUrl: trainerInfo.photoUrl || null,
+          rating: 5.0,
         });
       }
       
