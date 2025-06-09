@@ -597,14 +597,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imageBase64 = imageBuffer.toString('base64');
       
       // Import and use OpenAI nutrition extraction
-      const openaiModule = await import('./openai');
-      const extraction = await openaiModule.extractNutritionFromScreenshot(imageBase64);
-      
-      if (extraction.error) {
-        return res.status(400).json({ 
+      let extraction;
+      try {
+        const openaiModule = await import('./openai');
+        extraction = await openaiModule.extractNutritionFromScreenshot(imageBase64);
+        
+        if (extraction.error) {
+          return res.status(400).json({ 
+            success: false,
+            message: extraction.error,
+            extraction 
+          });
+        }
+      } catch (error) {
+        console.error("OpenAI extraction error:", error);
+        return res.status(500).json({ 
           success: false,
-          message: extraction.error,
-          extraction 
+          message: "Failed to extract nutrition data from screenshot",
+          error: error instanceof Error ? error.message : 'Unknown error'
         });
       }
       
