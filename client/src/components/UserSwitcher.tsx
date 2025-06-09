@@ -168,17 +168,17 @@ export default function UserSwitcher() {
   });
 
   const handleCreateUser = () => {
-    if (!newUserData.firstName || !newUserData.lastName || !newUserData.email) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // For trainers, validate additional required fields
+    // For trainers, validate required fields
     if (accountType === 'trainer') {
+      if (!newUserData.firstName || !newUserData.lastName || !newUserData.email) {
+        toast({
+          title: "Missing information",
+          description: "Please fill in all required fields",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       if (!trainerData.bio || trainerData.specialties.length === 0) {
         toast({
           title: "Missing trainer information",
@@ -375,6 +375,44 @@ export default function UserSwitcher() {
                   Cancel
                 </Button>
               </div>
+            ) : accountType === 'client' ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAccountType(null)}
+                    className="p-1"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <h3 className="text-lg font-semibold">Create Client Account</h3>
+                </div>
+
+                <div className="text-center py-6">
+                  <User className="w-16 h-16 mx-auto text-blue-500 mb-4" />
+                  <h4 className="text-lg font-medium mb-2">Ready to Create Client Account</h4>
+                  <p className="text-gray-600 mb-6">
+                    The client will provide their personal information during the onboarding process.
+                  </p>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleCreateUser}
+                      disabled={createUserMutation.isPending}
+                      className="flex-1"
+                    >
+                      {createUserMutation.isPending ? 'Creating...' : 'Create Client Account'}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={resetForm}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
@@ -386,12 +424,10 @@ export default function UserSwitcher() {
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </Button>
-                  <h3 className="text-lg font-semibold">
-                    Create {accountType === 'client' ? 'Client' : 'Trainer'} Account
-                  </h3>
+                  <h3 className="text-lg font-semibold">Create Trainer Account</h3>
                 </div>
 
-                {/* Basic Information */}
+                {/* Basic Information for Trainers */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">First Name *</Label>

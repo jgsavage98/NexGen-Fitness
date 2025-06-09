@@ -159,8 +159,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { firstName, lastName, email, isTrainer, trainerInfo } = req.body;
       
-      if (!firstName || !lastName || !email) {
-        return res.status(400).json({ message: "First name, last name, and email are required" });
+      // For trainers, require all basic information
+      if (isTrainer && (!firstName || !lastName || !email)) {
+        return res.status(400).json({ message: "First name, last name, and email are required for trainers" });
       }
       
       // Generate unique user ID
@@ -168,9 +169,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const userData = {
         id: userId,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
+        firstName: isTrainer ? firstName.trim() : null, // Clients provide this during onboarding
+        lastName: isTrainer ? lastName.trim() : null,   // Clients provide this during onboarding
+        email: isTrainer ? email.trim() : null,         // Clients provide this during onboarding
         goal: null, // Goals will be set during onboarding
         trainerId: isTrainer ? null : 'coach_chassidy',
         onboardingCompleted: isTrainer ? true : false, // Trainers don't need onboarding
