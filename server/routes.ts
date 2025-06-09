@@ -15,7 +15,8 @@ import {
   insertProgressEntrySchema,
   users,
   macroChanges,
-  chatMessages
+  chatMessages,
+  dailyMacros
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -545,6 +546,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching recent macros:", error);
       res.status(500).json({ message: "Failed to fetch recent macros" });
+    }
+  });
+
+  // Get monthly macros for calendar view
+  app.get('/api/daily-macros/month', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const year = parseInt(req.query.year) || new Date().getFullYear();
+      const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+      
+      // Get first and last day of the month
+      const firstDay = new Date(year, month - 1, 1);
+      const lastDay = new Date(year, month, 0);
+      
+      const macros = await db.select()
+        .from(dailyMacros)
+        .where(
+          and(
+            eq(dailyMacros.userId, userId),
+            gte(dailyMacros.date, firstDay.toISOString().split('T')[0]),
+            lte(dailyMacros.date, lastDay.toISOString().split('T')[0])
+          )
+        )
+        .orderBy(dailyMacros.date);
+      
+      res.json(macros);
+    } catch (error) {
+      console.error("Error fetching monthly macros:", error);
+      res.status(500).json({ message: "Failed to fetch monthly macros" });
     }
   });
 

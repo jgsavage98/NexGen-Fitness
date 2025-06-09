@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, Upload, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { Camera, Upload, CheckCircle, AlertCircle, Clock, Calendar } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { TabType } from "@/pages/Home";
+import NutritionCalendar from "./NutritionCalendar";
 
 interface DailyMacros {
   id: number;
