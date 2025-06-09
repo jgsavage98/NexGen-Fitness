@@ -30,7 +30,6 @@ export default function UserSwitcher() {
     firstName: '',
     lastName: '',
     email: '',
-    goal: '',
     isTrainer: false
   });
   const [trainerData, setTrainerData] = useState({
@@ -204,7 +203,6 @@ export default function UserSwitcher() {
       firstName: '',
       lastName: '',
       email: '',
-      goal: '',
       isTrainer: false
     });
     setTrainerData({
@@ -426,19 +424,7 @@ export default function UserSwitcher() {
                   />
                 </div>
 
-                {/* Client-specific fields */}
-                {accountType === 'client' && (
-                  <div>
-                    <Label htmlFor="goal">Fitness Goal</Label>
-                    <Textarea
-                      id="goal"
-                      value={newUserData.goal}
-                      onChange={(e) => setNewUserData(prev => ({ ...prev, goal: e.target.value }))}
-                      placeholder="Enter fitness goals (optional)"
-                      rows={3}
-                    />
-                  </div>
-                )}
+
 
                 {/* Trainer-specific fields */}
                 {accountType === 'trainer' && (

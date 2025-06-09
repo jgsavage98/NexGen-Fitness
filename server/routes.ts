@@ -157,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new user account
   app.post('/api/auth/create-user', async (req, res) => {
     try {
-      const { firstName, lastName, email, goal, isTrainer, trainerInfo } = req.body;
+      const { firstName, lastName, email, isTrainer, trainerInfo } = req.body;
       
       if (!firstName || !lastName || !email) {
         return res.status(400).json({ message: "First name, last name, and email are required" });
@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        goal: goal?.trim() || null,
+        goal: null, // Goals will be set during onboarding
         trainerId: isTrainer ? null : 'coach_chassidy',
         onboardingCompleted: isTrainer ? true : false, // Trainers don't need onboarding
         programStartDate: isTrainer ? new Date() : null,
