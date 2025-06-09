@@ -12,7 +12,9 @@ interface DailyMacros {
   userId: string;
   date: string;
   screenshotUrl?: string;
+  screenshot_url?: string; // Database field name
   extractedCalories?: number;
+  extracted_calories?: number; // Database field name
   extractedProtein?: number;
   extractedCarbs?: number;
   extractedFat?: number;
@@ -68,7 +70,7 @@ export default function NutritionCalendar() {
     }
     
     // Check if data exists for this day
-    if (dayData && dayData.screenshotUrl) {
+    if (dayData && (dayData.screenshotUrl || dayData.screenshot_url)) {
       return { status: 'uploaded', data: dayData };
     }
     
@@ -189,7 +191,7 @@ export default function NutritionCalendar() {
                   </div>
                   {data && (
                     <div className="text-xs text-center mt-1">
-                      {data.extractedCalories}cal
+                      {(data.extractedCalories || data.extracted_calories)}cal
                     </div>
                   )}
                 </div>
