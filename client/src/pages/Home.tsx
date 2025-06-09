@@ -58,11 +58,16 @@ export default function Home() {
         <header className="px-6 py-4 bg-surface">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <img 
-                src="/john-profile.png" 
-                alt="User profile" 
-                className="w-10 h-10 rounded-full object-cover"
-              />
+              <button
+                onClick={() => setCurrentView('profile-settings')}
+                className="flex-shrink-0 rounded-full hover:ring-2 hover:ring-primary-500 transition-all"
+              >
+                <img 
+                  src="/john-profile.png" 
+                  alt="User profile" 
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              </button>
               <div>
                 <div className="font-semibold">
                   {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Welcome!'}
@@ -71,14 +76,6 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setCurrentView('profile-settings')}
-                className="text-gray-400 hover:text-white"
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
               <img 
                 src="/ignite-logo.png" 
                 alt="Ignite" 
