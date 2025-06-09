@@ -20,6 +20,10 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
   const [lastName, setLastName] = useState("");
   const [bio, setBio] = useState("");
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [certifications, setCertifications] = useState<string[]>([]);
+  const [yearsExperience, setYearsExperience] = useState(0);
+  const [clientsHelped, setClientsHelped] = useState(0);
+  const [rating, setRating] = useState(0.0);
   const [isCoach, setIsCoach] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -46,20 +50,42 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
       if (userData?.id === "coach_chassidy" && trainerData) {
         setBio((trainerData as any).bio || "");
         setSpecialties((trainerData as any).specialties || []);
+        setCertifications((trainerData as any).certifications || []);
+        setYearsExperience((trainerData as any).yearsExperience || 0);
+        setClientsHelped((trainerData as any).clientsHelped || 0);
+        setRating((trainerData as any).rating || 0.0);
       } else {
         setBio(userData?.bio || "");
         setSpecialties([]);
+        setCertifications([]);
+        setYearsExperience(0);
+        setClientsHelped(0);
+        setRating(0.0);
       }
     }
   }, [user, trainerData]);
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; bio?: string; specialties?: string[]; profileImage?: File }) => {
+    mutationFn: async (data: { 
+      firstName: string; 
+      lastName: string; 
+      bio?: string; 
+      specialties?: string[]; 
+      certifications?: string[];
+      yearsExperience?: number;
+      clientsHelped?: number;
+      rating?: number;
+      profileImage?: File 
+    }) => {
       const formData = new FormData();
       formData.append('firstName', data.firstName);
       formData.append('lastName', data.lastName);
       if (data.bio) formData.append('bio', data.bio);
       if (data.specialties) formData.append('specialties', JSON.stringify(data.specialties));
+      if (data.certifications) formData.append('certifications', JSON.stringify(data.certifications));
+      if (data.yearsExperience !== undefined) formData.append('yearsExperience', data.yearsExperience.toString());
+      if (data.clientsHelped !== undefined) formData.append('clientsHelped', data.clientsHelped.toString());
+      if (data.rating !== undefined) formData.append('rating', data.rating.toString());
       if (data.profileImage) formData.append('profileImage', data.profileImage);
 
       // Use trainer-specific endpoint if user is a coach
@@ -124,6 +150,10 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
       lastName,
       bio: isCoach ? bio : undefined,
       specialties: isCoach ? specialties : undefined,
+      certifications: isCoach ? certifications : undefined,
+      yearsExperience: isCoach ? yearsExperience : undefined,
+      clientsHelped: isCoach ? clientsHelped : undefined,
+      rating: isCoach ? rating : undefined,
       profileImage: selectedFile || undefined,
     });
   };
@@ -140,6 +170,20 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
 
   const removeSpecialty = (index: number) => {
     setSpecialties(specialties.filter((_, i) => i !== index));
+  };
+
+  const addCertification = () => {
+    setCertifications([...certifications, ""]);
+  };
+
+  const updateCertification = (index: number, value: string) => {
+    const updated = [...certifications];
+    updated[index] = value;
+    setCertifications(updated);
+  };
+
+  const removeCertification = (index: number) => {
+    setCertifications(certifications.filter((_, i) => i !== index));
   };
 
   const getCurrentProfileImage = () => {
