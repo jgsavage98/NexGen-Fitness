@@ -201,11 +201,29 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Development mode: check auth cookie
+  // Development mode: check session-based authentication
   if (process.env.NODE_ENV === 'development') {
+    const session = req.session as any;
     const authToken = req.cookies?.auth_token;
-    console.log('Auth check:', { hasCookie: !!authToken });
     
+    console.log('Auth check:', { 
+      hasCookie: !!authToken, 
+      hasSession: !!session?.userId,
+      sessionAuth: session?.authenticated 
+    });
+    
+    // Check session first (for demo login)
+    if (session?.userId && session?.authenticated) {
+      (req as any).user = {
+        claims: {
+          sub: session.userId,
+          email: session.userId === 'coach_chassidy' ? 'chassidy@igniteai.com' : 'demo@example.com',
+        }
+      };
+      return next();
+    }
+    
+    // Fallback to cookie-based auth
     if (!authToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
