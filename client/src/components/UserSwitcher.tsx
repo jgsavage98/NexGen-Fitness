@@ -127,7 +127,8 @@ export default function UserSwitcher() {
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: typeof newUserData) => {
-      return await apiRequest('POST', '/api/auth/create-user', userData);
+      const response = await apiRequest('POST', '/api/auth/create-user', userData);
+      return await response.json();
     },
     onSuccess: (data) => {
       toast({
@@ -147,6 +148,13 @@ export default function UserSwitcher() {
       
       // Refresh the users list
       queryClient.invalidateQueries({ queryKey: ["/api/auth/available-users"] });
+      
+      // Auto-login the new user if they're a client (to start onboarding)
+      if (!newUserData.isTrainer && data && data.user) {
+        setTimeout(() => {
+          window.location.href = `/api/auth/switch/${data.user.id}`;
+        }, 1500);
+      }
     },
     onError: (error: any) => {
       toast({
