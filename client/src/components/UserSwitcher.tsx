@@ -80,10 +80,9 @@ export default function UserSwitcher() {
           {/* Demo User Card */}
           <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-blue-300">
             <CardHeader className="text-center">
-              <Avatar className="mx-auto h-20 w-20 mb-4">
-                <AvatarImage src={johnProfileImage} alt="John" />
-                <AvatarFallback className="text-lg">J</AvatarFallback>
-              </Avatar>
+              <div className="mx-auto h-20 w-20 mb-4 rounded-full bg-blue-100 flex items-center justify-center">
+                <img src={johnProfileImage} alt="John" className="h-16 w-16 rounded-full object-cover" />
+              </div>
               <CardTitle>John (Demo User)</CardTitle>
               <CardDescription>
                 Fitness client working towards weight loss goals
@@ -103,9 +102,9 @@ export default function UserSwitcher() {
           {/* Coach Chassidy Card */}
           <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-purple-300">
             <CardHeader className="text-center">
-              <Avatar className="mx-auto h-20 w-20 mb-4">
-                <AvatarFallback className="text-lg bg-purple-100 text-purple-700">CC</AvatarFallback>
-              </Avatar>
+              <div className="mx-auto h-20 w-20 mb-4 rounded-full bg-purple-100 flex items-center justify-center">
+                <span className="text-lg font-semibold text-purple-700">CC</span>
+              </div>
               <CardTitle>Coach Chassidy</CardTitle>
               <CardDescription>
                 Personal trainer managing client programs and progress
