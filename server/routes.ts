@@ -18,7 +18,6 @@ import {
   chatMessages
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -1032,11 +1031,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { firstName, lastName, bio } = req.body;
       
-      // Update user record for basic info
-      await storage.updateUserProfile(trainerId, {
-        firstName,
-        lastName,
-      });
+      // Update user record for basic info using direct DB update
+      const userUpdates: any = {};
+      if (firstName) userUpdates.firstName = firstName;
+      if (lastName) userUpdates.lastName = lastName;
+      
+      if (req.file) {
+        const photoUrl = `/uploads/${req.file.filename}`;
+        userUpdates.profileImageUrl = photoUrl;
+      }
+      
+      if (Object.keys(userUpdates).length > 0) {
+        await db.update(users)
+          .set({ ...userUpdates, updatedAt: new Date() })
+          .where(eq(users.id, trainerId));
+      }
 
       // Update trainer record for bio and other trainer-specific data
       const trainerUpdates: any = {};
@@ -1045,11 +1054,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.file) {
         const photoUrl = `/uploads/${req.file.filename}`;
         trainerUpdates.photoUrl = photoUrl;
-        
-        // Also update user profile image
-        await storage.updateUserProfile(trainerId, {
-          profileImageUrl: photoUrl,
-        });
       }
 
       // Update trainer data if there are trainer-specific updates

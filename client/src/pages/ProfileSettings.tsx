@@ -78,6 +78,9 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
         description: "Your profile has been updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      if (isCoach) {
+        queryClient.invalidateQueries({ queryKey: ["/api/trainer/profile"] });
+      }
       setSelectedFile(null);
       setPreview(null);
     },
