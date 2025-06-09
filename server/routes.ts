@@ -110,6 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to logout" });
       }
       res.clearCookie('connect.sid');
+      res.clearCookie('auth_token');
       res.json({ success: true, message: "Logged out successfully" });
     });
   });
@@ -122,11 +123,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Invalid user ID" });
     }
 
-    // Set session for demo user
-    req.session.userId = userId;
-    req.session.authenticated = true;
+    // Clear any existing auth cookies
+    res.clearCookie('auth_token');
     
-    res.json({ success: true, message: `Logged in as ${userId}` });
+    // Set session for demo user
+    (req.session as any).userId = userId;
+    (req.session as any).authenticated = true;
+    
+    // Save session explicitly
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ message: "Failed to save session" });
+      }
+      console.log('Demo login session saved:', { userId, sessionId: req.sessionID });
+      res.json({ success: true, message: `Logged in as ${userId}` });
+    });
   });
 
 
