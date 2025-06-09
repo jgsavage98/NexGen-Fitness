@@ -829,14 +829,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user profile for context
       const user = await storage.getUser(userId);
       
+      // Check if client is awaiting trainer approval
+      const today = new Date().toISOString().split('T')[0];
+      let isPendingApproval = false;
+      
+      try {
+        // Check for pending macro changes (trainer approval workflow)
+        const pendingChanges = await storage.getPendingMacroChanges();
+        const userPendingChange = pendingChanges.find(change => change.userId === userId);
+        isPendingApproval = !!userPendingChange;
+        
+        // If no pending change, check if user has approved macro targets
+        if (!isPendingApproval) {
+          const macroTargets = await storage.getUserMacroTargets(userId, new Date(today));
+          isPendingApproval = !macroTargets;
+        }
+      } catch (error) {
+        console.log("Error checking approval status for chat:", error);
+        isPendingApproval = false;
+      }
+      
       // Get recent conversation history
       const recentMessages = await storage.getUserChatMessages(userId, 10);
       const conversationHistory = recentMessages.map(msg => 
         `${msg.isAI ? 'Coach' : 'User'}: ${msg.message}`
       );
       
-      // Get AI response
-      const aiResponse = await aiCoach.getChatResponse(message, user, conversationHistory);
+      // Get AI response with approval context
+      const aiResponse = await aiCoach.getChatResponse(message, user, conversationHistory, isPendingApproval);
       
       // Save AI response
       const savedAIMessage = await storage.saveChatMessage({
