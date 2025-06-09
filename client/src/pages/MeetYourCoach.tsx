@@ -10,6 +10,7 @@ interface Trainer {
   name: string;
   photoUrl?: string;
   bio: string;
+  specialties: string[];
   certifications: string[];
   isActive: boolean;
 }
@@ -112,48 +113,32 @@ export default function MeetYourCoach() {
                 <Users className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold text-white">About Coach Chassidy</h3>
               </div>
-              <div className="text-gray-300 text-sm leading-relaxed space-y-3">
-                <p>
-                  {trainer?.bio || `Certified personal trainer and nutrition specialist with 8+ years of experience helping clients achieve sustainable fitness and nutrition goals. I specialize in evidence-based coaching approaches and lifestyle transformations.`}
-                </p>
-                <p>
-                  I believe in creating personalized programs that fit your lifestyle and help you build lasting healthy habits. My approach focuses on sustainable changes that you can maintain long-term, not quick fixes that leave you feeling frustrated.
-                </p>
-                <p>
-                  When I'm not coaching, you can find me trying new recipes, hiking with my dog, or staying up to date on the latest nutrition research. I'm excited to be part of your journey to better health!
-                </p>
+              <div className="text-gray-300 text-sm leading-relaxed">
+                {trainer?.bio && (
+                  <div className="whitespace-pre-line">
+                    {trainer.bio}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
           {/* Specialties */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-white mb-3">My Specialties</h3>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-gray-300 text-sm">Sustainable weight management</span>
+          {trainer?.specialties && trainer.specialties.length > 0 && (
+            <Card className="bg-gray-800 border-gray-700">
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-white mb-3">My Specialties</h3>
+                <div className="space-y-2">
+                  {trainer.specialties.map((specialty, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
+                      <span className="text-gray-300 text-sm">{specialty}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-gray-300 text-sm">Macro-based nutrition coaching</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-gray-300 text-sm">Strength training programming</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-gray-300 text-sm">Habit formation & lifestyle coaching</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-gray-300 text-sm">Injury-friendly modifications</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* CTA */}
           <div className="pb-8">
