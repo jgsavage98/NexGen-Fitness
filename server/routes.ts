@@ -12,8 +12,13 @@ import {
   insertWorkoutLogSchema,
   insertChatMessageSchema,
   insertExerciseSchema,
-  insertProgressEntrySchema
+  insertProgressEntrySchema,
+  users,
+  macroChanges,
+  chatMessages
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -936,6 +941,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error clearing test data:", error);
       res.status(500).json({ message: "Failed to clear test data" });
+    }
+  });
+
+  // Trainer dashboard routes
+  app.get('/api/trainer/clients', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      
+      // For Coach Chassidy, show all clients assigned to her
+      const clients = await db.select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        profileImageUrl: users.profileImageUrl,
+        goal: users.goal,
+        weight: users.weight,
+        goalWeight: users.goalWeight,
+        programStartDate: users.programStartDate,
+        onboardingCompleted: users.onboardingCompleted,
+      }).from(users).where(eq(users.trainerId, 'coach_chassidy'));
+      
+      res.json(clients);
+    } catch (error) {
+      console.error("Error fetching trainer clients:", error);
+      res.status(500).json({ message: "Failed to fetch clients" });
+    }
+  });
+
+  app.get('/api/trainer/pending-macro-changes', isAuthenticated, async (req: any, res) => {
+    try {
+      const pendingChanges = await db
+        .select({
+          id: macroChanges.id,
+          userId: macroChanges.userId,
+          proposedCalories: macroChanges.proposedCalories,
+          proposedProtein: macroChanges.proposedProtein,
+          proposedCarbs: macroChanges.proposedCarbs,
+          proposedFat: macroChanges.proposedFat,
+          reasoning: macroChanges.reasoning,
+          requestDate: macroChanges.requestDate,
+          user: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+            profileImageUrl: users.profileImageUrl,
+            goal: users.goal,
+          }
+        })
+        .from(macroChanges)
+        .innerJoin(users, eq(macroChanges.userId, users.id))
+        .where(eq(macroChanges.status, 'pending'));
+      
+      res.json(pendingChanges);
+    } catch (error) {
+      console.error("Error fetching pending macro changes:", error);
+      res.status(500).json({ message: "Failed to fetch pending macro changes" });
+    }
+  });
+
+  app.post('/api/trainer/approve-macro-change/:changeId', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      const changeId = parseInt(req.params.changeId);
+      const { trainerNotes } = req.body;
+      
+      const approvedChange = await storage.approveMacroChange(changeId, trainerId, trainerNotes);
+      res.json(approvedChange);
+    } catch (error) {
+      console.error("Error approving macro change:", error);
+      res.status(500).json({ message: "Failed to approve macro change" });
+    }
+  });
+
+  app.post('/api/trainer/edit-macro-change/:changeId', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      const changeId = parseInt(req.params.changeId);
+      const { finalMacros, trainerNotes } = req.body;
+      
+      const editedChange = await storage.editMacroChange(changeId, trainerId, finalMacros, trainerNotes);
+      res.json(editedChange);
+    } catch (error) {
+      console.error("Error editing macro change:", error);
+      res.status(500).json({ message: "Failed to edit macro change" });
+    }
+  });
+
+  app.get('/api/trainer/recent-chats', isAuthenticated, async (req: any, res) => {
+    try {
+      const { limit = 50 } = req.query;
+      
+      const recentChats = await db
+        .select({
+          id: chatMessages.id,
+          userId: chatMessages.userId,
+          message: chatMessages.message,
+          isAI: chatMessages.isAI,
+          createdAt: chatMessages.createdAt,
+          user: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+            profileImageUrl: users.profileImageUrl,
+          }
+        })
+        .from(chatMessages)
+        .innerJoin(users, eq(chatMessages.userId, users.id))
+        .where(eq(users.trainerId, 'coach_chassidy'))
+        .orderBy(desc(chatMessages.createdAt))
+        .limit(parseInt(limit as string));
+      
+      res.json(recentChats);
+    } catch (error) {
+      console.error("Error fetching recent chats:", error);
+      res.status(500).json({ message: "Failed to fetch recent chats" });
+    }
+  });
+
+  app.get('/api/trainer/client-progress/:clientId', isAuthenticated, async (req: any, res) => {
+    try {
+      const clientId = req.params.clientId;
+      
+      // Get client progress entries
+      const progressEntries = await storage.getUserProgressEntries(clientId);
+      
+      // Get recent macro data
+      const recentMacros = await storage.getRecentMacros(clientId, 30);
+      
+      // Get workout logs
+      const workoutLogs = await storage.getUserWorkoutLogs(clientId);
+      
+      res.json({
+        progressEntries,
+        recentMacros,
+        workoutLogs
+      });
+    } catch (error) {
+      console.error("Error fetching client progress:", error);
+      res.status(500).json({ message: "Failed to fetch client progress" });
     }
   });
 

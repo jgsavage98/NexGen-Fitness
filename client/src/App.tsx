@@ -11,6 +11,7 @@ import Onboarding from "@/pages/Onboarding";
 import ExerciseUpload from "@/pages/ExerciseUpload";
 import MeetYourCoach from "@/pages/MeetYourCoach";
 import CoachBio from "@/pages/CoachBio";
+import TrainerDashboard from "@/pages/TrainerDashboard";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -29,6 +30,12 @@ function Router() {
       <Route path="/landing" component={Landing} />
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
+      ) : user?.id === 'coach_chassidy' ? (
+        <>
+          <Route path="/" component={TrainerDashboard} />
+          <Route path="/trainer" component={TrainerDashboard} />
+          <Route path="/admin/exercises" component={ExerciseUpload} />
+        </>
       ) : user?.onboardingCompleted ? (
         <>
           <Route path="/" component={Home} />
