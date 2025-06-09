@@ -123,22 +123,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Invalid user ID" });
     }
 
-    // Clear any existing cookies
-    res.clearCookie('auth_token');
-    res.clearCookie('connect.sid');
-    
-    // Create auth token and set as cookie
+    // Return auth token for client-side storage
     const authToken = Buffer.from(`${userId}:${Date.now()}`).toString('base64');
-    res.cookie('auth_token', authToken, {
-      httpOnly: true,
-      secure: false,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-      sameSite: 'lax',
-      path: '/'
-    });
     
-    console.log('Demo login auth token set:', { userId, token: authToken });
-    res.json({ success: true, message: `Logged in as ${userId}` });
+    console.log('Demo login auth token generated:', { userId, token: authToken });
+    res.json({ 
+      success: true, 
+      message: `Logged in as ${userId}`,
+      authToken: authToken,
+      userId: userId
+    });
   });
 
 

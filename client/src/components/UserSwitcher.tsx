@@ -23,8 +23,17 @@ export default function UserSwitcher() {
       }
       return response.json();
     },
-    onSuccess: () => {
-      // Force a page reload to ensure the new auth cookie takes effect
+    onSuccess: (data) => {
+      // Set auth token as cookie manually
+      if (data.authToken) {
+        document.cookie = `auth_token=${data.authToken}; path=/; max-age=${7 * 24 * 60 * 60}; samesite=lax`;
+        
+        // Also store in localStorage as backup
+        localStorage.setItem('demo_auth_token', data.authToken);
+        localStorage.setItem('demo_user_id', data.userId);
+      }
+      
+      // Force a page reload to ensure the new auth takes effect
       setTimeout(() => {
         window.location.reload();
       }, 100);
@@ -45,6 +54,14 @@ export default function UserSwitcher() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      // Clear localStorage
+      localStorage.removeItem('demo_auth_token');
+      localStorage.removeItem('demo_user_id');
+      
+      // Clear cookies
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'connect.sid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
@@ -63,6 +80,11 @@ export default function UserSwitcher() {
         title: "Logged out",
         description: "Successfully logged out",
       });
+      
+      // Force reload to clear auth state
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     },
     onError: (error) => {
       toast({
