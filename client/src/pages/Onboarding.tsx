@@ -11,6 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
 interface OnboardingData {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  profileImage?: File;
   goal?: string;
   height?: number;
   weight?: number;
@@ -39,6 +43,7 @@ export default function Onboarding() {
   const [macroSummary, setMacroSummary] = useState<any>(null);
   const [hasAcknowledged, setHasAcknowledged] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const [nutritionData, setNutritionData] = useState<NutritionExtraction | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [formData, setFormData] = useState<OnboardingData>({
@@ -60,8 +65,19 @@ export default function Onboarding() {
     },
   });
 
-  const totalSteps = 6;
+  const totalSteps = 7;
   const progressPercentage = (currentStep / totalSteps) * 100;
+
+  const handleProfileImageUpload = (file: File) => {
+    setFormData({ ...formData, profileImage: file });
+    
+    // Create image preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setProfileImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleImageUpload = async (file: File) => {
     setFormData({ ...formData, currentMacrosFile: file });
@@ -256,18 +272,20 @@ export default function Onboarding() {
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return !!formData.goal;
+        return !!(formData.firstName && formData.lastName && formData.email);
       case 2:
+        return !!formData.goal;
+      case 3:
         const basicInfoComplete = !!(formData.height && formData.weight && formData.age && formData.gender);
         const goalWeightRequired = formData.goal === 'weight-loss' ? !!formData.goalWeight : true;
         return basicInfoComplete && goalWeightRequired;
-      case 3:
-        return !!formData.activityLevel;
       case 4:
-        return true; // Injuries are optional
+        return !!formData.activityLevel;
       case 5:
-        return true; // Equipment is optional
+        return true; // Injuries are optional
       case 6:
+        return true; // Equipment is optional
+      case 7:
         return true; // Current macros screenshot is optional
       default:
         return false;
@@ -472,6 +490,88 @@ export default function Onboarding() {
         {/* Step Content */}
         <div className="flex-1">
           {currentStep === 1 && (
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Let's get to know you</h1>
+              <p className="text-gray-400 mb-8">Tell us about yourself so we can personalize your experience.</p>
+              
+              <div className="space-y-6">
+                {/* Profile Image Upload */}
+                <div className="text-center">
+                  <div className="mb-4">
+                    <div className="w-24 h-24 mx-auto mb-4 relative">
+                      {profileImagePreview ? (
+                        <img 
+                          src={profileImagePreview} 
+                          alt="Profile preview" 
+                          className="w-24 h-24 rounded-full object-cover border-2 border-primary-500"
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-gray-700 border-2 border-dashed border-gray-500 flex items-center justify-center">
+                          <Camera className="w-8 h-8 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      id="profile-image"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleProfileImageUpload(file);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label htmlFor="profile-image" className="cursor-pointer">
+                      <div className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500/20 text-primary-300 rounded-lg hover:bg-primary-500/30 transition-colors">
+                        <Camera className="w-4 h-4" />
+                        <span className="text-sm">Add Photo (Optional)</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Name Fields */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+                    <input
+                      type="text"
+                      value={formData.firstName || ''}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      className="w-full bg-surface border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:border-primary-500 focus:outline-none"
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
+                    <input
+                      type="text"
+                      value={formData.lastName || ''}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      className="w-full bg-surface border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:border-primary-500 focus:outline-none"
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                </div>
+
+                {/* Email Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    value={formData.email || ''}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full bg-surface border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:border-primary-500 focus:outline-none"
+                    placeholder="Enter your email"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 2 && (
             <div>
               <h1 className="text-3xl font-bold mb-2">What's your main goal?</h1>
               <p className="text-gray-400 mb-8">This helps us personalize your coaching experience.</p>
