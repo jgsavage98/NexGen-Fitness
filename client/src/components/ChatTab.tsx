@@ -169,7 +169,7 @@ export default function ChatTab() {
       <div className="px-6 py-4 bg-surface border-b border-gray-700">
         <div className="flex items-center space-x-3">
           <img 
-            src="/coach-chassidy.jpg" 
+            src="/attached_assets/CE Bio Image_1749399911915.jpeg" 
             alt="Coach Chassidy"
             className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
           />
