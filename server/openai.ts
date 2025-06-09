@@ -194,6 +194,12 @@ NEVER mention being an AI, assistant, or virtual coach. You ARE Coach Chassidy s
 
 ${context}
 
+IMPORTANT: Ensure the macros mathematically add up to the total calories:
+- Protein: 4 calories per gram
+- Carbs: 4 calories per gram  
+- Fat: 9 calories per gram
+- Total should equal stated calories
+
 Respond with JSON:
 {
   "calories": number,
@@ -214,11 +220,38 @@ Respond with JSON:
 
       const result = JSON.parse(response.choices[0].message.content || "{}");
       
+      let calories = Number(result.calories) || 0;
+      let protein = Number(result.protein) || 0;
+      let carbs = Number(result.carbs) || 0;
+      let fat = Number(result.fat) || 0;
+      
+      // Validate that macros add up to stated calories
+      const calculatedCalories = (protein * 4) + (carbs * 4) + (fat * 9);
+      const calorieDiscrepancy = Math.abs(calculatedCalories - calories);
+      
+      // If discrepancy is more than 50 calories, adjust macros proportionally
+      if (calorieDiscrepancy > 50) {
+        console.log(`Macro calculation mismatch: ${calculatedCalories} vs ${calories}. Adjusting...`);
+        
+        // Adjust macros to match stated calories while maintaining ratios
+        const proteinCalories = protein * 4;
+        const carbCalories = carbs * 4;
+        const fatCalories = fat * 9;
+        const totalMacroCalories = proteinCalories + carbCalories + fatCalories;
+        
+        if (totalMacroCalories > 0) {
+          const ratio = calories / totalMacroCalories;
+          protein = Math.round(protein * ratio);
+          carbs = Math.round(carbs * ratio);
+          fat = Math.round(fat * ratio);
+        }
+      }
+      
       return {
-        calories: Number(result.calories) || 0,
-        protein: Number(result.protein) || 0,
-        carbs: Number(result.carbs) || 0,
-        fat: Number(result.fat) || 0,
+        calories,
+        protein,
+        carbs,
+        fat,
         reasoning: result.reasoning || "Standard macro calculation",
         requiresTrainerApproval: true, // Always require approval
         weightTrend,
@@ -229,11 +262,25 @@ Respond with JSON:
       console.error("Macro calculation error:", error);
       // Return conservative baseline if AI fails
       const bmr = this.calculateBMR(userProfile);
+      const targetCalories = Math.round(bmr * 1.2); // Conservative sedentary multiplier
+      
+      // Calculate macros with proper mathematical consistency
+      const protein = Math.round(userProfile.currentWeight * 2.2 * 0.8); // 0.8g per lb
+      const proteinCalories = protein * 4;
+      
+      // Allocate remaining calories between carbs and fat (60% carbs, 40% fat)
+      const remainingCalories = targetCalories - proteinCalories;
+      const carbCalories = Math.round(remainingCalories * 0.6);
+      const fatCalories = remainingCalories - carbCalories;
+      
+      const carbs = Math.round(carbCalories / 4);
+      const fat = Math.round(fatCalories / 9);
+      
       return {
-        calories: Math.round(bmr * 1.2), // Conservative sedentary multiplier
-        protein: Math.round(userProfile.currentWeight * 2.2 * 0.8), // 0.8g per lb
-        carbs: Math.round(bmr * 1.2 * 0.4 / 4), // 40% of calories
-        fat: Math.round(bmr * 1.2 * 0.3 / 9), // 30% of calories
+        calories: targetCalories,
+        protein,
+        carbs,
+        fat,
         reasoning: "Conservative baseline calculation - AI processing unavailable",
         requiresTrainerApproval: true,
         weightTrend,
