@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, X, Camera, Check, Info, Dumbbell, Target, Heart } from "lucide-react";
+import { ArrowLeft, X, Camera, Check, Info, Dumbbell, Target, Heart, Calendar } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -366,70 +366,28 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Macro Comparison */}
+          {/* Next Steps */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Your Nutrition Plan</h2>
-            <div className="space-y-4">
-              
-              {/* Baseline Section */}
-              <div className="bg-surface rounded-lg p-4">
-                <div className="text-sm font-medium mb-3 text-gray-300">Baseline (From Your Screenshot)</div>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-lg font-semibold">{macroSummary?.baselineCalories || 2000} calories</span>
+            <h2 className="text-xl font-semibold mb-4">What's Next?</h2>
+            <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-6">
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-6 h-6 text-primary-400" />
                 </div>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="text-gray-400">Protein</div>
-                    <div className="font-semibold">{macroSummary?.baselineMacros?.protein || 120}g</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-primary-300 mb-2">Your Plan is Being Created</h3>
+                  <p className="text-gray-300 mb-4">
+                    Coach Chassidy will review all the information you've provided, including your MyFitnessPal baseline data, 
+                    goals, and preferences to create your personalized macro plan.
+                  </p>
+                  <div className="bg-primary-500/10 rounded-lg p-4">
+                    <h4 className="font-medium text-primary-200 mb-2">You'll be notified when:</h4>
+                    <ul className="text-sm text-gray-300 space-y-1">
+                      <li>• Your macro targets are ready</li>
+                      <li>• Your workout plan is available</li>
+                      <li>• Coach Chassidy has any questions</li>
+                    </ul>
                   </div>
-                  <div className="text-center">
-                    <div className="text-gray-400">Carbs</div>
-                    <div className="font-semibold">{macroSummary?.baselineMacros?.carbs || 200}g</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-gray-400">Fat</div>
-                    <div className="font-semibold">{macroSummary?.baselineMacros?.fat || 65}g</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Arrow */}
-              <div className="flex justify-center">
-                <div className="flex items-center space-x-2 text-primary-500">
-                  <div className="h-px bg-primary-500 w-8"></div>
-                  <ArrowLeft className="w-6 h-6 rotate-180" />
-                  <div className="h-px bg-primary-500 w-8"></div>
-                </div>
-              </div>
-
-              {/* Proposed Target Section */}
-              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
-                <div className="text-sm font-medium mb-3 text-yellow-300">Proposed Daily Target (Pending Trainer Review)</div>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-lg font-semibold text-yellow-100">{macroSummary?.proposedCalories || macroSummary?.newCalories || 1950} calories</span>
-                  <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">
-                    -{((macroSummary?.baselineCalories || 2000) - (macroSummary?.proposedCalories || macroSummary?.newCalories || 1950))} cal
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="text-yellow-400">Protein</div>
-                    <div className="font-semibold text-yellow-100">{macroSummary?.proposedMacros?.protein || macroSummary?.newMacros?.protein || 122}g</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-yellow-400">Carbs</div>
-                    <div className="font-semibold text-yellow-100">{macroSummary?.proposedMacros?.carbs || macroSummary?.newMacros?.carbs || 219}g</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-yellow-400">Fat</div>
-                    <div className="font-semibold text-yellow-100">{macroSummary?.proposedMacros?.fat || macroSummary?.newMacros?.fat || 65}g</div>
-                  </div>
-                </div>
-                <div className="mt-3 text-xs text-yellow-200 bg-yellow-500/10 rounded p-2">
-                  {macroSummary?.status === 'pending_trainer_approval' 
-                    ? 'This plan is awaiting your trainer\'s review and approval.'
-                    : 'I\'m starting you with a gentle reduction. We\'ll adjust gradually as you progress!'
-                  }
                 </div>
               </div>
             </div>
@@ -446,9 +404,9 @@ export default function Onboarding() {
               <div className="text-sm">
                 <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
                 <p className="text-primary-100">
-                  Welcome to your personalized fitness journey! I've generated your initial macro plan based on your MyFitnessPal data and goals. 
-                  I'll review and approve this plan shortly, making any necessary adjustments to ensure it's perfect for you. Once approved, 
-                  you'll see your active targets in the dashboard.
+                  Welcome to your personalized fitness journey! I've received all your information and MyFitnessPal baseline data. 
+                  I'll now create your custom macro plan and workout routine tailored specifically to your goals and preferences. 
+                  You'll receive a notification in the app once everything is ready!
                 </p>
               </div>
             </div>
