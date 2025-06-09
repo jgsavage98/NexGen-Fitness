@@ -162,7 +162,7 @@ export default function Onboarding() {
           carbs: nutritionData.carbs,
           fat: nutritionData.fat
         };
-        newCalories = Math.max(baselineData.calories - 200, 1200);
+        newCalories = Math.max(baselineData.calories - 50, 1200);
         console.log('Using extracted nutrition data for macro summary:', baselineData);
       } else {
         // Use standard baseline values if no screenshot was uploaded
@@ -171,6 +171,28 @@ export default function Onboarding() {
         console.log('Using standard baseline for macro summary (no screenshot):', baselineData);
       }
       
+      // Calculate new macros based on baseline data
+      let newMacros;
+      if (nutritionData && formData.currentMacrosFile) {
+        // For extracted data, reduce calories by adjusting fat and carbs
+        const calorieReduction = baselineData.calories - newCalories; // 50 calories
+        const fatReduction = Math.round(calorieReduction * 0.6 / 9); // ~3g fat (30 cal)
+        const carbReduction = Math.round(calorieReduction * 0.4 / 4); // ~5g carbs (20 cal)
+        
+        newMacros = {
+          protein: baselineData.protein, // Keep protein the same
+          carbs: Math.max(baselineData.carbs - carbReduction, 50),
+          fat: Math.max(baselineData.fat - fatReduction, 20)
+        };
+      } else {
+        // Use percentage-based calculation for standard baseline
+        newMacros = { 
+          protein: Math.round(newCalories * 0.25 / 4), 
+          carbs: Math.round(newCalories * 0.45 / 4), 
+          fat: Math.round(newCalories * 0.30 / 9) 
+        };
+      }
+
       const macroData = {
         baselineCalories: baselineData.calories,
         newCalories,
@@ -179,11 +201,7 @@ export default function Onboarding() {
           carbs: baselineData.carbs, 
           fat: baselineData.fat 
         },
-        newMacros: { 
-          protein: Math.round(newCalories * 0.25 / 4), 
-          carbs: Math.round(newCalories * 0.45 / 4), 
-          fat: Math.round(newCalories * 0.30 / 9) 
-        }
+        newMacros
       };
       
       setMacroSummary(macroData);
