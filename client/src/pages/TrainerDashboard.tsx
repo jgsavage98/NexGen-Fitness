@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings } from "lucide-react";
+import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut } from "lucide-react";
 
 interface Client {
   id: string;
@@ -296,7 +296,7 @@ export default function TrainerDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <img
-                src="/attached_assets/CE Bio Image_1749399911915.jpeg"
+                src="/chassidy-profile.jpeg"
                 alt="Coach Chassidy"
                 className="w-12 h-12 rounded-full object-cover"
               />
@@ -312,6 +312,15 @@ export default function TrainerDashboard() {
               <Badge variant="outline" className="text-yellow-400 border-yellow-400">
                 {pendingChanges.length} Pending Reviews
               </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = '/'}
+                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Switch Account
+              </Button>
             </div>
           </div>
         </div>
