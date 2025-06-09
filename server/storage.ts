@@ -46,6 +46,7 @@ export interface IStorage {
   // Trainer operations
   getTrainer(id: string): Promise<Trainer | undefined>;
   upsertTrainer(trainer: InsertTrainer): Promise<Trainer>;
+  getAllTrainers(): Promise<Trainer[]>;
   
   // Daily macros operations (core PRD workflow)
   getDailyMacros(userId: string, date: Date): Promise<DailyMacros | undefined>;
@@ -143,6 +144,10 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return upsertedTrainer;
+  }
+
+  async getAllTrainers(): Promise<Trainer[]> {
+    return await db.select().from(trainers);
   }
 
   // Daily macros operations (core PRD workflow)

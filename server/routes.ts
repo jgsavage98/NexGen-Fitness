@@ -167,13 +167,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate unique user ID
       const userId = Math.random().toString(36).substring(2, 15);
       
+      // Smart trainer assignment logic
+      let assignedTrainerId = null;
+      if (!isTrainer) {
+        // For clients, check how many trainers exist
+        const allTrainers = await storage.getAllTrainers();
+        if (allTrainers.length === 1 && allTrainers[0].id === 'coach_chassidy') {
+          // Only Chassidy exists, auto-assign to her
+          assignedTrainerId = 'coach_chassidy';
+        } else if (allTrainers.length > 1) {
+          // Multiple trainers exist, leave unassigned for manual assignment
+          assignedTrainerId = null;
+        } else {
+          // Fallback to Chassidy if no trainers found
+          assignedTrainerId = 'coach_chassidy';
+        }
+      }
+
       const userData = {
         id: userId,
         firstName: isTrainer ? firstName.trim() : null, // Clients provide this during onboarding
         lastName: isTrainer ? lastName.trim() : null,   // Clients provide this during onboarding
         email: isTrainer ? email.trim() : null,         // Clients provide this during onboarding
         goal: null, // Goals will be set during onboarding
-        trainerId: isTrainer ? null : 'coach_chassidy',
+        trainerId: assignedTrainerId,
         onboardingCompleted: isTrainer ? true : false, // Trainers don't need onboarding
         programStartDate: isTrainer ? new Date() : null,
       };
