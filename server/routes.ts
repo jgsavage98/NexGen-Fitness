@@ -10,7 +10,8 @@ import {
   insertMealSchema, 
   insertWorkoutLogSchema,
   insertChatMessageSchema,
-  insertExerciseSchema
+  insertExerciseSchema,
+  insertProgressEntrySchema
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -608,6 +609,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching progress:", error);
       res.status(500).json({ message: "Failed to fetch progress" });
+    }
+  });
+
+  app.post('/api/progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const progressData = insertProgressEntrySchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const progressEntry = await storage.createProgressEntry(progressData);
+      res.json(progressEntry);
+    } catch (error) {
+      console.error("Error creating progress entry:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid progress data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create progress entry" });
     }
   });
 
