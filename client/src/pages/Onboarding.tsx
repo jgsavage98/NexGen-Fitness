@@ -144,9 +144,38 @@ export default function Onboarding() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: OnboardingData) => {
+      // First upload profile image if provided
+      let profileImageUrl = null;
+      if (data.profileImage) {
+        const formData = new FormData();
+        formData.append('profileImage', data.profileImage);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const authParam = urlParams.get('auth');
+        let uploadUrl = '/api/user/profile-image';
+        if (authParam) {
+          uploadUrl += `?auth=${authParam}`;
+        }
+        
+        const uploadResponse = await fetch(uploadUrl, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          profileImageUrl = uploadData.profileImageUrl;
+        }
+      }
+      
       // Convert string values to numbers where needed
       const profileData = {
         ...data,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        profileImageUrl: profileImageUrl,
         goal: data.goal, // Keep goal as string (weight-loss, muscle-gain, maintenance)
         weight: data.weight ? parseFloat(data.weight.toString()) : undefined,
         goalWeight: data.goalWeight ? parseFloat(data.goalWeight.toString()) : undefined,
@@ -155,7 +184,11 @@ export default function Onboarding() {
         onboardingCompleted: false, // Don't mark as completed yet - wait for user acknowledgment
       };
       
-      // First update the profile
+      // Remove the file objects from the data being sent to the API
+      delete profileData.profileImage;
+      delete profileData.currentMacrosFile;
+      
+      // Update the profile
       const profileResponse = await apiRequest("PUT", "/api/user/profile", profileData);
       
       // Note: Macro summary will be calculated in onSuccess after profile update
@@ -619,7 +652,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 3 && (
             <div>
               <h1 className="text-3xl font-bold mb-2">Tell us about yourself</h1>
               <p className="text-gray-400 mb-8">We need some basic info to calculate your macros.</p>
@@ -703,7 +736,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 4 && (
             <div>
               <h1 className="text-3xl font-bold mb-2">Activity Level</h1>
               <p className="text-gray-400 mb-8">How active are you currently?</p>
@@ -733,7 +766,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 5 && (
             <div>
               <h1 className="text-3xl font-bold mb-2">Any injuries?</h1>
               <p className="text-gray-400 mb-8">We'll modify exercises to keep you safe (optional).</p>
@@ -770,7 +803,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 6 && (
             <div>
               <h1 className="text-3xl font-bold mb-2">Available Equipment</h1>
               <p className="text-gray-400 mb-8">What equipment do you have access to?</p>
@@ -806,7 +839,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {currentStep === 6 && (
+          {currentStep === 7 && (
             <div>
               <h1 className="text-3xl font-bold mb-2">Current Nutrition</h1>
               <p className="text-gray-400 mb-8">Upload a screenshot of your MyFitnessPal nutrition dashboard so I can understand your current eating habits (optional).</p>

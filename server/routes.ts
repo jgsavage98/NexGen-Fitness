@@ -227,6 +227,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+  // Profile image upload
+  app.post('/api/user/profile-image', isAuthenticated, screenshotUpload.single('profileImage'), async (req: any, res) => {
+    try {
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ message: "Profile image file is required" });
+      }
+      
+      const profileImageUrl = `screenshots/${file.filename}`;
+      res.json({ profileImageUrl });
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      res.status(500).json({ message: "Failed to upload profile image" });
+    }
+  });
+
   // User profile routes
   app.put('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
