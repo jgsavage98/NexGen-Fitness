@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut } from "lucide-react";
+import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut, Bell } from "lucide-react";
 import ProfileSettings from "@/pages/ProfileSettings";
 import ClientUploadHistory from "@/components/ClientUploadHistory";
 import { calculateJourneyDay } from "@/lib/dateUtils";
@@ -52,6 +52,7 @@ export default function TrainerDashboard() {
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [trainerNotes, setTrainerNotes] = useState("");
+  const [previousPendingCount, setPreviousPendingCount] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -63,7 +64,45 @@ export default function TrainerDashboard() {
   // Fetch pending macro changes
   const { data: pendingChanges = [] } = useQuery<PendingMacroChange[]>({
     queryKey: ["/api/trainer/pending-macro-changes"],
+    refetchInterval: 30000, // Check every 30 seconds for new reviews
   });
+
+  // Notification effect for new pending macro changes
+  useEffect(() => {
+    if (pendingChanges.length > previousPendingCount && previousPendingCount > 0) {
+      const newCount = pendingChanges.length - previousPendingCount;
+      
+      // Show toast notification
+      toast({
+        title: "New Macro Review Required",
+        description: `${newCount} new client macro plan${newCount > 1 ? 's' : ''} need${newCount === 1 ? 's' : ''} your review`,
+        duration: 10000,
+      });
+
+      // Request browser notification permission and show notification
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('Ignite AI - Macro Review Required', {
+            body: `${newCount} new client macro plan${newCount > 1 ? 's' : ''} need${newCount === 1 ? 's' : ''} your review`,
+            icon: '/ignite-logo.png',
+            tag: 'macro-review'
+          });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              new Notification('Ignite AI - Macro Review Required', {
+                body: `${newCount} new client macro plan${newCount > 1 ? 's' : ''} need${newCount === 1 ? 's' : ''} your review`,
+                icon: '/ignite-logo.png',
+                tag: 'macro-review'
+              });
+            }
+          });
+        }
+      }
+    }
+    
+    setPreviousPendingCount(pendingChanges.length);
+  }, [pendingChanges.length, previousPendingCount, toast]);
 
   // Fetch recent chat messages across all clients
   const { data: recentChats = [] } = useQuery<ChatMessage[]>({
@@ -323,9 +362,15 @@ export default function TrainerDashboard() {
               <Badge variant="outline" className="text-green-400 border-green-400">
                 {clients.length} Active Clients
               </Badge>
-              <Badge variant="outline" className="text-yellow-400 border-yellow-400">
-                {pendingChanges.length} Pending Reviews
-              </Badge>
+              <div className="relative">
+                <Badge variant="outline" className={`${pendingChanges.length > 0 ? 'text-yellow-400 border-yellow-400 animate-pulse' : 'text-gray-400 border-gray-400'}`}>
+                  <Bell className="w-3 h-3 mr-1" />
+                  {pendingChanges.length} Pending Reviews
+                </Badge>
+                {pendingChanges.length > 0 && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+                )}
+              </div>
               <Button
                 variant="outline"
                 size="sm"
