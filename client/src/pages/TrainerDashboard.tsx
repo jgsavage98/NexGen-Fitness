@@ -359,6 +359,10 @@ export default function TrainerDashboard() {
               <User className="w-4 h-4 mr-2" />
               Client Progress
             </TabsTrigger>
+            <TabsTrigger value="client-setup" className="data-[state=active]:bg-primary-500">
+              <User className="w-4 h-4 mr-2" />
+              Client Setup
+            </TabsTrigger>
             <TabsTrigger value="client-history" className="data-[state=active]:bg-primary-500">
               <Calendar className="w-4 h-4 mr-2" />
               Upload History
@@ -582,6 +586,148 @@ export default function TrainerDashboard() {
                   </Card>
                 );
               })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="client-setup" className="space-y-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Client Setup Information</h3>
+                <p className="text-gray-400 mb-6">Review your clients' onboarding details, goals, and program configuration.</p>
+              </div>
+
+              {/* Client Selection */}
+              <Card className="bg-surface border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Select Client to Review Setup</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {clients.map((client) => (
+                      <Card
+                        key={client.id}
+                        className={`cursor-pointer transition-all border-2 ${
+                          selectedClient === client.id
+                            ? 'border-primary-500 bg-primary-500/10'
+                            : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                        }`}
+                        onClick={() => setSelectedClient(client.id)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center">
+                              <span className="text-white font-semibold">
+                                {client.firstName[0]}{client.lastName[0]}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-white font-semibold">
+                                {client.firstName} {client.lastName}
+                              </p>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Badge 
+                                  variant={client.onboardingCompleted ? "default" : "secondary"}
+                                  className={client.onboardingCompleted ? "bg-green-600" : "bg-yellow-600"}
+                                >
+                                  {client.onboardingCompleted ? "Setup Complete" : "Incomplete"}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Client Setup Information Display */}
+              {selectedClient && (
+                <Card className="bg-surface border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="text-white">
+                      {clients.find(c => c.id === selectedClient)?.firstName} {clients.find(c => c.id === selectedClient)?.lastName} - Setup Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {(() => {
+                      const client = clients.find(c => c.id === selectedClient);
+                      if (!client) return null;
+                      
+                      const journeyDay = client.programStartDate ? calculateJourneyDay(client.programStartDate, 'America/Los_Angeles') : 1;
+                      
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Basic Information */}
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-white border-b border-gray-600 pb-2">
+                              Basic Information
+                            </h3>
+                            <div className="space-y-3">
+                              <div>
+                                <Label className="text-gray-400">Full Name</Label>
+                                <p className="text-white font-medium">{client.firstName} {client.lastName}</p>
+                              </div>
+                              <div>
+                                <Label className="text-gray-400">Email</Label>
+                                <p className="text-white font-medium">{client.email}</p>
+                              </div>
+                              <div>
+                                <Label className="text-gray-400">Program Status</Label>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <Badge 
+                                    variant={client.onboardingCompleted ? "default" : "secondary"}
+                                    className={client.onboardingCompleted ? "bg-green-600" : "bg-yellow-600"}
+                                  >
+                                    {client.onboardingCompleted ? "Onboarding Complete" : "Onboarding Incomplete"}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div>
+                                <Label className="text-gray-400">Program Start Date</Label>
+                                <p className="text-white font-medium">
+                                  {client.programStartDate ? new Date(client.programStartDate).toLocaleDateString() : "Not set"}
+                                </p>
+                              </div>
+                              <div>
+                                <Label className="text-gray-400">Journey Day</Label>
+                                <p className="text-white font-medium">Day {journeyDay} of 90</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Goals & Physical Stats */}
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-white border-b border-gray-600 pb-2">
+                              Goals & Physical Stats
+                            </h3>
+                            <div className="space-y-3">
+                              <div>
+                                <Label className="text-gray-400">Primary Goal</Label>
+                                <p className="text-white font-medium">{client.goal || "Not specified"}</p>
+                              </div>
+                              <div>
+                                <Label className="text-gray-400">Current Weight</Label>
+                                <p className="text-white font-medium">{client.weight ? `${client.weight} lbs` : "Not provided"}</p>
+                              </div>
+                              <div>
+                                <Label className="text-gray-400">Goal Weight</Label>
+                                <p className="text-white font-medium">{client.goalWeight ? `${client.goalWeight} lbs` : "Not provided"}</p>
+                              </div>
+                              {client.weight && client.goalWeight && (
+                                <div>
+                                  <Label className="text-gray-400">Weight Loss Target</Label>
+                                  <p className="text-white font-medium">{Math.abs(client.weight - client.goalWeight)} lbs</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
