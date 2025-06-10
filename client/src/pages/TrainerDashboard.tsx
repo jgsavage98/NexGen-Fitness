@@ -80,9 +80,16 @@ export default function TrainerDashboard() {
   }, [queryClient]);
 
   // Fetch all clients
-  const { data: clients = [] } = useQuery<Client[]>({
+  const { data: clients = [], isLoading: clientsLoading, error: clientsError } = useQuery<Client[]>({
     queryKey: ["/api/trainer/clients"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
+
+  // Debug logging for clients query
+  useEffect(() => {
+    console.log("Clients query state:", { clients, clientsLoading, clientsError });
+  }, [clients, clientsLoading, clientsError]);
 
   // Fetch pending macro changes
   const { data: pendingChanges = [] } = useQuery<PendingMacroChange[]>({
