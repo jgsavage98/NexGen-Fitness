@@ -49,7 +49,7 @@ export default function UnifiedChatTab() {
 
   // Query to fetch chat messages for selected client
   const { data: clientChatMessages = [], refetch: refetchClientChat } = useQuery({
-    queryKey: ['/api/trainer/client-chat', selectedChatClient],
+    queryKey: [`/api/trainer/client-chat/${selectedChatClient}`],
     enabled: !!selectedChatClient,
   });
 
@@ -124,11 +124,19 @@ export default function UnifiedChatTab() {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
-                            <span className="text-white font-semibold text-xs">
-                              {client.firstName[0]}{client.lastName[0]}
-                            </span>
-                          </div>
+                          {client.profileImageUrl ? (
+                            <img 
+                              src={client.profileImageUrl} 
+                              alt={`${client.firstName} ${client.lastName}`}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
+                              <span className="text-white font-semibold text-xs">
+                                {client.firstName[0]}{client.lastName[0]}
+                              </span>
+                            </div>
+                          )}
                           <div>
                             <h4 className="text-white font-medium text-sm">
                               {client.firstName} {client.lastName}
@@ -202,7 +210,7 @@ export default function UnifiedChatTab() {
                     disabled={isGeneratingAI}
                     variant="outline"
                     size="sm"
-                    className="border-gray-600 text-gray-300"
+                    className="border-gray-400 text-white bg-gray-800 hover:bg-gray-700 hover:border-gray-300"
                   >
                     {isGeneratingAI ? "Generating..." : "Generate AI Response"}
                   </Button>
