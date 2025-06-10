@@ -77,6 +77,7 @@ export default function TrainerDashboard() {
   // Force cache invalidation on component mount to get fresh data
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-macro-changes"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
   }, [queryClient]);
 
   // Fetch all clients
