@@ -167,9 +167,7 @@ export default function ChatTab() {
     }
   };
 
-  const sendQuickReply = (reply: string) => {
-    sendMessageMutation.mutate(reply);
-  };
+
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString([], { 
@@ -300,37 +298,7 @@ export default function ChatTab() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Replies */}
-      {messages.length > 0 && (
-        <div className="px-6 py-2">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => sendQuickReply("How many calories should I eat today?")}
-              className="text-xs bg-surface border-gray-600 text-white hover:bg-gray-700"
-            >
-              Calories today?
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => sendQuickReply("I'm feeling tired, should I workout?")}
-              className="text-xs bg-surface border-gray-600 text-white hover:bg-gray-700"
-            >
-              Tired, workout?
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => sendQuickReply("Show me a quick stretch routine")}
-              className="text-xs bg-surface border-gray-600 text-white hover:bg-gray-700"
-            >
-              Quick stretch
-            </Button>
-          </div>
-        </div>
-      )}
+
 
       {/* Chat Input */}
       <div className="px-6 py-4 bg-surface border-t border-gray-700">
