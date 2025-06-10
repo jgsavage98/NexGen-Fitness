@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area, AreaChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area, AreaChart, ReferenceLine, Dot } from 'recharts';
 import { Heart, Zap, Target, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useState } from "react";
 
@@ -22,6 +22,16 @@ interface DailyMacros {
   energyLevel?: number;
   adherenceScore?: number;
   createdAt: string;
+}
+
+interface MacroUpdate {
+  id: number;
+  approvedAt: string;
+  finalCalories: number;
+  finalProtein: number;
+  finalCarbs: number;
+  finalFat: number;
+  trainerNotes?: string;
 }
 
 interface Client {
@@ -61,6 +71,12 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
 
   const { data: macrosData = [] } = useQuery<DailyMacros[]>({
     queryKey: [`/api/trainer/client/${clientId}/recent-macros?days=${getDaysForRange(timeRange)}`],
+    enabled: !!clientId,
+  });
+
+  // Fetch macro updates/changes for markers
+  const { data: macroUpdates = [] } = useQuery<MacroUpdate[]>({
+    queryKey: [`/api/trainer/client/${clientId}/macro-updates?days=${getDaysForRange(timeRange)}`],
     enabled: !!clientId,
   });
 
@@ -294,44 +310,141 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
       )}
 
       {viewType === 'wellness' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Hunger and Energy Levels */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Wellness Metrics with Macro Update Markers */}
           <Card className="bg-surface border-gray-700">
             <CardHeader>
-              <CardTitle className="text-white">Daily Wellness Metrics</CardTitle>
+              <CardTitle className="text-white">
+                Wellness Levels Over Time
+                <span className="text-sm text-gray-400 ml-2">
+                  (Markers show macro plan updates)
+                </span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={processedData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
                   <YAxis domain={[0, 5]} stroke="#9CA3AF" fontSize={12} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Line type="monotone" dataKey="hungerLevel" stroke="#EF4444" strokeWidth={3} name="Hunger Level" />
-                  <Line type="monotone" dataKey="energyLevel" stroke="#F59E0B" strokeWidth={3} name="Energy Level" />
+                  
+                  {/* Wellness trend lines */}
+                  <Line 
+                    type="monotone" 
+                    dataKey="hungerLevel" 
+                    stroke="#EF4444" 
+                    strokeWidth={3} 
+                    name="Hunger Level"
+                    dot={{ fill: '#EF4444', strokeWidth: 2, r: 4 }}
+                    connectNulls={false}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="energyLevel" 
+                    stroke="#F59E0B" 
+                    strokeWidth={3} 
+                    name="Energy Level"
+                    dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
+                    connectNulls={false}
+                  />
+                  
+                  {/* Macro update markers */}
+                  {macroUpdates.map((update, index) => {
+                    const updateDate = new Date(update.approvedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    return (
+                      <ReferenceLine 
+                        key={update.id}
+                        x={updateDate} 
+                        stroke="#10B981" 
+                        strokeDasharray="8 4"
+                        strokeWidth={2}
+                        label={{ 
+                          value: "Plan Updated", 
+                          position: "top",
+                          offset: 10,
+                          fontSize: 12,
+                          fill: "#10B981",
+                          fontWeight: "bold"
+                        }}
+                      />
+                    );
+                  })}
                 </LineChart>
               </ResponsiveContainer>
+              
+              {/* Legend */}
+              <div className="flex flex-wrap items-center justify-center gap-6 mt-4 text-sm">
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-0.5 bg-red-400"></div>
+                  <span className="text-gray-300">Hunger Level (1=Satisfied, 5=Very Hungry)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-0.5 bg-yellow-400"></div>
+                  <span className="text-gray-300">Energy Level (1=Low, 5=High)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-0.5 bg-green-400 border-dashed"></div>
+                  <span className="text-gray-300">Macro Plan Updates</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Wellness Distribution */}
-          <Card className="bg-surface border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">Wellness Levels Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={processedData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
-                  <YAxis domain={[0, 5]} stroke="#9CA3AF" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="hungerLevel" fill="#EF4444" name="Hunger Level" />
-                  <Bar dataKey="energyLevel" fill="#F59E0B" name="Energy Level" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          {/* Macro Updates Timeline */}
+          {macroUpdates.length > 0 && (
+            <Card className="bg-surface border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Recent Macro Plan Updates</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {macroUpdates.slice(0, 5).map((update) => (
+                    <div key={update.id} className="flex items-start space-x-4 p-4 bg-gray-800 rounded-lg">
+                      <div className="flex-shrink-0 w-3 h-3 bg-green-400 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-white font-medium">
+                            Plan Updated
+                          </span>
+                          <span className="text-gray-400 text-sm">
+                            {new Date(update.approvedAt).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-400">Calories:</span>
+                            <span className="text-white ml-1">{update.finalCalories}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Protein:</span>
+                            <span className="text-white ml-1">{update.finalProtein}g</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Carbs:</span>
+                            <span className="text-white ml-1">{update.finalCarbs}g</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Fat:</span>
+                            <span className="text-white ml-1">{update.finalFat}g</span>
+                          </div>
+                        </div>
+                        {update.trainerNotes && (
+                          <div className="mt-2 text-gray-300 text-sm">
+                            <span className="text-gray-400">Notes:</span> {update.trainerNotes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 

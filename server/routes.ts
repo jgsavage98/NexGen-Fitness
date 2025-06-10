@@ -1685,6 +1685,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get macro plan updates for a client
+  app.get('/api/trainer/client/:clientId/macro-updates', isAuthenticated, async (req: any, res) => {
+    try {
+      const { clientId } = req.params;
+      const { days = '30' } = req.query;
+      
+      const daysCount = parseInt(days as string);
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysCount);
+      
+      // Get approved macro changes from the macro_changes table
+      const macroUpdates = await db
+        .select({
+          id: macroChanges.id,
+          approvedAt: macroChanges.approvedAt,
+          finalCalories: macroChanges.finalCalories,
+          finalProtein: macroChanges.finalProtein,
+          finalCarbs: macroChanges.finalCarbs,
+          finalFat: macroChanges.finalFat,
+          trainerNotes: macroChanges.trainerNotes,
+        })
+        .from(macroChanges)
+        .where(
+          and(
+            eq(macroChanges.userId, clientId),
+            eq(macroChanges.status, 'approved')
+          )
+        )
+        .orderBy(macroChanges.approvedAt);
+      
+      res.json(macroUpdates);
+    } catch (error) {
+      console.error("Error fetching client macro updates:", error);
+      res.status(500).json({ message: "Failed to fetch client macro updates" });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // WebSocket server for real-time chat
