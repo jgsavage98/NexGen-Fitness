@@ -74,11 +74,11 @@ export default function ClientProgressReport({ clientId, onClose }: ClientProgre
   // Send report to client via chat
   const sendToClientMutation = useMutation({
     mutationFn: async () => {
-      const currentWeight = weightProgress?.weightEntries.length > 0 
-        ? weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight 
+      const currentWeight = (weightProgress?.weightEntries?.length || 0) > 0 
+        ? weightProgress!.weightEntries[weightProgress!.weightEntries.length - 1].weight 
         : client?.weight;
-      const startWeight = weightProgress?.weightEntries.length > 0 
-        ? weightProgress.weightEntries[0].weight 
+      const startWeight = (weightProgress?.weightEntries?.length || 0) > 0 
+        ? weightProgress!.weightEntries[0].weight 
         : client?.weight;
       const weightChange = (currentWeight || 0) - (startWeight || 0);
       const avgAdherence = macrosData.length > 0 
@@ -101,9 +101,9 @@ Keep up the great work! 💪 Let me know if you have any questions about your pr
 
 - Coach Chassidy`;
 
-      return await apiRequest(`/api/trainer/client/${clientId}/send-message`, {
-        method: 'POST',
-        body: { message: reportSummary, isCoach: true }
+      return await apiRequest('/api/trainer/client/' + clientId + '/send-message', 'POST', { 
+        message: reportSummary, 
+        isCoach: true 
       });
     },
     onSuccess: () => {
