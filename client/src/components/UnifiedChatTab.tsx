@@ -66,10 +66,13 @@ export default function UnifiedChatTab() {
   // Invalidate client list when a chat is opened to update unanswered counts
   useEffect(() => {
     if (selectedChatClient) {
-      // Small delay to ensure the backend has processed the "read" status
+      // Immediately invalidate to refresh the count after chat is opened
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      
+      // Also invalidate after a short delay to ensure backend processing is complete
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-      }, 500);
+      }, 1000);
     }
   }, [selectedChatClient, queryClient]);
 
@@ -194,14 +197,24 @@ export default function UnifiedChatTab() {
               <CardHeader className="flex-shrink-0">
                 <CardTitle className="text-white flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
-                        {(() => {
-                          const client = clients.find(c => c.id === selectedChatClient);
-                          return client ? `${client.firstName[0]}${client.lastName[0]}` : '?';
-                        })()}
-                      </span>
-                    </div>
+                    {(() => {
+                      const client = clients.find(c => c.id === selectedChatClient);
+                      if (!client) return null;
+                      
+                      return client.profileImageUrl ? (
+                        <img 
+                          src={client.profileImageUrl} 
+                          alt={`${client.firstName} ${client.lastName}`}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm">
+                            {client.firstName[0]}{client.lastName[0]}
+                          </span>
+                        </div>
+                      );
+                    })()}
                     <span>
                       {(() => {
                         const client = clients.find(c => c.id === selectedChatClient);
