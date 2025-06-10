@@ -89,7 +89,10 @@ export default function ClientProgressReport({ clientId, onClose }: ClientProgre
         ? Math.round(macrosData.reduce((sum, day) => sum + (day.adherenceScore || 0), 0) / macrosData.length)
         : 0;
 
-      // Prepare report data for PDF generation
+      // Get the same HTML content as the Download button uses
+      const reportContent = document.getElementById('progress-report')?.innerHTML;
+
+      // Prepare report data for HTML-based PDF generation
       const reportMessage = `📊 **Your Progress Report is Ready!**
 
 Hi ${client.firstName}! I've generated your latest progress report with detailed charts and analysis.
@@ -106,18 +109,8 @@ Your detailed PDF progress report is attached below. Great work on your progress
       const response = await apiRequest('POST', `/api/trainer/client/${clientId}/send-message`, { 
         message: reportMessage,
         isCoach: true,
-        reportData: {
-          client: {
-            firstName: client.firstName,
-            lastName: client.lastName,
-            weight: client.weight,
-            goalWeight: client.goalWeight,
-            goal: client.goal
-          },
-          currentWeight,
-          weightChange,
-          avgAdherence
-        }
+        htmlContent: reportContent,
+        clientName: `${client.firstName} ${client.lastName}`
       });
       
       return response;
@@ -146,79 +139,43 @@ Your detailed PDF progress report is attached below. Great work on your progress
     window.print();
   };
 
-  const downloadMutation = useMutation({
-    mutationFn: async () => {
-      if (!client || !weightProgress) {
-        throw new Error("Client data not available");
-      }
+  const handleDownload = async () => {
+    // Create a new window for the report
+    const reportWindow = window.open('', '_blank');
+    if (!reportWindow) return;
 
-      const currentWeight = (weightProgress.weightEntries?.length || 0) > 0 
-        ? weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight 
-        : client.weight;
-      const startWeight = (weightProgress.weightEntries?.length || 0) > 0 
-        ? weightProgress.weightEntries[0].weight 
-        : client.weight;
-      const weightChange = (currentWeight || 0) - (startWeight || 0);
-      const avgAdherence = macrosData.length > 0 
-        ? Math.round(macrosData.reduce((sum, day) => sum + (day.adherenceScore || 0), 0) / macrosData.length)
-        : 0;
-
-      const reportDate = new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-
-      // Generate PDF using the same data structure as Send to Client
-      const response = await fetch('/api/trainer/generate-pdf-report', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reportData: {
-            client: {
-              firstName: client.firstName,
-              lastName: client.lastName,
-              weight: client.weight,
-              goalWeight: client.goalWeight,
-              goal: client.goal
-            },
-            currentWeight,
-            weightChange,
-            avgAdherence,
-            reportDate
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
-      }
-
-      // Download the PDF
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `progress-report-${client.firstName}-${client.lastName}-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    },
-    onError: (error) => {
-      console.error('Download error:', error);
-      toast({
-        title: "Download Failed", 
-        description: `Unable to download progress report: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleDownload = () => {
-    downloadMutation.mutate();
+    const reportContent = document.getElementById('progress-report')?.innerHTML;
+    
+    reportWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Progress Report - ${client?.firstName} ${client?.lastName}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; background: white; color: black; }
+            .report-container { max-width: 800px; margin: 0 auto; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+            .section { margin-bottom: 30px; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+            .metric-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
+            .chart-container { height: 300px; margin: 20px 0; }
+            .summary-text { line-height: 1.6; margin: 15px 0; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="report-container">
+            ${reportContent}
+          </div>
+        </body>
+      </html>
+    `);
+    
+    reportWindow.document.close();
+    setTimeout(() => {
+      reportWindow.print();
+      reportWindow.close();
+    }, 250);
   };
 
   if (!client || !weightProgress) {

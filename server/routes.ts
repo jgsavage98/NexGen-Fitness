@@ -1793,54 +1793,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate PDF report for download (same as send-message but returns PDF directly)
-  app.post('/api/trainer/generate-pdf-report', isAuthenticated, async (req: any, res) => {
-    try {
-      const { reportData } = req.body;
-      
-      if (!reportData) {
-        return res.status(400).json({ message: "Report data is required" });
-      }
-      
-      const reportDate = reportData.reportDate || new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      
-      const progressData: ProgressReportData = {
-        client: reportData.client,
-        currentWeight: reportData.currentWeight,
-        weightChange: reportData.weightChange,
-        avgAdherence: reportData.avgAdherence,
-        reportDate
-      };
-      
-      // Generate PDF
-      const pdfBuffer = await generateProgressReportPDF(progressData);
-      
-      // Set headers for PDF download
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="progress-report-${reportData.client.firstName}-${reportData.client.lastName}-${Date.now()}.pdf"`);
-      res.setHeader('Content-Length', pdfBuffer.length);
-      
-      // Send PDF buffer
-      res.send(pdfBuffer);
-      
-    } catch (error: any) {
-      console.error('PDF generation error:', error);
-      res.status(500).json({ 
-        message: "Failed to generate PDF report",
-        error: error.message 
-      });
-    }
-  });
 
   // Trainer send message to client with PDF report support
   app.post('/api/trainer/client/:clientId/send-message', isAuthenticated, async (req: any, res) => {
     try {
       const { clientId } = req.params;
-      const { message, isCoach = true, reportData } = req.body;
+      const { message, isCoach = true, reportData, htmlContent, clientName } = req.body;
       
       if (!message || !message.trim()) {
         return res.status(400).json({ message: "Message content is required" });
@@ -1849,7 +1807,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let finalMessage = message.trim();
       let pdfUrl = null;
       
-      // If this includes report data, generate PDF
+      // If this includes HTML content for PDF generation, use HTML-to-PDF approach
+      if (htmlContent && clientName) {
+        // Create HTML document with the same styling as the download version
+        const fullHtmlContent = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Progress Report - ${clientName}</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 20px; background: white; color: black; }
+                .report-container { max-width: 800px; margin: 0 auto; }
+                .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                .section { margin-bottom: 30px; }
+                .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+                .metric-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
+                .chart-container { height: 300px; margin: 20px 0; }
+                .summary-text { line-height: 1.6; margin: 15px 0; }
+                @media print { body { margin: 0; } }
+              </style>
+            </head>
+            <body>
+              <div class="report-container">
+                ${htmlContent}
+              </div>
+            </body>
+          </html>
+        `;
+        
+        // Save HTML content as a file for the client to access
+        const htmlFilename = `progress-report-${clientName.replace(/\s+/g, '-')}-${Date.now()}.html`;
+        const htmlFilePath = await savePDFToFile(Buffer.from(fullHtmlContent, 'utf8'), htmlFilename);
+        
+        // Save the coach message with HTML report metadata
+        await storage.saveChatMessage({
+          userId: clientId,
+          message: finalMessage,
+          isAI: false,
+          metadata: {
+            fromCoach: true,
+            coachId: req.user.claims.sub,
+            hasPdfReport: true,
+            pdfUrl: htmlFilePath,
+            reportTitle: `Progress Report - ${clientName}`
+          }
+        });
+        
+        res.json({ 
+          success: true, 
+          message: "Message with progress report sent successfully",
+          pdfUrl: htmlFilePath
+        });
+        return;
+      }
+      
+      // If this includes legacy report data, generate PDF using server-side generator
       if (reportData) {
         const reportDate = new Date().toLocaleDateString('en-US', { 
           year: 'numeric', 
