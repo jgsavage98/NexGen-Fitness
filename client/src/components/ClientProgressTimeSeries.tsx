@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Area, AreaChart, ReferenceLine, Dot } from 'recharts';
-import { Heart, Zap, Target, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Heart, Zap, Target, TrendingUp, TrendingDown, Minus, FileText } from "lucide-react";
 import { useState } from "react";
+import ClientProgressReport from './ClientProgressReport';
 
 interface DailyMacros {
   id: number;
@@ -65,6 +66,7 @@ interface ClientProgressTimeSeriesProps {
 export default function ClientProgressTimeSeries({ clientId }: ClientProgressTimeSeriesProps) {
   const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d' | '90d'>('30d');
   const [viewType, setViewType] = useState<'macros' | 'wellness' | 'adherence' | 'weight'>('macros');
+  const [showProgressReport, setShowProgressReport] = useState(false);
 
   // Fetch client data
   const { data: client } = useQuery<Client>({
@@ -194,6 +196,15 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
         </div>
         
         <div className="flex items-center space-x-3">
+          <Button 
+            onClick={() => setShowProgressReport(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            size="sm"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Generate Report
+          </Button>
+          
           <Select value={viewType} onValueChange={(value: any) => setViewType(value)}>
             <SelectTrigger className="w-32 bg-gray-700 border-gray-600 text-white">
               <SelectValue />
@@ -797,6 +808,14 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
             <p className="text-gray-500 text-sm mt-2">Client hasn't uploaded any macro data yet.</p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Progress Report Modal */}
+      {showProgressReport && (
+        <ClientProgressReport 
+          clientId={clientId} 
+          onClose={() => setShowProgressReport(false)} 
+        />
       )}
     </div>
   );
