@@ -475,7 +475,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async saveChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
-    const [newMessage] = await db.insert(chatMessages).values(message).returning();
+    // If this is an AI message, set it to pending approval by default
+    const messageWithStatus = {
+      ...message,
+      status: message.isAI ? 'pending_approval' : 'approved',
+      originalAIResponse: message.isAI ? message.message : undefined
+    };
+
+    const [newMessage] = await db.insert(chatMessages).values(messageWithStatus).returning();
     return newMessage;
   }
 
@@ -571,33 +578,60 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]> {
-    let query = db
-      .select({
-        id: chatMessages.id,
-        userId: chatMessages.userId,
-        message: chatMessages.message,
-        isAI: chatMessages.isAI,
-        metadata: chatMessages.metadata,
-        isRead: chatMessages.isRead,
-        status: chatMessages.status,
-        trainerId: chatMessages.trainerId,
-        trainerNotes: chatMessages.trainerNotes,
-        approvedAt: chatMessages.approvedAt,
-        originalAIResponse: chatMessages.originalAIResponse,
-        createdAt: chatMessages.createdAt,
-        userFirstName: users.firstName,
-        userLastName: users.lastName,
-      })
-      .from(chatMessages)
-      .innerJoin(users, eq(chatMessages.userId, users.id))
-      .where(eq(chatMessages.status, 'pending_approval'));
-
     if (trainerId) {
-      query = query.where(eq(users.trainerId, trainerId));
+      const result = await db
+        .select({
+          id: chatMessages.id,
+          userId: chatMessages.userId,
+          message: chatMessages.message,
+          isAI: chatMessages.isAI,
+          metadata: chatMessages.metadata,
+          isRead: chatMessages.isRead,
+          status: chatMessages.status,
+          trainerId: chatMessages.trainerId,
+          trainerNotes: chatMessages.trainerNotes,
+          approvedAt: chatMessages.approvedAt,
+          originalAIResponse: chatMessages.originalAIResponse,
+          createdAt: chatMessages.createdAt,
+          userFirstName: users.firstName,
+          userLastName: users.lastName,
+        })
+        .from(chatMessages)
+        .innerJoin(users, eq(chatMessages.userId, users.id))
+        .where(
+          and(
+            eq(chatMessages.status, 'pending_approval'),
+            eq(users.trainerId, trainerId)
+          )
+        )
+        .orderBy(desc(chatMessages.createdAt));
+      
+      return result as ChatMessage[];
+    } else {
+      const result = await db
+        .select({
+          id: chatMessages.id,
+          userId: chatMessages.userId,
+          message: chatMessages.message,
+          isAI: chatMessages.isAI,
+          metadata: chatMessages.metadata,
+          isRead: chatMessages.isRead,
+          status: chatMessages.status,
+          trainerId: chatMessages.trainerId,
+          trainerNotes: chatMessages.trainerNotes,
+          approvedAt: chatMessages.approvedAt,
+          originalAIResponse: chatMessages.originalAIResponse,
+          createdAt: chatMessages.createdAt,
+          userFirstName: users.firstName,
+          userLastName: users.lastName,
+        })
+        .from(chatMessages)
+        .innerJoin(users, eq(chatMessages.userId, users.id))
+        .where(eq(chatMessages.status, 'pending_approval'))
+        .orderBy(desc(chatMessages.createdAt));
+      
+      return result as ChatMessage[];
     }
-
-    const result = await query.orderBy(desc(chatMessages.createdAt));
-    return result as ChatMessage[];
   }
 
   async approveChatMessage(messageId: number, trainerId: string, approvedMessage?: string, trainerNotes?: string): Promise<ChatMessage> {

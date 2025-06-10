@@ -49,6 +49,18 @@ interface ChatMessage {
   user: Client;
 }
 
+interface PendingChatMessage {
+  id: number;
+  userId: string;
+  message: string;
+  isAI: boolean;
+  status: string;
+  originalAIResponse?: string;
+  createdAt: string;
+  userFirstName: string;
+  userLastName: string;
+}
+
 export default function TrainerDashboard() {
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
@@ -121,6 +133,12 @@ export default function TrainerDashboard() {
     queryKey: ["/api/trainer/recent-chats"],
   });
 
+  // Fetch pending chat approvals
+  const { data: pendingChatApprovals = [] } = useQuery<PendingChatMessage[]>({
+    queryKey: ["/api/trainer/pending-chat-approvals"],
+    refetchInterval: 10000, // Check for new messages every 10 seconds
+  });
+
   // Approve macro change mutation
   const approveMacroMutation = useMutation({
     mutationFn: async ({ changeId, notes }: { changeId: number; notes?: string }) => {
@@ -174,6 +192,61 @@ export default function TrainerDashboard() {
       toast({
         title: "Error",
         description: "Failed to edit macro change",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Chat approval mutations
+  const approveChatMutation = useMutation({
+    mutationFn: async ({ messageId, approvedMessage, trainerNotes }: { 
+      messageId: number; 
+      approvedMessage?: string; 
+      trainerNotes?: string 
+    }) => {
+      const response = await apiRequest("POST", `/api/trainer/approve-chat/${messageId}`, {
+        approvedMessage,
+        trainerNotes
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-chat-approvals"] });
+      toast({
+        title: "Success",
+        description: "Chat message approved and sent to client",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to approve chat message",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectChatMutation = useMutation({
+    mutationFn: async ({ messageId, trainerNotes }: { 
+      messageId: number; 
+      trainerNotes: string 
+    }) => {
+      const response = await apiRequest("POST", `/api/trainer/reject-chat/${messageId}`, {
+        trainerNotes
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-chat-approvals"] });
+      toast({
+        title: "Success", 
+        description: "Chat message rejected",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reject chat message",
         variant: "destructive",
       });
     },
