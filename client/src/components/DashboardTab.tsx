@@ -132,7 +132,7 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
           <h2 className="text-xl font-bold mb-4 text-white">Today's Overview</h2>
           
           {/* Macro Progress Bars */}
-          <MacroVisualizationOptions summary={macroSummary} />
+          <MacroBars summary={macroSummary} />
 
           <div className="bg-dark rounded-lg p-4">
             <div className="flex justify-between items-center mb-2">

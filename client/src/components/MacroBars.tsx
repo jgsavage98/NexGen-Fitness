@@ -91,23 +91,30 @@ export default function MacroBars({ summary }: MacroBarsProps) {
       </div>
       
       <div className="relative w-full bg-gray-700 rounded-full h-3 overflow-hidden">
-        {/* Progress bar */}
+        {/* Target section (0-100%) */}
         <div 
-          className={`h-full rounded-full transition-all duration-1000 ease-out ${getBarColor(percentage)}`}
-          style={{ 
-            width: `${Math.min(100, animatedPercentage)}%`,
-            // Show gradient when over 100%
-            ...(percentage > 100 && {
-              width: '100%',
-              background: `linear-gradient(90deg, ${getBarColor(percentage)} 0%, #ef4444 100%)`,
-              boxShadow: '0 0 8px rgba(239, 68, 68, 0.5)'
-            })
-          }}
+          className={`h-full rounded-l-full transition-all duration-1000 ${getBarColor(percentage)}`}
+          style={{ width: `${Math.min(100, animatedPercentage)}%` }}
         />
         
-        {/* 100% marker line - only show if under 100% */}
-        {percentage < 100 && (
-          <div className="absolute right-0 top-0 w-0.5 h-full bg-gray-400 opacity-50"></div>
+        {/* Overflow section (100%+) with striped pattern */}
+        {percentage > 100 && (
+          <div 
+            className="absolute top-0 right-0 h-full bg-red-500 opacity-80 rounded-r-full"
+            style={{ 
+              width: `${Math.min(30, (percentage - 100) / 3)}%`,
+              backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.2) 2px, rgba(255,255,255,0.2) 4px)',
+              boxShadow: '0 0 6px rgba(239, 68, 68, 0.4)'
+            }}
+          />
+        )}
+        
+        {/* 100% marker line */}
+        {percentage < 130 && (
+          <div 
+            className="absolute top-0 w-0.5 h-full bg-white opacity-60"
+            style={{ left: percentage > 100 ? '77%' : '100%' }}
+          />
         )}
       </div>
     </div>
