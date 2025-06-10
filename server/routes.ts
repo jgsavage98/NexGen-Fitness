@@ -926,14 +926,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Message content is required" });
       }
       
-      // Save user message
-      await storage.saveChatMessage({
-        userId,
-        message,
-        isAI: false,
-        metadata: isVoice ? { isVoice: true } : null,
-      });
-      
       // Get user profile for context
       const user = await storage.getUser(userId);
       
@@ -957,7 +949,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isPendingApproval = false;
       }
       
-      // Just save the user message - no automatic AI response
+      // Save the user message
       const savedUserMessage = await storage.saveChatMessage({
         userId,
         message,
