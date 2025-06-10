@@ -256,7 +256,7 @@ export default function UnifiedChatTab() {
                             </span>
                           </div>
                           <p className="text-sm break-words">{message.message}</p>
-                          {message.status === 'pending_approval' && (
+                          {message.status === 'pending_approval' && !message.metadata?.fromCoach && (
                             <Badge variant="outline" className="mt-1 text-xs border-orange-300 text-orange-300">
                               Pending Approval
                             </Badge>
