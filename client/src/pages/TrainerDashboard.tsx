@@ -521,7 +521,7 @@ export default function TrainerDashboard() {
             </TabsTrigger>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary-500">
               <MessageSquare className="w-4 h-4 mr-2" />
-              Chat
+              Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0)})
             </TabsTrigger>
             <TabsTrigger value="client-progress" className="data-[state=active]:bg-primary-500">
               <BarChart3 className="w-4 h-4 mr-2" />

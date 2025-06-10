@@ -44,6 +44,9 @@ export default function UnifiedChatTab() {
     queryKey: ["/api/trainer/clients"],
   });
 
+  // Calculate total unanswered messages across all clients
+  const totalUnansweredCount = clients.reduce((total, client) => total + (client.unansweredCount || 0), 0);
+
   // Query to fetch chat messages for selected client
   const { data: clientChatMessages = [], refetch: refetchClientChat } = useQuery({
     queryKey: ['/api/trainer/client-chat', selectedChatClient],
@@ -97,9 +100,21 @@ export default function UnifiedChatTab() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="max-h-[500px] overflow-y-auto">
-                {clients
-                  .sort((a, b) => (b.unansweredCount || 0) - (a.unansweredCount || 0))
-                  .map((client) => (
+                {clients.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <p>No clients found</p>
+                  </div>
+                ) : (
+                  clients
+                    .sort((a, b) => {
+                      // First sort by unanswered count (descending)
+                      const aCount = a.unansweredCount || 0;
+                      const bCount = b.unansweredCount || 0;
+                      if (bCount !== aCount) return bCount - aCount;
+                      // Then alphabetically by name for consistent ordering
+                      return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+                    })
+                    .map((client) => (
                     <button
                       key={client.id}
                       onClick={() => setSelectedChatClient(client.id)}
@@ -128,7 +143,8 @@ export default function UnifiedChatTab() {
                         )}
                       </div>
                     </button>
-                  ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
