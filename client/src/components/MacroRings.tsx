@@ -16,9 +16,9 @@ export default function MacroRings({ summary }: MacroRingsProps) {
     // Animate the progress rings on mount
     const timer = setTimeout(() => {
       setAnimatedPercentages({
-        protein: Math.min(100, summary.percentages.protein),
-        carbs: Math.min(100, summary.percentages.carbs),
-        fat: Math.min(100, summary.percentages.fat),
+        protein: summary.percentages.protein,
+        carbs: summary.percentages.carbs,
+        fat: summary.percentages.fat,
       });
     }, 100);
 
@@ -28,12 +28,14 @@ export default function MacroRings({ summary }: MacroRingsProps) {
   const createProgressRing = (percentage: number, color: string) => {
     const radius = 28;
     const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+    // Cap the visual ring at 100% but allow percentage to exceed 100%
+    const displayPercentage = Math.min(100, percentage);
+    const strokeDashoffset = circumference - (displayPercentage / 100) * circumference;
 
     return {
       circumference,
       strokeDashoffset: isNaN(strokeDashoffset) ? circumference : strokeDashoffset,
-      color,
+      color: percentage > 100 ? "#FF5722" : color, // Red color when exceeding target
     };
   };
 
@@ -81,8 +83,8 @@ export default function MacroRings({ summary }: MacroRingsProps) {
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className={`text-xs font-bold ${getProgressColor(summary.percentages.protein)}`}>
-              {Math.round(animatedPercentages.protein)}%
+            <span className={`text-xs font-bold ${summary.percentages.protein > 100 ? 'text-red-400' : getProgressColor(summary.percentages.protein)}`}>
+              {Math.round(summary.percentages.protein)}%
             </span>
           </div>
         </div>
@@ -124,8 +126,8 @@ export default function MacroRings({ summary }: MacroRingsProps) {
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className={`text-xs font-bold ${getProgressColor(summary.percentages.carbs)}`}>
-              {Math.round(animatedPercentages.carbs)}%
+            <span className={`text-xs font-bold ${summary.percentages.carbs > 100 ? 'text-red-400' : getProgressColor(summary.percentages.carbs)}`}>
+              {Math.round(summary.percentages.carbs)}%
             </span>
           </div>
         </div>
@@ -167,8 +169,8 @@ export default function MacroRings({ summary }: MacroRingsProps) {
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className={`text-xs font-bold ${getProgressColor(summary.percentages.fat)}`}>
-              {Math.round(animatedPercentages.fat)}%
+            <span className={`text-xs font-bold ${summary.percentages.fat > 100 ? 'text-red-400' : getProgressColor(summary.percentages.fat)}`}>
+              {Math.round(summary.percentages.fat)}%
             </span>
           </div>
         </div>
