@@ -91,6 +91,12 @@ export interface ChatMessage {
     confidence?: number;
     requiresHumanReview?: boolean;
     suggestedActions?: string[];
+    fromCoach?: boolean;
+    coachId?: string;
+    hasPdfReport?: boolean;
+    pdfUrl?: string;
+    reportTitle?: string;
+    pdfThumbnail?: boolean;
   };
   createdAt: string;
 }
