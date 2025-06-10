@@ -13,6 +13,7 @@ import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut, 
 import ProfileSettings from "@/pages/ProfileSettings";
 import ClientUploadHistory from "@/components/ClientUploadHistory";
 import ClientProgressTimeSeries from "@/components/ClientProgressTimeSeries";
+import UnifiedChatTab from "@/components/UnifiedChatTab";
 import { calculateJourneyDay } from "@/lib/dateUtils";
 
 interface Client {
@@ -666,79 +667,7 @@ export default function TrainerDashboard() {
               </div>
             </div>
 
-            {pendingChatApprovals.length === 0 ? (
-              <Card className="bg-surface border-gray-700">
-                <CardContent className="p-8 text-center">
-                  <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-400">No pending AI chat messages for approval</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingChatApprovals.map((message) => (
-                  <Card key={message.id} className="bg-surface border-gray-700">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <img
-                            src="/john-profile.png"
-                            alt={`${message.userFirstName} ${message.userLastName}`}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                          <div>
-                            <h3 className="text-white font-semibold">
-                              {message.userFirstName} {message.userLastName}
-                            </h3>
-                            <p className="text-gray-400 text-sm">
-                              AI Response • {new Date(message.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge variant="secondary" className="bg-orange-500/20 text-orange-400">
-                          Pending Approval
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="bg-blue-900/20 border border-blue-600/30 p-4 rounded-lg">
-                        <Label className="text-sm text-blue-300 mb-2 block">Client's Question:</Label>
-                        <p className="text-white italic">{(message as any).clientQuestion}</p>
-                        <p className="text-gray-400 text-xs mt-2">
-                          Asked: {new Date((message as any).clientQuestionTime).toLocaleString()}
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="text-sm text-gray-400">AI Generated Response (Edit as needed):</Label>
-                        <Textarea
-                          defaultValue={message.message}
-                          className="bg-gray-800 border-gray-600 text-white min-h-[120px]"
-                          id={`edit-message-${message.id}`}
-                          placeholder="Edit the AI response directly..."
-                        />
-                      </div>
-                      
-                      <div className="flex space-x-3">
-                        <Button
-                          onClick={() => {
-                            const editedMessage = (document.getElementById(`edit-message-${message.id}`) as HTMLTextAreaElement)?.value;
-                            
-                            approveChatMutation.mutate({
-                              messageId: message.id,
-                              approvedMessage: editedMessage || message.message,
-                            });
-                          }}
-                          disabled={approveChatMutation.isPending}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          {approveChatMutation.isPending ? "Approving..." : "Approve & Send to Client"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            <UnifiedChatTab />
           </TabsContent>
 
           <TabsContent value="send-message" className="space-y-6">
