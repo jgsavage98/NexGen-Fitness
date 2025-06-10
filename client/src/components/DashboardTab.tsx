@@ -6,7 +6,7 @@ import MacroVisualizationOptions from "./MacroVisualizationOptions";
 import AnimatedExerciseThumbnail from "./AnimatedExerciseThumbnail";
 import { Workout, MacroTarget } from "@/lib/types";
 import { Link } from "wouter";
-import { User, Calendar, Target } from "lucide-react";
+import { User, Calendar, Target, Heart, Zap } from "lucide-react";
 import { getTodayInTimezone } from "@/lib/dateUtils";
 import { TabType } from "@/pages/Home";
 
@@ -133,6 +133,77 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
           
           {/* Macro Progress Bars */}
           <MacroBars summary={macroSummary} />
+
+          {/* Wellness Indicators */}
+          {dailyMacros && (dailyMacros.hungerLevel || dailyMacros.energyLevel) && (
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              {/* Hunger Level */}
+              {dailyMacros.hungerLevel && (
+                <div className="bg-dark rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Heart className="w-4 h-4 text-red-400" />
+                      <span className="text-sm font-medium text-gray-300">Hunger</span>
+                    </div>
+                    <span className="text-xs text-gray-400">{dailyMacros.hungerLevel}/5</span>
+                  </div>
+                  <div className="flex space-x-1">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <div
+                        key={level}
+                        className={`flex-1 h-2 rounded-full transition-all duration-300 ${
+                          level <= dailyMacros.hungerLevel
+                            ? level <= 2
+                              ? 'bg-green-500'
+                              : level <= 3
+                              ? 'bg-yellow-500'
+                              : 'bg-red-500'
+                            : 'bg-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {dailyMacros.hungerLevel <= 2 ? 'Satisfied' : 
+                     dailyMacros.hungerLevel <= 3 ? 'Moderate' : 'Hungry'}
+                  </div>
+                </div>
+              )}
+
+              {/* Energy Level */}
+              {dailyMacros.energyLevel && (
+                <div className="bg-dark rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Zap className="w-4 h-4 text-yellow-400" />
+                      <span className="text-sm font-medium text-gray-300">Energy</span>
+                    </div>
+                    <span className="text-xs text-gray-400">{dailyMacros.energyLevel}/5</span>
+                  </div>
+                  <div className="flex space-x-1">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <div
+                        key={level}
+                        className={`flex-1 h-2 rounded-full transition-all duration-300 ${
+                          level <= dailyMacros.energyLevel
+                            ? level <= 2
+                              ? 'bg-red-500'
+                              : level <= 3
+                              ? 'bg-yellow-500'
+                              : 'bg-green-500'
+                            : 'bg-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {dailyMacros.energyLevel <= 2 ? 'Low' : 
+                     dailyMacros.energyLevel <= 3 ? 'Moderate' : 'High'}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="bg-dark rounded-lg p-4">
             <div className="flex justify-between items-center mb-2">
