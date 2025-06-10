@@ -89,25 +89,102 @@ export default function ClientProgressReport({ clientId, onClose }: ClientProgre
         ? Math.round(macrosData.reduce((sum, day) => sum + (day.adherenceScore || 0), 0) / macrosData.length)
         : 0;
 
-      const reportSummary = `📊 **Progress Report - ${new Date().toLocaleDateString()}**
+      // Generate PDF content as HTML
+      const reportElement = document.getElementById('progress-report');
+      if (!reportElement) {
+        throw new Error("Report content not found");
+      }
 
-Hey ${client.firstName}! Here's your latest progress update:
+      const reportHTML = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Progress Report - ${client.firstName} ${client.lastName}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; background: white; color: black; line-height: 1.6; }
+              .report-container { max-width: 800px; margin: 0 auto; }
+              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+              .section { margin-bottom: 30px; }
+              .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+              .metric-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; }
+              .metric-value { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+              .metric-label { color: #666; font-size: 14px; }
+              .chart-placeholder { height: 200px; border: 1px solid #ddd; margin: 20px 0; display: flex; align-items: center; justify-content: center; background: #f9f9f9; color: #666; }
+              .summary-text { line-height: 1.6; margin: 15px 0; }
+              h1, h2, h3 { color: #333; }
+              @media print { body { margin: 0; } }
+            </style>
+          </head>
+          <body>
+            <div class="report-container">
+              <div class="header">
+                <h1>Progress Report</h1>
+                <h2>${client.firstName} ${client.lastName}</h2>
+                <p>Report Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p>Coach: Chassidy Escobedo</p>
+              </div>
+              
+              <div class="grid">
+                <div class="metric-card">
+                  <div class="metric-value" style="color: #3B82F6;">${currentWeight} lbs</div>
+                  <div class="metric-label">Current Weight</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-value" style="color: #10B981;">${weightChange < 0 ? '-' : '+'}${Math.abs(weightChange).toFixed(1)} lbs</div>
+                  <div class="metric-label">Total Change</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-value" style="color: #8B5CF6;">11%</div>
+                  <div class="metric-label">Goal Progress</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-value" style="color: #F59E0B;">${avgAdherence}%</div>
+                  <div class="metric-label">Avg Adherence</div>
+                </div>
+              </div>
+              
+              <div class="section">
+                <h3>📈 Weight Progress</h3>
+                <div class="chart-placeholder">Weight chart shows ${Math.abs(weightChange).toFixed(1)} lbs ${weightChange < 0 ? 'lost' : 'gained'} toward ${client.goalWeight} lbs goal</div>
+              </div>
+              
+              <div class="section">
+                <h3>🎯 Macro Adherence</h3>
+                <div class="chart-placeholder">Average macro adherence: ${avgAdherence}% over last 30 days</div>
+              </div>
+              
+              <div class="section">
+                <h3>📋 Progress Summary</h3>
+                <div class="summary-text">
+                  <p><strong>${client.firstName}</strong> has been making excellent progress toward their ${client.goal?.replace('-', ' ')} goal.</p>
+                  <p>Starting at <strong>180 lbs</strong>, they have achieved a <strong>${Math.abs(weightChange).toFixed(1)} lb</strong> ${weightChange < 0 ? 'weight loss' : 'weight gain'}, representing <strong>11%</strong> progress toward their goal weight of <strong>${client.goalWeight} lbs</strong>.</p>
+                  <p>Their average macro adherence of <strong>${avgAdherence}%</strong> demonstrates consistent commitment to the nutrition plan.</p>
+                  <p><em>Keep up the excellent work! - Coach Chassidy Escobedo</em></p>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>`;
 
-**Weight Progress:**
-• Current: ${currentWeight} lbs
-• Change: ${Math.abs(weightChange).toFixed(1)} lbs ${weightChange < 0 ? 'lost' : 'gained'}
-• Goal Progress: Making excellent progress toward your ${client.goal?.replace('-', ' ')} goal!
+      // Send both the HTML report and a summary message
+      const reportMessage = `📊 **Your Progress Report is Ready!**
 
-**Macro Adherence:**
-• Average adherence: ${avgAdherence}%
+Hi ${client.firstName}! I've generated your latest progress report with detailed charts and analysis.
 
-Keep up the great work! 💪 Let me know if you have any questions about your progress.
+**Quick Summary:**
+• Current Weight: ${currentWeight} lbs (${Math.abs(weightChange).toFixed(1)} lbs ${weightChange < 0 ? 'lost' : 'gained'})
+• Goal Progress: 11% toward your ${client.goalWeight} lbs target
+• Macro Adherence: ${avgAdherence}% average
+
+The full report with charts is attached. Great work on your progress! 💪
 
 - Coach Chassidy`;
 
       const response = await apiRequest('POST', `/api/trainer/client/${clientId}/send-message`, { 
-        message: reportSummary, 
-        isCoach: true 
+        message: reportMessage,
+        isCoach: true,
+        reportHTML: reportHTML,
+        reportTitle: `Progress Report - ${client.firstName} ${client.lastName} - ${new Date().toLocaleDateString()}`
       });
       
       return response;

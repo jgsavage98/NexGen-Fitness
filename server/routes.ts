@@ -1796,24 +1796,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/trainer/client/:clientId/send-message', isAuthenticated, async (req: any, res) => {
     try {
       const { clientId } = req.params;
-      const { message, isCoach = true } = req.body;
+      const { message, isCoach = true, reportHTML, reportTitle } = req.body;
       
       if (!message || !message.trim()) {
         return res.status(400).json({ message: "Message content is required" });
       }
       
-      // Save the coach message to the chat
-      await storage.saveChatMessage({
-        userId: clientId,
-        message: message.trim(),
-        isAI: false, // This is a human coach message, not AI
-        metadata: { fromCoach: true, coachId: req.user.claims.sub },
-      });
+      // If this includes an HTML report, save it separately and add a link
+      let finalMessage = message.trim();
+      let reportId = null;
       
-      res.json({ success: true, message: "Message sent successfully" });
+      if (reportHTML && reportTitle) {
+        // Generate a unique report ID
+        reportId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Store the HTML report in the report store
+        reportStore.set(reportId, {
+          html: reportHTML,
+          title: reportTitle,
+          generatedAt: new Date().toISOString()
+        });
+        
+        // Add download link to the message
+        finalMessage += `\n\n🔗 [View Full Progress Report](/api/reports/${reportId})`;
+        
+        // Save the coach message with report metadata
+        await storage.saveChatMessage({
+          userId: clientId,
+          message: finalMessage,
+          isAI: false,
+          metadata: { 
+            fromCoach: true, 
+            coachId: req.user.claims.sub,
+            hasReport: true,
+            reportId: reportId
+          },
+        });
+      } else {
+        // Save regular coach message
+        await storage.saveChatMessage({
+          userId: clientId,
+          message: finalMessage,
+          isAI: false,
+          metadata: { fromCoach: true, coachId: req.user.claims.sub },
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: "Message sent successfully",
+        reportId: reportId
+      });
     } catch (error) {
-      console.error("Error sending message to client:", error);
+      console.error("Error sending message to client:", error as Error);
       res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Store reports in memory for easy access
+  const reportStore = new Map<string, { html: string; title: string; generatedAt: string }>();
+
+  // Serve HTML reports
+  app.get('/api/reports/:reportId', async (req, res) => {
+    try {
+      const { reportId } = req.params;
+      
+      const report = reportStore.get(reportId);
+      if (!report) {
+        return res.status(404).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>Report Not Found</h1>
+              <p>The requested progress report could not be found or may have expired.</p>
+            </body>
+          </html>
+        `);
+      }
+      
+      // Serve the HTML content
+      res.setHeader('Content-Type', 'text/html');
+      res.send(report.html);
+    } catch (error) {
+      console.error("Error serving report:", error);
+      res.status(500).send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Error Loading Report</h1>
+            <p>There was an error loading the progress report. Please try again.</p>
+          </body>
+        </html>
+      `);
     }
   });
 
