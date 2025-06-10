@@ -199,9 +199,8 @@ export default function ClientUploadHistory({ clientId }: ClientUploadHistoryPro
               }
               
               const { status, data } = getDayStatus(day);
-              const isToday = day === today.getDate() && 
-                           currentDate.getMonth() === today.getMonth() && 
-                           currentDate.getFullYear() === today.getFullYear();
+              const currentDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const isToday = currentDateStr === today;
               
               return (
                 <div

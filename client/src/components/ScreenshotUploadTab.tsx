@@ -61,7 +61,13 @@ export default function ScreenshotUploadTab({ onTabChange }: ScreenshotUploadTab
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const today = new Date().toISOString().split('T')[0];
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
+
+  const userTimezone = (user as any)?.timezone || 'America/New_York';
+  const today = getTodayInTimezone(userTimezone);
 
   // Get today's macros
   const { data: todaysMacros, isLoading, error } = useQuery<DailyMacros | null>({
