@@ -513,35 +513,51 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
             <CardContent>
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={(() => {
-                  // Create 12-week timeline starting from June 9, 2025
+                  // Create comprehensive timeline with all actual weight entries plus weekly markers
                   const programStart = new Date('2025-06-09');
                   const timelineData = [];
+                  const processedDates = new Set();
                   
-                  // Generate 12 weeks of timeline (84 days), showing every week
+                  // First, add all actual weight entries
+                  weightProgress.weightEntries.forEach(entry => {
+                    const entryDate = new Date(entry.recordedAt);
+                    const dateKey = entryDate.toDateString();
+                    
+                    if (!processedDates.has(dateKey)) {
+                      timelineData.push({
+                        date: entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        weight: entry.weight,
+                        goalWeight: weightProgress.goalWeight,
+                        fullDate: entry.recordedAt,
+                        notes: entry.notes,
+                        isActualData: true,
+                        sortDate: entryDate.getTime()
+                      });
+                      processedDates.add(dateKey);
+                    }
+                  });
+                  
+                  // Then add weekly timeline markers for empty weeks (for full 12-week view)
                   for (let week = 0; week < 12; week++) {
                     const weekDate = new Date(programStart);
                     weekDate.setDate(programStart.getDate() + (week * 7));
+                    const dateKey = weekDate.toDateString();
                     
-                    // Find actual weight entry for this week
-                    const weekEntry = weightProgress.weightEntries.find(entry => {
-                      const entryDate = new Date(entry.recordedAt);
-                      const weekStart = new Date(weekDate);
-                      const weekEnd = new Date(weekDate);
-                      weekEnd.setDate(weekEnd.getDate() + 6);
-                      return entryDate >= weekStart && entryDate <= weekEnd;
-                    });
-                    
-                    timelineData.push({
-                      date: weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                      weight: weekEntry?.weight || null,
-                      goalWeight: weightProgress.goalWeight,
-                      fullDate: weekEntry?.recordedAt || weekDate.toISOString(),
-                      notes: weekEntry?.notes || null,
-                      isActualData: !!weekEntry
-                    });
+                    if (!processedDates.has(dateKey)) {
+                      timelineData.push({
+                        date: weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        weight: null,
+                        goalWeight: weightProgress.goalWeight,
+                        fullDate: weekDate.toISOString(),
+                        notes: null,
+                        isActualData: false,
+                        sortDate: weekDate.getTime()
+                      });
+                    }
                   }
                   
-                  return timelineData;
+                  // Sort by date
+                  return timelineData.sort((a, b) => a.sortDate - b.sortDate);
                 })()}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
