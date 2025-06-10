@@ -26,6 +26,7 @@ interface Client {
   goalWeight: number;
   programStartDate: string;
   onboardingCompleted: boolean;
+  unansweredCount?: number;
 }
 
 interface PendingMacroChange {
@@ -66,9 +67,9 @@ export default function TrainerDashboard() {
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [trainerNotes, setTrainerNotes] = useState("");
   const [previousPendingCount, setPreviousPendingCount] = useState(0);
-  const [selectedClientForMessage, setSelectedClientForMessage] = useState<string>("");
+  const [selectedChatClient, setSelectedChatClient] = useState<string>("");
   const [newMessage, setNewMessage] = useState("");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -257,8 +258,8 @@ export default function TrainerDashboard() {
 
   // Query to fetch chat messages for selected client
   const { data: clientChatMessages = [], refetch: refetchClientChat } = useQuery({
-    queryKey: ['/api/trainer/client-chat', selectedClientForMessage],
-    enabled: !!selectedClientForMessage,
+    queryKey: ['/api/trainer/client-chat', selectedChatClient],
+    enabled: !!selectedChatClient,
   });
 
   // Send message to client mutation
@@ -517,17 +518,9 @@ export default function TrainerDashboard() {
               <Settings className="w-4 h-4 mr-2" />
               Macro Reviews ({pendingChanges.length})
             </TabsTrigger>
-            <TabsTrigger value="chat-approvals" className="data-[state=active]:bg-primary-500">
-              <Bell className="w-4 h-4 mr-2" />
-              Chat Approvals ({pendingChatApprovals.length})
-            </TabsTrigger>
-            <TabsTrigger value="send-message" className="data-[state=active]:bg-primary-500">
+            <TabsTrigger value="chat" className="data-[state=active]:bg-primary-500">
               <MessageSquare className="w-4 h-4 mr-2" />
-              Send Message
-            </TabsTrigger>
-            <TabsTrigger value="chat-logs" className="data-[state=active]:bg-primary-500">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Chat Logs
+              Chat ({pendingChatApprovals.length})
             </TabsTrigger>
             <TabsTrigger value="client-progress" className="data-[state=active]:bg-primary-500">
               <BarChart3 className="w-4 h-4 mr-2" />

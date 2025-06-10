@@ -1504,7 +1504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const trainerId = req.user.claims.sub;
       
-      // For Coach Chassidy, show all clients assigned to her (excluding the trainer themselves)
+      // For Coach Chassidy, show all clients with unanswered message counts
       const clients = await db.select({
         id: users.id,
         firstName: users.firstName,
@@ -1516,12 +1516,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         goalWeight: users.goalWeight,
         programStartDate: users.programStartDate,
         onboardingCompleted: users.onboardingCompleted,
+        unansweredCount: sql<number>`
+          COALESCE((
+            SELECT COUNT(*)
+            FROM ${chatMessages} cm
+            WHERE cm.user_id = ${users.id}
+              AND cm.is_ai = false
+              AND cm.status = 'sent'
+              AND NOT EXISTS (
+                SELECT 1 FROM ${chatMessages} cm2
+                WHERE cm2.user_id = ${users.id}
+                  AND cm2.created_at > cm.created_at
+                  AND (cm2.metadata->>'fromCoach' = 'true' OR cm2.is_ai = true)
+              )
+          ), 0)
+        `
       }).from(users).where(
         and(
           eq(users.trainerId, 'coach_chassidy'),
           not(eq(users.id, 'coach_chassidy'))
         )
-      );
+      ).orderBy(sql`unanswered_count DESC, ${users.firstName} ASC`);
       
       res.json(clients);
     } catch (error) {
