@@ -187,33 +187,6 @@ export default function UnifiedChatTab() {
                       })()}
                     </span>
                   </div>
-                  <Button
-                    onClick={async () => {
-                      setIsGeneratingAI(true);
-                      try {
-                        const response = await fetch('/api/trainer/generate-ai-response', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ 
-                            clientId: selectedChatClient,
-                            context: 'General coaching support' 
-                          })
-                        });
-                        const data = await response.json();
-                        setNewMessage(data.message || 'Hi! How can I help you today?');
-                      } catch (error) {
-                        setNewMessage('Hi! How can I help you today?');
-                      } finally {
-                        setIsGeneratingAI(false);
-                      }
-                    }}
-                    disabled={isGeneratingAI}
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-400 text-white bg-gray-800 hover:bg-gray-700 hover:border-gray-300"
-                  >
-                    {isGeneratingAI ? "Generating..." : "Generate AI Response"}
-                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col space-y-4 min-h-0">
@@ -283,20 +256,58 @@ export default function UnifiedChatTab() {
                     <p className="text-xs text-gray-500">
                       Press Enter to send, Shift+Enter for new line
                     </p>
-                    <Button
-                      onClick={() => {
-                        if (newMessage.trim()) {
-                          sendMessageMutation.mutate({
-                            clientId: selectedChatClient,
-                            message: newMessage.trim()
-                          });
-                        }
-                      }}
-                      disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {sendMessageMutation.isPending ? "Sending..." : "Send"}
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={async () => {
+                          setIsGeneratingAI(true);
+                          try {
+                            const response = await fetch('/api/trainer/generate-ai-response', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ 
+                                clientId: selectedChatClient,
+                                context: 'General coaching support' 
+                              })
+                            });
+                            
+                            if (response.ok) {
+                              refetchClientChat();
+                              toast({ 
+                                title: "AI Response Generated", 
+                                description: "New AI response added to chat" 
+                              });
+                            }
+                          } catch (error) {
+                            toast({ 
+                              title: "Error", 
+                              description: "Failed to generate AI response",
+                              variant: "destructive" 
+                            });
+                          } finally {
+                            setIsGeneratingAI(false);
+                          }
+                        }}
+                        disabled={isGeneratingAI}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                      >
+                        {isGeneratingAI ? "Generating..." : "Generate AI Response"}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          if (newMessage.trim()) {
+                            sendMessageMutation.mutate({
+                              clientId: selectedChatClient,
+                              message: newMessage.trim()
+                            });
+                          }
+                        }}
+                        disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {sendMessageMutation.isPending ? "Sending..." : "Send"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
