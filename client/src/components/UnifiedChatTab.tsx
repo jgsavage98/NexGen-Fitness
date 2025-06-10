@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export default function UnifiedChatTab() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch all clients sorted by unanswered messages
   const { data: clients = [] } = useQuery<Client[]>({
@@ -52,6 +53,15 @@ export default function UnifiedChatTab() {
     queryKey: [`/api/trainer/client-chat/${selectedChatClient}`],
     enabled: !!selectedChatClient,
   });
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [clientChatMessages]);
 
   // Send message to client mutation
   const sendMessageMutation = useMutation({
@@ -168,7 +178,7 @@ export default function UnifiedChatTab() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-surface border-gray-700 h-full flex flex-col">
+            <Card className="bg-surface border-gray-700 h-[600px] flex flex-col">
               <CardHeader className="flex-shrink-0">
                 <CardTitle className="text-white flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -189,9 +199,9 @@ export default function UnifiedChatTab() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col space-y-4 min-h-0">
+              <CardContent className="flex-1 flex flex-col min-h-0">
                 {/* Chat Messages */}
-                <div className="flex-1 overflow-y-auto border border-gray-600 rounded-lg p-4 space-y-3 bg-gray-900 min-h-0">
+                <div className="flex-1 overflow-y-auto border border-gray-600 rounded-lg p-4 space-y-3 bg-gray-900 max-h-[400px]">
                   {!Array.isArray(clientChatMessages) || clientChatMessages.length === 0 ? (
                     <div className="text-center text-gray-500 py-8">
                       <p>No conversation yet. Start by sending a message!</p>
@@ -230,10 +240,12 @@ export default function UnifiedChatTab() {
                       </div>
                     ))
                   )}
+                  {/* Invisible element to scroll to */}
+                  <div ref={messagesEndRef} />
                 </div>
 
-                {/* Message Input */}
-                <div className="flex-shrink-0 space-y-3">
+                {/* Message Input - Always visible at bottom */}
+                <div className="flex-shrink-0 space-y-3 mt-4 border-t border-gray-600 pt-4">
                   <Textarea
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
