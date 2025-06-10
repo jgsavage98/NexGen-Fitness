@@ -585,6 +585,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnansweredMessageCount(clientId: string, trainerId: string): Promise<number> {
+    console.log(`[DEBUG] Checking unanswered count for client: ${clientId}, trainer: ${trainerId}`);
+    
     // Get the most recent message from the client that isn't from AI or coach
     const latestClientMessage = await db
       .select()
@@ -593,33 +595,40 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(chatMessages.userId, clientId),
           eq(chatMessages.isAI, false),
-          sql`NOT (${chatMessages.metadata}->>'fromCoach' = 'true')`
+          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'fromCoach' != 'true')`
         )
       )
       .orderBy(desc(chatMessages.createdAt))
       .limit(1);
 
+    console.log(`[DEBUG] Latest client message:`, latestClientMessage[0]);
+
     if (latestClientMessage.length === 0) {
+      console.log(`[DEBUG] No client messages found`);
       return 0; // No client messages
     }
 
     const latestClientMessageTime = latestClientMessage[0].createdAt;
 
-    // Check if there's any trainer/AI response after the latest client message
+    // Check if there's any DIRECT trainer response (not AI) after the latest client message
     const trainerResponseAfter = await db
       .select()
       .from(chatMessages)
       .where(
         and(
           eq(chatMessages.userId, clientId),
-          sql`(${chatMessages.isAI} = true OR ${chatMessages.metadata}->>'fromCoach' = 'true')`,
+          sql`${chatMessages.metadata}->>'fromCoach' = 'true'`,
           sql`${chatMessages.createdAt} > ${latestClientMessageTime}`
         )
       )
       .limit(1);
 
-    // If no trainer response after latest client message, count as unanswered
-    return trainerResponseAfter.length === 0 ? 1 : 0;
+    console.log(`[DEBUG] Trainer responses after:`, trainerResponseAfter);
+
+    // If no direct trainer response after latest client message, count as unanswered
+    const count = trainerResponseAfter.length === 0 ? 1 : 0;
+    console.log(`[DEBUG] Final unanswered count: ${count}`);
+    return count;
   }
 
   async getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]> {
