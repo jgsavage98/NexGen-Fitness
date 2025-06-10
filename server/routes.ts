@@ -863,7 +863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/trainer/pending-chat-approvals', async (req: any, res) => {
+  app.get('/api/trainer/pending-chat-approvals', isAuthenticated, async (req: any, res) => {
     try {
       const trainerId = req.user?.claims?.sub;
       if (!trainerId || !trainerId.startsWith('coach_')) {
@@ -878,7 +878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/trainer/approve-chat/:messageId', async (req: any, res) => {
+  app.post('/api/trainer/approve-chat/:messageId', isAuthenticated, async (req: any, res) => {
     try {
       const trainerId = req.user?.claims?.sub;
       if (!trainerId || !trainerId.startsWith('coach_')) {
@@ -902,7 +902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/trainer/reject-chat/:messageId', async (req: any, res) => {
+  app.post('/api/trainer/reject-chat/:messageId', isAuthenticated, async (req: any, res) => {
     try {
       const trainerId = req.user?.claims?.sub;
       if (!trainerId || !trainerId.startsWith('coach_')) {
