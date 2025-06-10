@@ -647,6 +647,7 @@ export class DatabaseStorage implements IStorage {
         trainerId,
         trainerNotes,
         approvedAt: new Date(),
+        isRead: false, // Mark as unread so client sees notification badge
         ...(approvedMessage && { message: approvedMessage })
       })
       .where(eq(chatMessages.id, messageId))
