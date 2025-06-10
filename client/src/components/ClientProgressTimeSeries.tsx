@@ -573,7 +573,7 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                       strokeWidth={2}
                       label={{ 
                         value: `Goal: ${weightProgress.goalWeight} lbs`, 
-                        position: "topRight",
+                        position: "top",
                         offset: 10,
                         fontSize: 12,
                         fill: "#3B82F6",

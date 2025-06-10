@@ -29,22 +29,10 @@ export default function ProgressTab() {
   // Log weight mutation
   const logWeightMutation = useMutation({
     mutationFn: async (weight: number) => {
-      const response = await fetch("/api/progress", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          weight: weight,
-          notes: `Weight: ${weight} lbs`
-        })
+      return await apiRequest("POST", "/api/progress", {
+        weight: weight,
+        notes: `Weight: ${weight} lbs`
       });
-      
-      if (!response.ok) {
-        throw new Error("Failed to log weight");
-      }
-      
-      return response.json();
     },
     onSuccess: () => {
       toast({
