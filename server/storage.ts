@@ -523,8 +523,7 @@ export class DatabaseStorage implements IStorage {
       }
     } else {
       // Mark all unread approved messages as read (both coach messages and AI responses)
-      console.log('Marking messages as read for user:', userId);
-      const result = await db
+      await db
         .update(chatMessages)
         .set({ isRead: true })
         .where(
@@ -534,7 +533,6 @@ export class DatabaseStorage implements IStorage {
             eq(chatMessages.status, 'approved')
           )
         );
-      console.log('Mark as read result:', result);
     }
   }
 

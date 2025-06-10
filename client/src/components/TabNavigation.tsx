@@ -8,6 +8,8 @@ interface TabNavigationProps {
 }
 
 export default function TabNavigation({ activeTab, onTabChange, isPendingApproval, unreadCount }: TabNavigationProps) {
+  console.log('TabNavigation unreadCount:', unreadCount, 'type:', typeof unreadCount);
+  
   const tabs = [
     { id: 'dashboard' as TabType, icon: 'fas fa-home', label: 'Home', disabled: false },
     { id: 'nutrition' as TabType, icon: 'fas fa-camera', label: 'Nutrition', disabled: isPendingApproval },
@@ -35,7 +37,7 @@ export default function TabNavigation({ activeTab, onTabChange, isPendingApprova
               <span className={`text-xs ${
                 tab.disabled ? 'text-gray-600' : ''
               }`}>{tab.label}</span>
-              {tab.id === 'chat' && unreadCount && unreadCount > 0 && (
+              {tab.id === 'chat' && Number(unreadCount) > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] font-bold">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>

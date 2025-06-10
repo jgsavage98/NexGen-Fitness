@@ -39,7 +39,7 @@ export default function Home() {
   });
 
   const isPendingApproval = macroTargets?.status === 'pending_trainer_approval' || false;
-  const unreadCount = unreadData?.count || 0;
+  const unreadCount = Number(unreadData?.count) || 0;
 
   // Mark messages as read when chat tab is opened
   const markAsReadMutation = useMutation({
