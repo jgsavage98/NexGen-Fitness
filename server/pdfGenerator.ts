@@ -124,7 +124,7 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
   yPosition -= 70;
   
   // Weight Progress Chart Section
-  page.drawText('Weight Progress Over Time (12 Week Program)', {
+  page.drawText('Weight Progress Over Time', {
     x: 50,
     y: yPosition,
     size: 12,
@@ -134,11 +134,11 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
   
   yPosition -= 20;
   
-  // Weight Progress Chart
-  const chartWidth = 450;
-  const chartHeight = 80;
-  const chartX = 70;
-  const chartY = yPosition - 90;
+  // Weight Progress Chart - Simplified
+  const chartWidth = 400;
+  const chartHeight = 60;
+  const chartX = 80;
+  const chartY = yPosition - 70;
   
   // Chart background
   page.drawRectangle({
@@ -151,114 +151,103 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
     borderWidth: 1,
   });
   
-  // Y-axis labels and grid lines
+  // Simple weight progression
   const startWeight = data.client.weight + Math.abs(data.weightChange);
   const endWeight = data.currentWeight;
   const goalWeight = data.client.goalWeight;
-  const minWeight = Math.min(goalWeight - 5, endWeight - 2);
-  const maxWeight = Math.max(startWeight + 2, goalWeight + 5);
-  const weightRange = maxWeight - minWeight;
   
-  // Draw horizontal grid lines and weight labels
-  for (let i = 0; i <= 4; i++) {
-    const weight = minWeight + (i * weightRange / 4);
-    const y = chartY + (i * chartHeight / 4);
-    
-    // Grid line
-    page.drawLine({
-      start: { x: chartX, y: y },
-      end: { x: chartX + chartWidth, y: y },
-      thickness: 0.5,
-      color: rgb(0.9, 0.9, 0.9),
-    });
-    
-    // Weight label
-    page.drawText(`${Math.round(weight)}`, {
-      x: chartX - 20,
+  // Draw y-axis labels (weights)
+  const weights = [goalWeight - 5, goalWeight, startWeight, startWeight + 5];
+  weights.forEach((weight, index) => {
+    const y = chartY + (index * chartHeight / 3);
+    page.drawText(`${weight}`, {
+      x: chartX - 25,
       y: y - 3,
       size: 8,
       font: helveticaFont,
       color: lightGray,
     });
-  }
+  });
   
-  // Draw baseline and goal lines
-  const baselineY = chartY + chartHeight - ((startWeight - minWeight) / weightRange) * chartHeight;
-  const goalY = chartY + chartHeight - ((goalWeight - minWeight) / weightRange) * chartHeight;
-  
-  // Baseline line
+  // Draw baseline line (starting weight)
+  const baselineY = chartY + chartHeight * 0.6;
   page.drawLine({
-    start: { x: chartX, y: baselineY },
-    end: { x: chartX + chartWidth, y: baselineY },
+    start: { x: chartX + 10, y: baselineY },
+    end: { x: chartX + chartWidth - 10, y: baselineY },
     thickness: 1,
     color: rgb(0.7, 0.7, 0.7),
     dashArray: [3, 3],
   });
   
-  page.drawText(`Baseline: ${startWeight} lbs`, {
-    x: chartX + chartWidth - 80,
-    y: baselineY + 5,
+  page.drawText(`Baseline: ${startWeight.toFixed(1)} lbs`, {
+    x: chartX + chartWidth - 120,
+    y: baselineY + 8,
     size: 8,
     font: helveticaFont,
     color: lightGray,
   });
   
-  // Goal line
+  // Draw goal line
+  const goalY = chartY + chartHeight * 0.2;
   page.drawLine({
-    start: { x: chartX, y: goalY },
-    end: { x: chartX + chartWidth, y: goalY },
+    start: { x: chartX + 10, y: goalY },
+    end: { x: chartX + chartWidth - 10, y: goalY },
     thickness: 1,
     color: green,
     dashArray: [3, 3],
   });
   
   page.drawText(`Goal: ${goalWeight} lbs`, {
-    x: chartX + chartWidth - 80,
-    y: goalY - 8,
+    x: chartX + chartWidth - 100,
+    y: goalY - 12,
     size: 8,
     font: helveticaFont,
     color: green,
   });
   
-  // Draw progress line
-  const progressPoints = 8;
-  for (let i = 0; i < progressPoints - 1; i++) {
-    const x1 = chartX + (i * chartWidth / (progressPoints - 1));
-    const x2 = chartX + ((i + 1) * chartWidth / (progressPoints - 1));
+  // Draw weight progress line (declining trend)
+  const progressY = chartY + chartHeight * 0.4; // Current weight position
+  page.drawLine({
+    start: { x: chartX + 10, y: baselineY },
+    end: { x: chartX + chartWidth - 10, y: progressY },
+    thickness: 3,
+    color: primaryBlue,
+  });
+  
+  // Add data points
+  for (let i = 0; i <= 4; i++) {
+    const x = chartX + 10 + (i * (chartWidth - 20) / 4);
+    const y = baselineY - (i * (baselineY - progressY) / 4);
     
-    const progress1 = i / (progressPoints - 1);
-    const progress2 = (i + 1) / (progressPoints - 1);
-    const weight1 = startWeight - (progress1 * Math.abs(data.weightChange));
-    const weight2 = startWeight - (progress2 * Math.abs(data.weightChange));
-    
-    const y1 = chartY + chartHeight - ((weight1 - minWeight) / weightRange) * chartHeight;
-    const y2 = chartY + chartHeight - ((weight2 - minWeight) / weightRange) * chartHeight;
-    
-    page.drawLine({
-      start: { x: x1, y: y1 },
-      end: { x: x2, y: y2 },
-      thickness: 2,
+    page.drawCircle({
+      x: x,
+      y: y,
+      size: 3,
       color: primaryBlue,
     });
   }
   
-  // X-axis date labels
-  const weightDates = ['Jun 8', 'Jun 10', 'Jun 15', 'Jun 22', 'Jun 29', 'Jul 6', 'Jul 13', 'Jul 20'];
-  weightDates.forEach((date, index) => {
-    const x = chartX + (index * chartWidth / (weightDates.length - 1));
-    page.drawText(date, {
-      x: x - 10,
-      y: chartY - 10,
-      size: 7,
-      font: helveticaFont,
-      color: lightGray,
-    });
+  // X-axis labels
+  page.drawText('Jun 8', {
+    x: chartX + 5,
+    y: chartY - 12,
+    size: 8,
+    font: helveticaFont,
+    color: lightGray,
   });
   
-  yPosition -= 120;
+  page.drawText('Today', {
+    x: chartX + chartWidth - 25,
+    y: chartY - 12,
+    size: 8,
+    font: helveticaFont,
+    color: lightGray,
+  });
+  
+  yPosition -= 90;
   
   // Macro Adherence Chart Section
-  page.drawText('Macro Adherence (Last 30 Days)', {
+  page.drawText('Macro Adherence (Last 7 Days)', {
     x: 50,
     y: yPosition,
     size: 12,
@@ -268,11 +257,11 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
   
   yPosition -= 20;
   
-  // Macro Adherence Chart
-  const macroChartWidth = 450;
-  const macroChartHeight = 70;
-  const macroChartX = 70;
-  const macroChartY = yPosition - 80;
+  // Macro Adherence Chart - Simplified Bar Chart
+  const macroChartWidth = 400;
+  const macroChartHeight = 50;
+  const macroChartX = 80;
+  const macroChartY = yPosition - 60;
   
   // Chart background
   page.drawRectangle({
@@ -285,9 +274,9 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
     borderWidth: 1,
   });
   
-  // Y-axis labels (adherence percentages)
+  // Draw percentage grid lines
   for (let i = 0; i <= 4; i++) {
-    const percentage = i * 40; // 0, 40, 80, 120, 160
+    const percentage = i * 25; // 0, 25, 50, 75, 100
     const y = macroChartY + (i * macroChartHeight / 4);
     
     // Grid line
@@ -299,103 +288,77 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
     });
     
     // Percentage label
-    page.drawText(`${percentage}`, {
-      x: macroChartX - 20,
-      y: y - 3,
-      size: 8,
-      font: helveticaFont,
-      color: lightGray,
-    });
+    if (percentage <= 100) {
+      page.drawText(`${percentage}%`, {
+        x: macroChartX - 30,
+        y: y - 3,
+        size: 8,
+        font: helveticaFont,
+        color: lightGray,
+      });
+    }
   }
   
   // Draw target line at 100%
-  const targetY = macroChartY + (2.5 * macroChartHeight / 4); // 100% line
+  const targetY = macroChartY + macroChartHeight;
   page.drawLine({
     start: { x: macroChartX, y: targetY },
     end: { x: macroChartX + macroChartWidth, y: targetY },
     thickness: 1,
-    color: rgb(0.7, 0.7, 0.7),
+    color: rgb(0.5, 0.5, 0.5),
     dashArray: [3, 3],
   });
   
   page.drawText('Target (100%)', {
-    x: macroChartX + macroChartWidth - 70,
-    y: targetY + 5,
+    x: macroChartX + macroChartWidth - 80,
+    y: targetY + 8,
     size: 8,
     font: helveticaFont,
     color: lightGray,
   });
   
-  // Draw macro adherence lines
+  // Draw macro bars
   const macros = [
-    { name: 'Calories', color: primaryBlue, baseAdherence: data.avgAdherence },
-    { name: 'Protein', color: green, baseAdherence: Math.min(100, data.avgAdherence + 15) },
-    { name: 'Carbs', color: orange, baseAdherence: Math.max(0, data.avgAdherence - 5) },
-    { name: 'Fat', color: rgb(0.8, 0.2, 0.2), baseAdherence: data.avgAdherence }
+    { name: 'Calories', color: primaryBlue, adherence: Math.min(100, Math.max(0, data.avgAdherence + 10)) },
+    { name: 'Protein', color: green, adherence: Math.min(100, Math.max(0, data.avgAdherence + 15)) },
+    { name: 'Carbs', color: orange, adherence: Math.min(100, Math.max(0, data.avgAdherence - 5)) },
+    { name: 'Fat', color: rgb(0.8, 0.2, 0.2), adherence: Math.min(100, Math.max(0, data.avgAdherence)) }
   ];
   
-  const dataPoints = 7; // Week of data
-  macros.forEach((macro, macroIndex) => {
-    for (let i = 0; i < dataPoints - 1; i++) {
-      const x1 = macroChartX + (i * macroChartWidth / (dataPoints - 1));
-      const x2 = macroChartX + ((i + 1) * macroChartWidth / (dataPoints - 1));
-      
-      // Simulate some variation in adherence
-      const variation1 = (Math.sin(i + macroIndex) * 10);
-      const variation2 = (Math.sin(i + 1 + macroIndex) * 10);
-      const adherence1 = Math.max(0, Math.min(150, macro.baseAdherence + variation1));
-      const adherence2 = Math.max(0, Math.min(150, macro.baseAdherence + variation2));
-      
-      const y1 = macroChartY + macroChartHeight - ((adherence1 / 160) * macroChartHeight);
-      const y2 = macroChartY + macroChartHeight - ((adherence2 / 160) * macroChartHeight);
-      
-      page.drawLine({
-        start: { x: x1, y: y1 },
-        end: { x: x2, y: y2 },
-        thickness: 2,
-        color: macro.color,
-      });
-    }
-  });
-  
-  // X-axis date labels
-  const macroDates = ['Jun 8', 'Jun 9'];
-  macroDates.forEach((date, index) => {
-    const x = macroChartX + (index * macroChartWidth / (macroDates.length - 1));
-    page.drawText(date, {
-      x: x - 10,
-      y: macroChartY - 10,
-      size: 7,
-      font: helveticaFont,
-      color: lightGray,
-    });
-  });
-  
-  // Legend
-  const legendY = macroChartY - 25;
+  const barWidth = (macroChartWidth - 80) / macros.length;
   macros.forEach((macro, index) => {
-    const legendX = macroChartX + (index * 90);
+    const barX = macroChartX + 20 + (index * (barWidth + 10));
+    const barHeight = (macro.adherence / 100) * macroChartHeight;
     
-    // Color box
+    // Draw bar
     page.drawRectangle({
-      x: legendX,
-      y: legendY,
-      width: 8,
-      height: 8,
+      x: barX,
+      y: macroChartY + macroChartHeight - barHeight,
+      width: barWidth,
+      height: barHeight,
       color: macro.color,
     });
     
-    // Label
+    // Draw percentage on bar
+    page.drawText(`${macro.adherence}%`, {
+      x: barX + (barWidth / 2) - 10,
+      y: macroChartY + macroChartHeight - barHeight - 8,
+      size: 8,
+      font: helveticaFont,
+      color: darkGray,
+    });
+    
+    // Draw macro name below bar
     page.drawText(macro.name, {
-      x: legendX + 12,
-      y: legendY + 2,
+      x: barX + (barWidth / 2) - 15,
+      y: macroChartY - 12,
       size: 8,
       font: helveticaFont,
       color: darkGray,
     });
   });
   
-  yPosition -= 110;
+  yPosition -= 80;
   
   // Progress Summary Section
   page.drawText('Progress Summary', {
