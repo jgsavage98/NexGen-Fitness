@@ -498,8 +498,9 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(chatMessages.userId, userId),
           eq(chatMessages.isRead, false),
-          // Only count messages from the coach (not user's own messages or AI responses)
-          sql`${chatMessages.metadata}->>'fromCoach' = 'true'`
+          eq(chatMessages.status, 'approved'),
+          // Count approved AI responses OR messages from coach (not user's own messages)
+          eq(chatMessages.isAI, true)
         )
       );
     
