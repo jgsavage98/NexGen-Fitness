@@ -66,6 +66,8 @@ export default function TrainerDashboard() {
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [trainerNotes, setTrainerNotes] = useState("");
   const [previousPendingCount, setPreviousPendingCount] = useState(0);
+  const [selectedClientForMessage, setSelectedClientForMessage] = useState<string>("");
+  const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -247,6 +249,32 @@ export default function TrainerDashboard() {
       toast({
         title: "Error",
         description: "Failed to reject chat message",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Send message to client mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ clientId, message }: { clientId: string; message: string }) => {
+      const response = await apiRequest("POST", "/api/trainer/send-message", {
+        clientId,
+        message
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Message sent to client successfully",
+      });
+      setNewMessage("");
+      setSelectedClientForMessage("");
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send message",
         variant: "destructive",
       });
     },
@@ -485,6 +513,10 @@ export default function TrainerDashboard() {
               <Bell className="w-4 h-4 mr-2" />
               Chat Approvals ({pendingChatApprovals.length})
             </TabsTrigger>
+            <TabsTrigger value="send-message" className="data-[state=active]:bg-primary-500">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Send Message
+            </TabsTrigger>
             <TabsTrigger value="chat-logs" className="data-[state=active]:bg-primary-500">
               <MessageSquare className="w-4 h-4 mr-2" />
               Chat Logs
@@ -701,6 +733,81 @@ export default function TrainerDashboard() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="send-message" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">Send Message to Client</h2>
+              <Badge variant="outline" className="text-blue-400 border-blue-400">
+                Direct Communication
+              </Badge>
+            </div>
+
+            <Card className="bg-surface border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Compose Message</CardTitle>
+                <p className="text-gray-400">Send a direct message to your client as Coach Chassidy</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm text-gray-400">Select Client:</Label>
+                  <select 
+                    className="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2"
+                    value={selectedClientForMessage}
+                    onChange={(e) => setSelectedClientForMessage(e.target.value)}
+                  >
+                    <option value="">Choose a client...</option>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.firstName} {client.lastName} ({client.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm text-gray-400">Message:</Label>
+                  <Textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type your message to the client..."
+                    className="bg-gray-800 border-gray-600 text-white min-h-[120px] resize-none"
+                    disabled={sendMessageMutation.isPending}
+                  />
+                  <p className="text-xs text-gray-500">
+                    This message will appear in the client's chat as coming from Coach Chassidy
+                  </p>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={() => {
+                      if (selectedClientForMessage && newMessage.trim()) {
+                        sendMessageMutation.mutate({
+                          clientId: selectedClientForMessage,
+                          message: newMessage.trim()
+                        });
+                      }
+                    }}
+                    disabled={!selectedClientForMessage || !newMessage.trim() || sendMessageMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {sendMessageMutation.isPending ? "Sending..." : "Send Message"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setNewMessage("");
+                      setSelectedClientForMessage("");
+                    }}
+                    disabled={sendMessageMutation.isPending}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="chat-logs" className="space-y-6">
