@@ -128,19 +128,54 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
 
           <div className="bg-dark rounded-lg p-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-400">Total Calories</span>
-              <span className="text-sm font-semibold text-white">
-                {Math.round(consumedMacros.calories)}
-              </span>
-              <span className="text-sm text-gray-400">
-                / {macroSummary.targets.calories}
-              </span>
+              <span className="text-sm font-medium text-gray-300">Total Calories</span>
+              <div className="flex items-center space-x-2">
+                <span className={`text-sm font-bold ${
+                  macroSummary.percentages.calories > 100 ? 'text-red-400' : 
+                  macroSummary.percentages.calories >= 90 ? 'text-green-400' :
+                  macroSummary.percentages.calories >= 70 ? 'text-yellow-400' : 'text-blue-400'
+                }`}>
+                  {Math.round(macroSummary.percentages.calories)}%
+                </span>
+                <span className="text-xs text-gray-400">
+                  {Math.round(consumedMacros.calories)} / {macroSummary.targets.calories}
+                </span>
+              </div>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            
+            <div className="relative w-full bg-gray-700 rounded-full h-3">
+              {/* 100% baseline marker */}
+              <div className="absolute left-0 top-0 w-full h-full border-r-2 border-gray-500 rounded-full"></div>
+              
+              {/* Progress bar */}
               <div 
-                className="bg-primary-500 h-2 rounded-full transition-all duration-500" 
-                style={{ width: `${Math.min(100, macroSummary.percentages.calories)}%` }}
-              ></div>
+                className={`h-full rounded-full transition-all duration-1000 ease-out ${
+                  macroSummary.percentages.calories > 100 ? 'bg-red-500' :
+                  macroSummary.percentages.calories >= 90 ? 'bg-green-500' :
+                  macroSummary.percentages.calories >= 70 ? 'bg-yellow-500' : 'bg-blue-500'
+                }`}
+                style={{ 
+                  width: `${Math.min(100, macroSummary.percentages.calories)}%`,
+                  ...(macroSummary.percentages.calories > 100 && {
+                    background: 'linear-gradient(90deg, #3b82f6 0%, #ef4444 100%)',
+                    boxShadow: '0 0 8px rgba(239, 68, 68, 0.5)'
+                  })
+                }}
+              />
+              
+              {/* Overflow indicator for values over 100% */}
+              {macroSummary.percentages.calories > 100 && (
+                <div 
+                  className="absolute top-0 h-full bg-red-500 opacity-60 rounded-r-full"
+                  style={{ 
+                    left: '100%',
+                    width: `${Math.min(50, (macroSummary.percentages.calories - 100) * 0.5)}%`,
+                  }}
+                />
+              )}
+              
+              {/* 100% marker line */}
+              <div className="absolute right-0 top-0 w-0.5 h-full bg-gray-400 opacity-50"></div>
             </div>
           </div>
         </CardContent>
