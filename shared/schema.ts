@@ -212,6 +212,12 @@ export const chatMessages = pgTable("chat_messages", {
   isAI: boolean("is_ai").default(false),
   metadata: jsonb("metadata"), // voice duration, confidence scores, etc.
   isRead: boolean("is_read").default(false),
+  // Trainer approval workflow
+  status: varchar("status").default("approved"), // approved, pending_approval, rejected
+  trainerId: varchar("trainer_id"),
+  trainerNotes: text("trainer_notes"),
+  approvedAt: timestamp("approved_at"),
+  originalAIResponse: text("original_ai_response"), // Store original AI response before trainer edits
   createdAt: timestamp("created_at").defaultNow(),
 });
 

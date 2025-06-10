@@ -88,6 +88,12 @@ export interface IStorage {
   getUnreadMessagesCount(userId: string): Promise<number>;
   markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void>;
   
+  // Trainer chat operations
+  getClientChatMessages(clientId: string, trainerId: string, limit?: number): Promise<ChatMessage[]>;
+  getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]>;
+  approveChatMessage(messageId: number, trainerId: string, approvedMessage?: string, trainerNotes?: string): Promise<ChatMessage>;
+  rejectChatMessage(messageId: number, trainerId: string, trainerNotes: string): Promise<ChatMessage>;
+  
   // Progress operations
   getUserProgressEntries(userId: string): Promise<ProgressEntry[]>;
   createProgressEntry(entry: InsertProgressEntry): Promise<ProgressEntry>;
@@ -544,6 +550,85 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(dailyMacros.date));
     
     return macros;
+  }
+
+  // Trainer chat operations
+  async getClientChatMessages(clientId: string, trainerId: string, limit: number = 50): Promise<ChatMessage[]> {
+    // Verify trainer has access to this client
+    const client = await this.getUser(clientId);
+    if (!client || client.trainerId !== trainerId) {
+      throw new Error("Unauthorized access to client chat");
+    }
+
+    const messages = await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.userId, clientId))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(limit);
+    
+    return messages;
+  }
+
+  async getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]> {
+    let query = db
+      .select({
+        id: chatMessages.id,
+        userId: chatMessages.userId,
+        message: chatMessages.message,
+        isAI: chatMessages.isAI,
+        metadata: chatMessages.metadata,
+        isRead: chatMessages.isRead,
+        status: chatMessages.status,
+        trainerId: chatMessages.trainerId,
+        trainerNotes: chatMessages.trainerNotes,
+        approvedAt: chatMessages.approvedAt,
+        originalAIResponse: chatMessages.originalAIResponse,
+        createdAt: chatMessages.createdAt,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+      })
+      .from(chatMessages)
+      .innerJoin(users, eq(chatMessages.userId, users.id))
+      .where(eq(chatMessages.status, 'pending_approval'));
+
+    if (trainerId) {
+      query = query.where(eq(users.trainerId, trainerId));
+    }
+
+    const result = await query.orderBy(desc(chatMessages.createdAt));
+    return result as ChatMessage[];
+  }
+
+  async approveChatMessage(messageId: number, trainerId: string, approvedMessage?: string, trainerNotes?: string): Promise<ChatMessage> {
+    const [message] = await db
+      .update(chatMessages)
+      .set({
+        status: 'approved',
+        trainerId,
+        trainerNotes,
+        approvedAt: new Date(),
+        ...(approvedMessage && { message: approvedMessage })
+      })
+      .where(eq(chatMessages.id, messageId))
+      .returning();
+    
+    return message;
+  }
+
+  async rejectChatMessage(messageId: number, trainerId: string, trainerNotes: string): Promise<ChatMessage> {
+    const [message] = await db
+      .update(chatMessages)
+      .set({
+        status: 'rejected',
+        trainerId,
+        trainerNotes,
+        approvedAt: new Date()
+      })
+      .where(eq(chatMessages.id, messageId))
+      .returning();
+    
+    return message;
   }
 }
 
