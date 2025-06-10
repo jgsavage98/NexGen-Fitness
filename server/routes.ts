@@ -1496,9 +1496,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ).orderBy(users.firstName);
 
       // Add unanswered count property for each client
-      const clientsWithCount = clients.map(client => ({
-        ...client,
-        unansweredCount: 0 // Will implement proper counting later
+      const clientsWithCount = await Promise.all(clients.map(async (client) => {
+        // Count unanswered messages (client messages without trainer responses after them)
+        const unansweredCount = await storage.getUnansweredMessageCount(client.id, trainerId);
+        return {
+          ...client,
+          unansweredCount
+        };
       }));
       
       res.json(clientsWithCount);

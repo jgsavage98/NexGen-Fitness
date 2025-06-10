@@ -35,7 +35,7 @@ import {
   type UpdateUserProfile,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, sql, asc, lt, count } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, asc, lt, count, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -90,6 +90,7 @@ export interface IStorage {
   
   // Trainer chat operations
   getClientChatMessages(clientId: string, trainerId: string, limit?: number): Promise<ChatMessage[]>;
+  getUnansweredMessageCount(clientId: string, trainerId: string): Promise<number>;
   getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]>;
   approveChatMessage(messageId: number, trainerId: string, approvedMessage?: string, trainerNotes?: string): Promise<ChatMessage>;
   rejectChatMessage(messageId: number, trainerId: string, trainerNotes: string): Promise<ChatMessage>;
@@ -581,6 +582,44 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
     
     return messages;
+  }
+
+  async getUnansweredMessageCount(clientId: string, trainerId: string): Promise<number> {
+    // Get the most recent message from the client that isn't from AI or coach
+    const latestClientMessage = await db
+      .select()
+      .from(chatMessages)
+      .where(
+        and(
+          eq(chatMessages.userId, clientId),
+          eq(chatMessages.isAI, false),
+          sql`NOT (${chatMessages.metadata}->>'fromCoach' = 'true')`
+        )
+      )
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(1);
+
+    if (latestClientMessage.length === 0) {
+      return 0; // No client messages
+    }
+
+    const latestClientMessageTime = latestClientMessage[0].createdAt;
+
+    // Check if there's any trainer/AI response after the latest client message
+    const trainerResponseAfter = await db
+      .select()
+      .from(chatMessages)
+      .where(
+        and(
+          eq(chatMessages.userId, clientId),
+          sql`(${chatMessages.isAI} = true OR ${chatMessages.metadata}->>'fromCoach' = 'true')`,
+          sql`${chatMessages.createdAt} > ${latestClientMessageTime}`
+        )
+      )
+      .limit(1);
+
+    // If no trainer response after latest client message, count as unanswered
+    return trainerResponseAfter.length === 0 ? 1 : 0;
   }
 
   async getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]> {
