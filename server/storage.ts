@@ -585,8 +585,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnansweredMessageCount(clientId: string, trainerId: string): Promise<number> {
-    console.log(`[DEBUG] Checking unanswered count for client: ${clientId}, trainer: ${trainerId}`);
-    
     // Get the most recent message from the client that isn't from AI or coach
     const latestClientMessage = await db
       .select()
@@ -601,10 +599,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(chatMessages.createdAt))
       .limit(1);
 
-    console.log(`[DEBUG] Latest client message:`, latestClientMessage[0]);
-
     if (latestClientMessage.length === 0) {
-      console.log(`[DEBUG] No client messages found`);
       return 0; // No client messages
     }
 
@@ -623,12 +618,8 @@ export class DatabaseStorage implements IStorage {
       )
       .limit(1);
 
-    console.log(`[DEBUG] Trainer responses after:`, trainerResponseAfter);
-
     // If no direct trainer response after latest client message, count as unanswered
-    const count = trainerResponseAfter.length === 0 ? 1 : 0;
-    console.log(`[DEBUG] Final unanswered count: ${count}`);
-    return count;
+    return trainerResponseAfter.length === 0 ? 1 : 0;
   }
 
   async getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]> {

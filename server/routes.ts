@@ -957,31 +957,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isPendingApproval = false;
       }
       
-      // Get recent conversation history
-      const recentMessages = await storage.getUserChatMessages(userId, 10);
-      const conversationHistory = recentMessages.map(msg => 
-        `${msg.isAI ? 'Coach' : 'User'}: ${msg.message}`
-      );
-      
-      // Get AI response with approval context
-      const aiResponse = await aiCoach.getChatResponse(message, user, conversationHistory, isPendingApproval);
-      
-      // Save AI response
-      const savedAIMessage = await storage.saveChatMessage({
+      // Just save the user message - no automatic AI response
+      const savedUserMessage = await storage.saveChatMessage({
         userId,
-        message: aiResponse.message,
-        isAI: true,
-        metadata: {
-          confidence: aiResponse.confidence,
-          requiresHumanReview: aiResponse.requiresHumanReview,
-          suggestedActions: aiResponse.suggestedActions,
-        },
+        message,
+        isAI: false,
+        metadata: isVoice ? { isVoice: true } : null,
       });
       
       res.json({
-        userMessage: { userId, message, isAI: false },
-        aiMessage: savedAIMessage,
-        aiResponse
+        userMessage: savedUserMessage,
+        message: "Message sent successfully"
       });
     } catch (error) {
       console.error("Error processing chat message:", error);
@@ -1007,39 +993,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process as regular chat message
       const { text: message } = transcription;
       
-      // Save user message
-      await storage.saveChatMessage({
+      // Save user voice message - no automatic AI response
+      const savedUserMessage = await storage.saveChatMessage({
         userId,
         message,
         isAI: false,
         metadata: { isVoice: true, duration: transcription.duration },
       });
       
-      // Get AI response (same as text chat)
-      const user = await storage.getUser(userId);
-      const recentMessages = await storage.getUserChatMessages(userId, 10);
-      const conversationHistory = recentMessages.map(msg => 
-        `${msg.isAI ? 'Coach' : 'User'}: ${msg.message}`
-      );
-      
-      const aiResponse = await aiCoach.getChatResponse(message, user, conversationHistory);
-      
-      const savedAIMessage = await storage.saveChatMessage({
-        userId,
-        message: aiResponse.message,
-        isAI: true,
-        metadata: {
-          confidence: aiResponse.confidence,
-          requiresHumanReview: aiResponse.requiresHumanReview,
-          suggestedActions: aiResponse.suggestedActions,
-        },
-      });
-      
       res.json({
         transcription,
-        userMessage: { userId, message, isAI: false },
-        aiMessage: savedAIMessage,
-        aiResponse
+        userMessage: savedUserMessage,
+        message: "Voice message sent successfully"
       });
     } catch (error) {
       console.error("Error processing voice message:", error);
