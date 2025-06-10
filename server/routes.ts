@@ -7,6 +7,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { aiCoach, extractNutritionFromScreenshot } from "./openai";
 import { seedTestData, clearTestData } from "./testData";
 import { getTodayInTimezone, getDateInTimezone, getMonthBoundsInTimezone } from "./timezone";
+import { generateProgressReportPDF, savePDFToFile, type ProgressReportData } from "./pdfGenerator";
 import { 
   updateUserProfileSchema, 
   insertMealSchema, 
@@ -1792,35 +1793,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Trainer send message to client
+  // Trainer send message to client with PDF report support
   app.post('/api/trainer/client/:clientId/send-message', isAuthenticated, async (req: any, res) => {
     try {
       const { clientId } = req.params;
-      const { message, isCoach = true, reportHTML, reportTitle } = req.body;
+      const { message, isCoach = true, reportData } = req.body;
       
       if (!message || !message.trim()) {
         return res.status(400).json({ message: "Message content is required" });
       }
       
-      // If this includes an HTML report, save it separately and add a link
       let finalMessage = message.trim();
-      let reportId = null;
+      let pdfUrl = null;
       
-      if (reportHTML && reportTitle) {
-        // Generate a unique report ID
-        reportId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Store the HTML report in the report store
-        reportStore.set(reportId, {
-          html: reportHTML,
-          title: reportTitle,
-          generatedAt: new Date().toISOString()
+      // If this includes report data, generate PDF
+      if (reportData) {
+        const reportDate = new Date().toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
         });
         
-        // Add download link to the message
-        finalMessage += `\n\n🔗 [View Full Progress Report](/api/reports/${reportId})`;
+        const progressData: ProgressReportData = {
+          client: reportData.client,
+          currentWeight: reportData.currentWeight,
+          weightChange: reportData.weightChange,
+          avgAdherence: reportData.avgAdherence,
+          reportDate
+        };
         
-        // Save the coach message with report metadata
+        // Generate PDF
+        const pdfBuffer = await generateProgressReportPDF(progressData);
+        const filename = `progress-report-${reportData.client.firstName}-${reportData.client.lastName}-${Date.now()}.pdf`;
+        pdfUrl = await savePDFToFile(pdfBuffer, filename);
+        
+        // Add PDF download to the message
+        finalMessage += `\n\n📄 **Progress Report PDF**: [Download Report](${pdfUrl})`;
+        
+        // Save the coach message with PDF attachment
         await storage.saveChatMessage({
           userId: clientId,
           message: finalMessage,
@@ -1828,8 +1838,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metadata: { 
             fromCoach: true, 
             coachId: req.user.claims.sub,
-            hasReport: true,
-            reportId: reportId
+            hasPdfReport: true,
+            pdfUrl: pdfUrl,
+            reportTitle: `Progress Report - ${reportData.client.firstName} ${reportData.client.lastName}`
           },
         });
       } else {
@@ -1845,7 +1856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         message: "Message sent successfully",
-        reportId: reportId
+        pdfUrl: pdfUrl
       });
     } catch (error) {
       console.error("Error sending message to client:", error as Error);
