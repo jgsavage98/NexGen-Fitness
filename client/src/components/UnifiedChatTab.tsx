@@ -52,6 +52,10 @@ export default function UnifiedChatTab() {
   const { data: clientChatMessages = [], refetch: refetchClientChat } = useQuery({
     queryKey: [`/api/trainer/client-chat/${selectedChatClient}`],
     enabled: !!selectedChatClient,
+    onSuccess: () => {
+      // When chat messages are successfully loaded, invalidate client list to update counters
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+    }
   });
 
   // Auto-scroll to bottom when new messages arrive
