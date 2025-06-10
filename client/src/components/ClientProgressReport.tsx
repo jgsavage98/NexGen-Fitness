@@ -74,12 +74,16 @@ export default function ClientProgressReport({ clientId, onClose }: ClientProgre
   // Send report to client via chat
   const sendToClientMutation = useMutation({
     mutationFn: async () => {
-      const currentWeight = (weightProgress?.weightEntries?.length || 0) > 0 
-        ? weightProgress!.weightEntries[weightProgress!.weightEntries.length - 1].weight 
-        : client?.weight;
-      const startWeight = (weightProgress?.weightEntries?.length || 0) > 0 
-        ? weightProgress!.weightEntries[0].weight 
-        : client?.weight;
+      if (!client || !weightProgress) {
+        throw new Error("Client data not available");
+      }
+
+      const currentWeight = (weightProgress.weightEntries?.length || 0) > 0 
+        ? weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight 
+        : client.weight;
+      const startWeight = (weightProgress.weightEntries?.length || 0) > 0 
+        ? weightProgress.weightEntries[0].weight 
+        : client.weight;
       const weightChange = (currentWeight || 0) - (startWeight || 0);
       const avgAdherence = macrosData.length > 0 
         ? Math.round(macrosData.reduce((sum, day) => sum + (day.adherenceScore || 0), 0) / macrosData.length)
@@ -87,12 +91,12 @@ export default function ClientProgressReport({ clientId, onClose }: ClientProgre
 
       const reportSummary = `📊 **Progress Report - ${new Date().toLocaleDateString()}**
 
-Hey ${client?.firstName}! Here's your latest progress update:
+Hey ${client.firstName}! Here's your latest progress update:
 
 **Weight Progress:**
 • Current: ${currentWeight} lbs
 • Change: ${Math.abs(weightChange).toFixed(1)} lbs ${weightChange < 0 ? 'lost' : 'gained'}
-• Goal Progress: Making excellent progress toward your ${client?.goal?.replace('-', ' ')} goal!
+• Goal Progress: Making excellent progress toward your ${client.goal?.replace('-', ' ')} goal!
 
 **Macro Adherence:**
 • Average adherence: ${avgAdherence}%
@@ -101,10 +105,12 @@ Keep up the great work! 💪 Let me know if you have any questions about your pr
 
 - Coach Chassidy`;
 
-      return await apiRequest('/api/trainer/client/' + clientId + '/send-message', 'POST', { 
+      const response = await apiRequest('POST', `/api/trainer/client/${clientId}/send-message`, { 
         message: reportSummary, 
         isCoach: true 
       });
+      
+      return response;
     },
     onSuccess: () => {
       toast({
@@ -112,10 +118,11 @@ Keep up the great work! 💪 Let me know if you have any questions about your pr
         description: `Report successfully sent to ${client?.firstName} via chat.`,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Send report error:', error);
       toast({
         title: "Send Failed", 
-        description: "Unable to send progress report. Please try again.",
+        description: `Unable to send progress report: ${error.message}`,
         variant: "destructive",
       });
     }
