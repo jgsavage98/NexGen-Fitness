@@ -29,13 +29,14 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
   });
 
   // Only show extracted macros if screenshot was uploaded today and processed
-  const todayString = new Date().toISOString().split('T')[0];
+  // Use Eastern Time for John's timezone
+  const easternTime = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
   const hasUploadedToday = dailyMacros && 
     (dailyMacros as any).screenshotUrl && 
     (dailyMacros as any).visionProcessedAt &&
-    (dailyMacros as any).date === todayString;
+    (dailyMacros as any).date === easternTime;
     
-  console.log('Dashboard check:', { dailyMacros, hasUploadedToday, todayString });
+  console.log('Dashboard check:', { dailyMacros, hasUploadedToday, easternTime });
   
   const consumedMacros = hasUploadedToday ? {
     calories: (dailyMacros as any).extractedCalories || 0,
