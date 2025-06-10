@@ -211,6 +211,7 @@ export const chatMessages = pgTable("chat_messages", {
   message: text("message").notNull(),
   isAI: boolean("is_ai").default(false),
   metadata: jsonb("metadata"), // voice duration, confidence scores, etc.
+  isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

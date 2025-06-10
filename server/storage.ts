@@ -85,6 +85,8 @@ export interface IStorage {
   // Chat operations
   getUserChatMessages(userId: string, limit?: number): Promise<ChatMessage[]>;
   saveChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  getUnreadMessagesCount(userId: string): Promise<number>;
+  markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void>;
   
   // Progress operations
   getUserProgressEntries(userId: string): Promise<ProgressEntry[]>;
@@ -469,6 +471,48 @@ export class DatabaseStorage implements IStorage {
   async saveChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
     const [newMessage] = await db.insert(chatMessages).values(message).returning();
     return newMessage;
+  }
+
+  async getUnreadMessagesCount(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(chatMessages)
+      .where(
+        and(
+          eq(chatMessages.userId, userId),
+          eq(chatMessages.isRead, false),
+          // Only count messages from the coach (not user's own messages or AI responses)
+          sql`${chatMessages.metadata}->>'fromCoach' = 'true'`
+        )
+      );
+    
+    return result[0]?.count || 0;
+  }
+
+  async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
+    if (messageIds && messageIds.length > 0) {
+      // Mark specific messages as read
+      await db
+        .update(chatMessages)
+        .set({ isRead: true })
+        .where(
+          and(
+            eq(chatMessages.userId, userId),
+            inArray(chatMessages.id, messageIds)
+          )
+        );
+    } else {
+      // Mark all unread messages from coach as read
+      await db
+        .update(chatMessages)
+        .set({ isRead: true })
+        .where(
+          and(
+            eq(chatMessages.userId, userId),
+            eq(chatMessages.isRead, false),
+            sql`${chatMessages.metadata}->>'fromCoach' = 'true'`
+          )
+        );
+    }
   }
 
   // Progress operations
