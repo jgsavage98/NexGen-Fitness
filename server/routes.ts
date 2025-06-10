@@ -22,7 +22,7 @@ import {
   progressEntries
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, not } from "drizzle-orm";
+import { eq, desc, and, gte, lte, not, sql } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";

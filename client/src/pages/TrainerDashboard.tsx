@@ -653,12 +653,17 @@ export default function TrainerDashboard() {
             )}
           </TabsContent>
 
-          <TabsContent value="chat-approvals" className="space-y-6">
+          <TabsContent value="chat" className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">AI Chat Message Approvals</h2>
-              <Badge variant="secondary" className="bg-orange-500/20 text-orange-400">
-                {pendingChatApprovals.length} Pending
-              </Badge>
+              <h2 className="text-xl font-bold text-white">Client Chat Management</h2>
+              <div className="flex space-x-2">
+                <Badge variant="secondary" className="bg-orange-500/20 text-orange-400">
+                  {pendingChatApprovals.length} Pending Approvals
+                </Badge>
+                <Badge variant="outline" className="text-blue-400 border-blue-400">
+                  Unified Chat
+                </Badge>
+              </div>
             </div>
 
             {pendingChatApprovals.length === 0 ? (
