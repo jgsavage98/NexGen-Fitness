@@ -504,7 +504,7 @@ export class DatabaseStorage implements IStorage {
         )
       );
     
-    return result[0]?.count || 0;
+    return Number(result[0]?.count) || 0;
   }
 
   async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
