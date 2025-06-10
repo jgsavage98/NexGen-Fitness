@@ -1695,6 +1695,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send message from trainer to client
+  app.post('/api/trainer/send-message', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { clientId, message } = req.body;
+      
+      if (!clientId || !message?.trim()) {
+        return res.status(400).json({ message: "Client ID and message are required" });
+      }
+
+      // Verify the client exists and belongs to this trainer
+      const client = await storage.getUser(clientId);
+      if (!client || client.trainerId !== trainerId) {
+        return res.status(404).json({ message: "Client not found or not assigned to you" });
+      }
+
+      // Create the chat message with metadata indicating it's from the coach
+      const chatMessage = await storage.saveChatMessage({
+        userId: clientId,
+        message: message.trim(),
+        isAI: true, // Mark as AI to display as coming from Coach Chassidy
+        status: 'approved', // Already approved since it's from the trainer
+        metadata: {
+          fromCoach: true,
+          trainerId: trainerId,
+          directMessage: true
+        }
+      });
+
+      res.json({
+        message: "Message sent to client successfully",
+        chatMessage
+      });
+    } catch (error) {
+      console.error("Error sending message to client:", error);
+      res.status(500).json({ message: "Failed to send message to client" });
+    }
+  });
+
   app.get('/api/trainer/client-progress/:clientId', isAuthenticated, async (req: any, res) => {
     try {
       const clientId = req.params.clientId;
