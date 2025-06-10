@@ -295,24 +295,7 @@ export default function ChatTab() {
           </div>
         ))}
 
-        {(sendMessageMutation.isPending || sendVoiceMutation.isPending) && (
-          <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
-            <div className="flex items-start space-x-3">
-              <img 
-                src="/chassidy-profile.jpeg" 
-                alt="Coach Chassidy"
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
-              />
-              <div className="text-sm flex-1">
-                <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-300"></div>
-                  <p className="text-primary-100">typing...</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         <div ref={messagesEndRef} />
       </div>
