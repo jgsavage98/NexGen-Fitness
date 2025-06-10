@@ -1827,10 +1827,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const filename = `progress-report-${reportData.client.firstName}-${reportData.client.lastName}-${Date.now()}.pdf`;
         pdfUrl = await savePDFToFile(pdfBuffer, filename);
         
-        // Add PDF download to the message
-        finalMessage += `\n\n📄 **Progress Report PDF**: [Download Report](${pdfUrl})`;
-        
-        // Save the coach message with PDF attachment
+        // Save the coach message with PDF attachment metadata
         await storage.saveChatMessage({
           userId: clientId,
           message: finalMessage,
@@ -1840,7 +1837,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             coachId: req.user.claims.sub,
             hasPdfReport: true,
             pdfUrl: pdfUrl,
-            reportTitle: `Progress Report - ${reportData.client.firstName} ${reportData.client.lastName}`
+            reportTitle: `Progress Report - ${reportData.client.firstName} ${reportData.client.lastName}`,
+            pdfThumbnail: true
           },
         });
       } else {
