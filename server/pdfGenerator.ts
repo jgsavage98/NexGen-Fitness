@@ -1,4 +1,3 @@
-import puppeteer from 'puppeteer';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import fs from 'fs/promises';
 import path from 'path';
@@ -18,220 +17,284 @@ export interface ProgressReportData {
 }
 
 export async function generateProgressReportPDF(data: ProgressReportData): Promise<Buffer> {
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Progress Report - ${data.client.firstName} ${data.client.lastName}</title>
-        <style>
-          body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 40px;
-            background: white;
-            color: #333;
-            line-height: 1.6;
-          }
-          .report-container {
-            max-width: 800px;
-            margin: 0 auto;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 3px solid #3B82F6;
-            padding-bottom: 30px;
-          }
-          .header h1 {
-            color: #3B82F6;
-            font-size: 36px;
-            margin: 0 0 10px 0;
-            font-weight: bold;
-          }
-          .header h2 {
-            color: #374151;
-            font-size: 24px;
-            margin: 0 0 20px 0;
-            font-weight: normal;
-          }
-          .header-info {
-            color: #6B7280;
-            font-size: 14px;
-            margin: 5px 0;
-          }
-          .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin: 40px 0;
-          }
-          .metric-card {
-            background: #F9FAFB;
-            border: 2px solid #E5E7EB;
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-          .metric-value {
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #111827;
-          }
-          .metric-label {
-            color: #6B7280;
-            font-size: 14px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-          .current-weight { color: #3B82F6; }
-          .weight-change { color: #10B981; }
-          .goal-progress { color: #8B5CF6; }
-          .adherence { color: #F59E0B; }
-          .section {
-            margin: 50px 0;
-          }
-          .section h3 {
-            color: #374151;
-            font-size: 20px;
-            margin-bottom: 20px;
-            border-left: 4px solid #3B82F6;
-            padding-left: 15px;
-          }
-          .chart-placeholder {
-            height: 200px;
-            border: 2px dashed #D1D5DB;
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #F9FAFB;
-            color: #6B7280;
-            font-size: 16px;
-            border-radius: 8px;
-          }
-          .summary-box {
-            background: #F0F9FF;
-            border: 1px solid #3B82F6;
-            border-radius: 12px;
-            padding: 30px;
-            margin: 40px 0;
-          }
-          .summary-text {
-            color: #374151;
-            line-height: 1.8;
-            font-size: 16px;
-          }
-          .summary-text p {
-            margin: 15px 0;
-          }
-          .coach-signature {
-            text-align: right;
-            margin-top: 40px;
-            font-style: italic;
-            color: #6B7280;
-            border-top: 1px solid #E5E7EB;
-            padding-top: 20px;
-          }
-          @media print {
-            body { margin: 0; padding: 20px; }
-            .report-container { max-width: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="report-container">
-          <div class="header">
-            <h1>Progress Report</h1>
-            <h2>${data.client.firstName} ${data.client.lastName}</h2>
-            <div class="header-info">Report Generated: ${data.reportDate}</div>
-            <div class="header-info">Coach: Chassidy Escobedo, Certified Personal Trainer</div>
-          </div>
-          
-          <div class="metrics-grid">
-            <div class="metric-card">
-              <div class="metric-value current-weight">${data.currentWeight} lbs</div>
-              <div class="metric-label">Current Weight</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-value weight-change">${data.weightChange < 0 ? '-' : '+'}${Math.abs(data.weightChange).toFixed(1)} lbs</div>
-              <div class="metric-label">Total Change</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-value goal-progress">${Math.round(Math.abs(data.weightChange) / Math.abs(data.client.goalWeight - data.client.weight) * 100)}%</div>
-              <div class="metric-label">Goal Progress</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-value adherence">${data.avgAdherence}%</div>
-              <div class="metric-label">Avg Adherence</div>
-            </div>
-          </div>
-          
-          <div class="section">
-            <h3>📈 Weight Progress Trend</h3>
-            <div class="chart-placeholder">
-              Weight tracking shows ${Math.abs(data.weightChange).toFixed(1)} lbs ${data.weightChange < 0 ? 'loss' : 'gain'} toward ${data.client.goalWeight} lbs target
-            </div>
-          </div>
-          
-          <div class="section">
-            <h3>🎯 Macro Adherence Overview</h3>
-            <div class="chart-placeholder">
-              Average macro adherence: ${data.avgAdherence}% over the last 30 days
-            </div>
-          </div>
-          
-          <div class="summary-box">
-            <h3>📋 Progress Summary</h3>
-            <div class="summary-text">
-              <p><strong>${data.client.firstName}</strong> has been making excellent progress toward their ${data.client.goal?.replace('-', ' ')} goal.</p>
-              <p>Starting weight tracking shows a <strong>${Math.abs(data.weightChange).toFixed(1)} lb</strong> ${data.weightChange < 0 ? 'weight loss' : 'weight gain'}, representing <strong>${Math.round(Math.abs(data.weightChange) / Math.abs(data.client.goalWeight - data.client.weight) * 100)}%</strong> progress toward their goal weight of <strong>${data.client.goalWeight} lbs</strong>.</p>
-              <p>Their average macro adherence of <strong>${data.avgAdherence}%</strong> demonstrates consistent commitment to the nutrition plan and shows excellent discipline in following the recommended guidelines.</p>
-              <p><strong>Recommendations:</strong> Continue with current nutrition plan and maintain consistent tracking habits. Consider slight adjustments if weight loss/gain rate needs modification.</p>
-            </div>
-          </div>
-          
-          <div class="coach-signature">
-            <p><strong>Keep up the excellent work!</strong></p>
-            <p>Coach Chassidy Escobedo<br>
-            Certified Personal Trainer & Nutrition Coach<br>
-            Ignite Fitness & Nutrition</p>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-
-  let browser;
-  try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+  // Create a new PDF document
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([595.28, 841.89]); // A4 size
+  const { width, height } = page.getSize();
+  
+  // Load fonts
+  const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  
+  // Colors
+  const primaryBlue = rgb(0.23, 0.51, 0.96); // #3B82F6
+  const darkGray = rgb(0.22, 0.26, 0.32); // #374151
+  const lightGray = rgb(0.42, 0.45, 0.50); // #6B7280
+  const green = rgb(0.06, 0.73, 0.51); // #10B981
+  const purple = rgb(0.55, 0.36, 0.97); // #8B5CF6
+  const orange = rgb(0.96, 0.62, 0.04); // #F59E0B
+  
+  let yPosition = height - 80;
+  
+  // Header Section
+  page.drawText('PROGRESS REPORT', {
+    x: 50,
+    y: yPosition,
+    size: 28,
+    font: helveticaBoldFont,
+    color: primaryBlue,
+  });
+  
+  yPosition -= 40;
+  page.drawText(`${data.client.firstName} ${data.client.lastName}`, {
+    x: 50,
+    y: yPosition,
+    size: 20,
+    font: helveticaBoldFont,
+    color: darkGray,
+  });
+  
+  yPosition -= 25;
+  page.drawText(`Report Generated: ${data.reportDate}`, {
+    x: 50,
+    y: yPosition,
+    size: 12,
+    font: helveticaFont,
+    color: lightGray,
+  });
+  
+  yPosition -= 20;
+  page.drawText('Coach: Chassidy Escobedo, Certified Personal Trainer', {
+    x: 50,
+    y: yPosition,
+    size: 12,
+    font: helveticaFont,
+    color: lightGray,
+  });
+  
+  // Header line
+  yPosition -= 30;
+  page.drawLine({
+    start: { x: 50, y: yPosition },
+    end: { x: width - 50, y: yPosition },
+    thickness: 2,
+    color: primaryBlue,
+  });
+  
+  yPosition -= 40;
+  
+  // Metrics Grid
+  const goalProgress = Math.round(Math.abs(data.weightChange) / Math.abs(data.client.goalWeight - data.client.weight) * 100);
+  
+  const metrics = [
+    { label: 'Current Weight', value: `${data.currentWeight} lbs`, color: primaryBlue },
+    { label: 'Total Change', value: `${data.weightChange < 0 ? '-' : '+'}${Math.abs(data.weightChange).toFixed(1)} lbs`, color: green },
+    { label: 'Goal Progress', value: `${goalProgress}%`, color: purple },
+    { label: 'Avg Adherence', value: `${data.avgAdherence}%`, color: orange }
+  ];
+  
+  const cardWidth = 120;
+  const cardSpacing = 20;
+  const startX = (width - (4 * cardWidth + 3 * cardSpacing)) / 2;
+  
+  metrics.forEach((metric, index) => {
+    const cardX = startX + index * (cardWidth + cardSpacing);
+    
+    // Card background
+    page.drawRectangle({
+      x: cardX - 10,
+      y: yPosition - 50,
+      width: cardWidth,
+      height: 80,
+      color: rgb(0.98, 0.98, 0.99),
+      borderColor: rgb(0.90, 0.91, 0.92),
+      borderWidth: 1,
     });
     
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      margin: {
-        top: '20px',
-        right: '20px',
-        bottom: '20px',
-        left: '20px'
-      },
-      printBackground: true
+    // Value
+    page.drawText(metric.value, {
+      x: cardX + 10,
+      y: yPosition - 15,
+      size: 18,
+      font: helveticaBoldFont,
+      color: metric.color,
     });
     
-    return Buffer.from(pdfBuffer);
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
-  }
+    // Label
+    page.drawText(metric.label, {
+      x: cardX,
+      y: yPosition - 35,
+      size: 10,
+      font: helveticaFont,
+      color: lightGray,
+    });
+  });
+  
+  yPosition -= 100;
+  
+  // Weight Progress Section
+  page.drawText('Weight Progress Trend', {
+    x: 50,
+    y: yPosition,
+    size: 16,
+    font: helveticaBoldFont,
+    color: darkGray,
+  });
+  
+  // Blue accent line
+  page.drawLine({
+    start: { x: 46, y: yPosition + 2 },
+    end: { x: 46, y: yPosition - 18 },
+    thickness: 4,
+    color: primaryBlue,
+  });
+  
+  yPosition -= 30;
+  page.drawRectangle({
+    x: 50,
+    y: yPosition - 60,
+    width: width - 100,
+    height: 60,
+    color: rgb(0.98, 0.98, 0.99),
+    borderColor: rgb(0.82, 0.84, 0.86),
+    borderWidth: 1,
+    borderDashArray: [5, 3],
+  });
+  
+  page.drawText(`Weight tracking shows ${Math.abs(data.weightChange).toFixed(1)} lbs ${data.weightChange < 0 ? 'loss' : 'gain'} toward ${data.client.goalWeight} lbs target`, {
+    x: 70,
+    y: yPosition - 35,
+    size: 12,
+    font: helveticaFont,
+    color: lightGray,
+  });
+  
+  yPosition -= 90;
+  
+  // Macro Adherence Section
+  page.drawText('Macro Adherence Overview', {
+    x: 50,
+    y: yPosition,
+    size: 16,
+    font: helveticaBoldFont,
+    color: darkGray,
+  });
+  
+  page.drawLine({
+    start: { x: 46, y: yPosition + 2 },
+    end: { x: 46, y: yPosition - 18 },
+    thickness: 4,
+    color: primaryBlue,
+  });
+  
+  yPosition -= 30;
+  page.drawRectangle({
+    x: 50,
+    y: yPosition - 60,
+    width: width - 100,
+    height: 60,
+    color: rgb(0.98, 0.98, 0.99),
+    borderColor: rgb(0.82, 0.84, 0.86),
+    borderWidth: 1,
+    borderDashArray: [5, 3],
+  });
+  
+  page.drawText(`Average macro adherence: ${data.avgAdherence}% over the last 30 days`, {
+    x: 70,
+    y: yPosition - 35,
+    size: 12,
+    font: helveticaFont,
+    color: lightGray,
+  });
+  
+  yPosition -= 90;
+  
+  // Progress Summary Section
+  page.drawRectangle({
+    x: 50,
+    y: yPosition - 120,
+    width: width - 100,
+    height: 120,
+    color: rgb(0.94, 0.97, 1.0),
+    borderColor: primaryBlue,
+    borderWidth: 1,
+  });
+  
+  page.drawText('Progress Summary', {
+    x: 70,
+    y: yPosition - 20,
+    size: 16,
+    font: helveticaBoldFont,
+    color: darkGray,
+  });
+  
+  const summaryText = [
+    `${data.client.firstName} has been making excellent progress toward their ${data.client.goal?.replace('-', ' ')} goal.`,
+    `Starting weight tracking shows a ${Math.abs(data.weightChange).toFixed(1)} lb ${data.weightChange < 0 ? 'weight loss' : 'weight gain'},`,
+    `representing ${goalProgress}% progress toward their goal weight of ${data.client.goalWeight} lbs.`,
+    `Their average macro adherence of ${data.avgAdherence}% demonstrates consistent commitment`,
+    `to the nutrition plan and shows excellent discipline in following guidelines.`
+  ];
+  
+  summaryText.forEach((line, index) => {
+    page.drawText(line, {
+      x: 70,
+      y: yPosition - 45 - (index * 15),
+      size: 11,
+      font: helveticaFont,
+      color: darkGray,
+    });
+  });
+  
+  yPosition -= 150;
+  
+  // Coach Signature
+  page.drawLine({
+    start: { x: 50, y: yPosition },
+    end: { x: width - 50, y: yPosition },
+    thickness: 1,
+    color: rgb(0.90, 0.91, 0.92),
+  });
+  
+  yPosition -= 25;
+  page.drawText('Keep up the excellent work!', {
+    x: width - 250,
+    y: yPosition,
+    size: 12,
+    font: helveticaBoldFont,
+    color: darkGray,
+  });
+  
+  yPosition -= 20;
+  page.drawText('Coach Chassidy Escobedo', {
+    x: width - 250,
+    y: yPosition,
+    size: 11,
+    font: helveticaFont,
+    color: lightGray,
+  });
+  
+  yPosition -= 15;
+  page.drawText('Certified Personal Trainer & Nutrition Coach', {
+    x: width - 250,
+    y: yPosition,
+    size: 10,
+    font: helveticaFont,
+    color: lightGray,
+  });
+  
+  yPosition -= 15;
+  page.drawText('Ignite Fitness & Nutrition', {
+    x: width - 250,
+    y: yPosition,
+    size: 10,
+    font: helveticaFont,
+    color: lightGray,
+  });
+  
+  // Save the PDF
+  const pdfBytes = await pdfDoc.save();
+  return Buffer.from(pdfBytes);
 }
 
 export async function savePDFToFile(pdfBuffer: Buffer, filename: string): Promise<string> {
