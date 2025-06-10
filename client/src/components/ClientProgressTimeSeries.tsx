@@ -496,7 +496,233 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
         </div>
       )}
 
-      {processedData.length === 0 && (
+      {viewType === 'weight' && weightProgress && (
+        <div className="grid grid-cols-1 gap-6">
+          {/* Weight Progress Chart */}
+          <Card className="bg-surface border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white">
+                Weight Progress Over Time
+                {weightProgress.goalWeight && (
+                  <span className="text-sm text-gray-400 ml-2">
+                    (Goal: {weightProgress.goalWeight} lbs)
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={weightProgress.weightEntries.map(entry => ({
+                  date: new Date(entry.recordedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  weight: entry.weight,
+                  goalWeight: weightProgress.goalWeight,
+                  fullDate: entry.recordedAt,
+                  notes: entry.notes
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
+                  <YAxis 
+                    domain={['dataMin - 5', 'dataMax + 5']} 
+                    stroke="#9CA3AF" 
+                    fontSize={12}
+                    label={{ value: 'Weight (lbs)', angle: -90, position: 'insideLeft' }}
+                  />
+                  <Tooltip 
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-lg">
+                            <p className="text-white font-medium">{label}</p>
+                            <p className="text-green-400">
+                              Weight: {payload[0].value} lbs
+                            </p>
+                            {data.goalWeight && (
+                              <p className="text-blue-400">
+                                Goal: {data.goalWeight} lbs
+                              </p>
+                            )}
+                            {data.notes && (
+                              <p className="text-gray-300 text-sm mt-1">
+                                {data.notes}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  
+                  {/* Weight progress line */}
+                  <Line 
+                    type="monotone" 
+                    dataKey="weight" 
+                    stroke="#10B981" 
+                    strokeWidth={3} 
+                    name="Weight"
+                    dot={{ fill: '#10B981', strokeWidth: 2, r: 5 }}
+                  />
+                  
+                  {/* Goal weight reference line */}
+                  {weightProgress.goalWeight && (
+                    <ReferenceLine 
+                      y={weightProgress.goalWeight} 
+                      stroke="#3B82F6" 
+                      strokeDasharray="8 4"
+                      strokeWidth={2}
+                      label={{ 
+                        value: `Goal: ${weightProgress.goalWeight} lbs`, 
+                        position: "topRight",
+                        offset: 10,
+                        fontSize: 12,
+                        fill: "#3B82F6",
+                        fontWeight: "bold"
+                      }}
+                    />
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Weight Progress Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Current Progress */}
+            <Card className="bg-surface border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">Current Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {weightProgress.currentWeight && (
+                    <div>
+                      <span className="text-gray-400">Current Weight:</span>
+                      <div className="text-2xl font-bold text-green-400">
+                        {weightProgress.currentWeight} lbs
+                      </div>
+                    </div>
+                  )}
+                  
+                  {weightProgress.goalWeight && weightProgress.currentWeight && (
+                    <div>
+                      <span className="text-gray-400">Progress to Goal:</span>
+                      <div className="text-2xl font-bold text-blue-400">
+                        {Math.abs(weightProgress.currentWeight - weightProgress.goalWeight).toFixed(1)} lbs
+                        {weightProgress.goal === 'weight-loss' ? ' to lose' : ' to gain'}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {weightProgress.weightEntries.length > 1 && (
+                    <div>
+                      <span className="text-gray-400">Total Change:</span>
+                      <div className={`text-2xl font-bold ${
+                        (weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight - 
+                         weightProgress.weightEntries[0].weight) > 0 ? 'text-red-400' : 'text-green-400'
+                      }`}>
+                        {(weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight - 
+                          weightProgress.weightEntries[0].weight) > 0 ? '+' : ''}
+                        {(weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight - 
+                          weightProgress.weightEntries[0].weight).toFixed(1)} lbs
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Goal Information */}
+            <Card className="bg-surface border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">Goal Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-gray-400">Goal Type:</span>
+                    <div className="text-lg font-semibold text-white capitalize">
+                      {weightProgress.goal?.replace('-', ' ') || 'Not specified'}
+                    </div>
+                  </div>
+                  
+                  {weightProgress.goalWeight && (
+                    <div>
+                      <span className="text-gray-400">Target Weight:</span>
+                      <div className="text-lg font-semibold text-blue-400">
+                        {weightProgress.goalWeight} lbs
+                      </div>
+                    </div>
+                  )}
+                  
+                  {weightProgress.goalWeight && weightProgress.currentWeight && (
+                    <div>
+                      <span className="text-gray-400">Progress:</span>
+                      <div className="mt-2">
+                        <div className="bg-gray-700 rounded-full h-3">
+                          <div 
+                            className="bg-blue-500 h-3 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.min(100, Math.abs(
+                                (weightProgress.currentWeight - (weightProgress.weightEntries[0]?.weight || weightProgress.currentWeight)) /
+                                (weightProgress.goalWeight - (weightProgress.weightEntries[0]?.weight || weightProgress.currentWeight))
+                              ) * 100)}%`
+                            }}
+                          ></div>
+                        </div>
+                        <div className="text-sm text-gray-400 mt-1">
+                          {Math.min(100, Math.abs(
+                            (weightProgress.currentWeight - (weightProgress.weightEntries[0]?.weight || weightProgress.currentWeight)) /
+                            (weightProgress.goalWeight - (weightProgress.weightEntries[0]?.weight || weightProgress.currentWeight))
+                          ) * 100).toFixed(0)}% to goal
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Entries */}
+            <Card className="bg-surface border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">Recent Weigh-ins</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {weightProgress.weightEntries.slice(-5).reverse().map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                      <div>
+                        <div className="text-white font-medium">{entry.weight} lbs</div>
+                        <div className="text-gray-400 text-sm">
+                          {new Date(entry.recordedAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                      {entry.notes && (
+                        <div className="text-gray-300 text-sm max-w-24 truncate">
+                          {entry.notes}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {weightProgress.weightEntries.length === 0 && (
+                    <div className="text-gray-400 text-center py-4">
+                      No weight entries recorded yet
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {processedData.length === 0 && viewType !== 'weight' && (
         <Card className="bg-surface border-gray-700">
           <CardContent className="p-8 text-center">
             <p className="text-gray-400">No data available for the selected time range.</p>
