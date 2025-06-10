@@ -45,31 +45,32 @@ export function calculateJourneyDay(programStartDate: string | Date, timezone?: 
   const todayString = getTodayInTimezone(timezone);
   const startString = getDateInTimezone(programStartDate, timezone);
   
-  console.log('Journey day calculation:', {
-    programStartDate,
+  console.log('🐛 Journey day debug:', {
+    originalStartDate: programStartDate,
     timezone,
     todayString,
-    startString
+    startString,
+    typeof_programStartDate: typeof programStartDate
   });
   
-  const today = new Date(todayString);
-  const startDate = new Date(startString);
+  // Convert YYYY-MM-DD strings to Date objects at start of day
+  const todayDate = new Date(todayString + 'T00:00:00.000Z');
+  const startDateObj = new Date(startString + 'T00:00:00.000Z');
   
-  const diffTime = today.getTime() - startDate.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  // Calculate difference in days
+  const diffMs = todayDate.getTime() - startDateObj.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   
-  // Start date is Day 1, so we add 1 to the difference
-  // But if diffDays is 0 (same day), it should be Day 1
-  // If diffDays is 1 (next day), it should be Day 2
-  const journeyDay = Math.max(1, diffDays + 1);
-  
-  console.log('Journey day result:', {
-    diffTime,
+  console.log('🐛 Journey day calculation:', {
+    todayDate: todayDate.toISOString(),
+    startDateObj: startDateObj.toISOString(),
+    diffMs,
     diffDays,
-    journeyDay
+    result: diffDays + 1
   });
   
-  return journeyDay;
+  // Day 1 = start date, Day 2 = next day, etc.
+  return Math.max(1, diffDays + 1);
 }
 
 /**
