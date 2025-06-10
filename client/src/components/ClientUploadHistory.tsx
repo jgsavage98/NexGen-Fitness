@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Calendar, CheckCircle, X, Camera } from "lucide-react";
-import { calculateJourneyDay } from "@/lib/dateUtils";
+import { calculateJourneyDay, getTodayInTimezone, getDateInTimezone } from "@/lib/dateUtils";
 import type { DailyMacros } from "@shared/schema";
 
 interface Client {
@@ -19,6 +19,7 @@ interface Client {
   goalWeight: number;
   programStartDate: string;
   onboardingCompleted: boolean;
+  timezone?: string;
 }
 
 interface ClientUploadHistoryProps {
@@ -41,7 +42,8 @@ export default function ClientUploadHistory({ clientId }: ClientUploadHistoryPro
     enabled: !!clientId,
   });
 
-  const today = new Date();
+  const userTimezone = client?.timezone || 'America/New_York';
+  const today = getTodayInTimezone(userTimezone);
   const programStartDate = client?.programStartDate;
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -59,11 +61,9 @@ export default function ClientUploadHistory({ clientId }: ClientUploadHistoryPro
   const getDayStatus = (day: number) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const dayData = monthlyMacros.find(m => m.date === dateStr);
-    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    const programStart = programStartDate ? new Date(programStartDate) : null;
     
-    // Check if this day is in the future
-    if (dayDate > today) {
+    // Check if this day is in the future (compare date strings in user's timezone)
+    if (dateStr > today) {
       return { status: 'future', data: null };
     }
     
@@ -73,11 +73,10 @@ export default function ClientUploadHistory({ clientId }: ClientUploadHistoryPro
     }
     
     // Check if this day is before program start (only for dates without data)
-    if (programStart) {
-      const programStartDate = new Date(programStart.getFullYear(), programStart.getMonth(), programStart.getDate());
-      const currentDayDate = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
+    if (programStartDate) {
+      const programStartString = getDateInTimezone(programStartDate, userTimezone);
       
-      if (currentDayDate < programStartDate) {
+      if (dateStr < programStartString) {
         return { status: 'before-program', data: null };
       }
     }

@@ -10,6 +10,7 @@ import { Camera, Upload, CheckCircle, AlertCircle, Clock, Calendar } from "lucid
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { TabType } from "@/pages/Home";
 import NutritionCalendar from "./NutritionCalendar";
+import { getTodayInTimezone } from "@/lib/dateUtils";
 
 interface DailyMacros {
   id: number;

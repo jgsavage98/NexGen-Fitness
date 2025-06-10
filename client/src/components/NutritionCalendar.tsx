@@ -179,9 +179,10 @@ export default function NutritionCalendar({ onBack }: NutritionCalendarProps) {
               }
               
               const { status, data } = getDayStatus(day);
-              const isToday = day === today.getDate() && 
-                           currentDate.getMonth() === today.getMonth() && 
-                           currentDate.getFullYear() === today.getFullYear();
+              const todayDateObj = new Date(today + 'T00:00:00');
+              const isToday = day === todayDateObj.getDate() && 
+                           currentDate.getMonth() === todayDateObj.getMonth() && 
+                           currentDate.getFullYear() === todayDateObj.getFullYear();
               
               return (
                 <div
