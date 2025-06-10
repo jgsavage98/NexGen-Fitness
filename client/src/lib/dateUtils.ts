@@ -45,13 +45,31 @@ export function calculateJourneyDay(programStartDate: string | Date, timezone?: 
   const todayString = getTodayInTimezone(timezone);
   const startString = getDateInTimezone(programStartDate, timezone);
   
+  console.log('Journey day calculation:', {
+    programStartDate,
+    timezone,
+    todayString,
+    startString
+  });
+  
   const today = new Date(todayString);
   const startDate = new Date(startString);
   
   const diffTime = today.getTime() - startDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
-  return Math.max(1, diffDays + 1); // +1 because day 1 is the start date
+  // Start date is Day 1, so we add 1 to the difference
+  // But if diffDays is 0 (same day), it should be Day 1
+  // If diffDays is 1 (next day), it should be Day 2
+  const journeyDay = Math.max(1, diffDays + 1);
+  
+  console.log('Journey day result:', {
+    diffTime,
+    diffDays,
+    journeyDay
+  });
+  
+  return journeyDay;
 }
 
 /**
