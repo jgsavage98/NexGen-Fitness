@@ -620,7 +620,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Save to database - check if record exists and update or create
-      const targetDate = date || new Date().toISOString().split('T')[0];
+      const user = await storage.getUser(userId);
+      const userTimezone = user?.timezone || 'America/New_York';
+      const targetDate = date || getTodayInTimezone(userTimezone);
       let dailyMacros;
       
       try {
@@ -685,7 +687,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/daily-macros', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const date = req.query.date || new Date().toISOString().split('T')[0];
+      const user = await storage.getUser(userId);
+      const userTimezone = user?.timezone || 'America/New_York';
+      
+      const date = req.query.date || getTodayInTimezone(userTimezone);
       
       const dailyMacros = await storage.getDailyMacros(userId, new Date(date));
       
@@ -718,20 +723,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/daily-macros/month', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      const userTimezone = user?.timezone || 'America/New_York';
+      
       const year = parseInt(req.query.year) || new Date().getFullYear();
       const month = parseInt(req.query.month) || new Date().getMonth() + 1;
       
-      // Get first and last day of the month
-      const firstDay = new Date(year, month - 1, 1);
-      const lastDay = new Date(year, month, 0);
+      // Get first and last day of the month in user's timezone
+      const { firstDay, lastDay } = getMonthBoundsInTimezone(year, month, userTimezone);
       
       const macros = await db.select()
         .from(dailyMacros)
         .where(
           and(
             eq(dailyMacros.userId, userId),
-            gte(dailyMacros.date, firstDay.toISOString().split('T')[0]),
-            lte(dailyMacros.date, lastDay.toISOString().split('T')[0])
+            gte(dailyMacros.date, firstDay),
+            lte(dailyMacros.date, lastDay)
           )
         )
         .orderBy(desc(dailyMacros.date));
