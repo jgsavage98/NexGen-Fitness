@@ -76,6 +76,8 @@ export default function UnifiedChatTab() {
       setNewMessage("");
       refetchClientChat();
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      // Auto-scroll to bottom after sending message
+      setTimeout(scrollToBottom, 100);
       toast({
         title: "Message sent",
         description: "Your message has been sent to the client",
