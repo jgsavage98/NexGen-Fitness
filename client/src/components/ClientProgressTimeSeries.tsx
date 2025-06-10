@@ -260,10 +260,12 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                   <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
                   <YAxis stroke="#9CA3AF" fontSize={12} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Line type="monotone" dataKey="calories" stroke="#3B82F6" strokeWidth={2} name="Calories" />
-                  <Line type="monotone" dataKey="targetCalories" stroke="#3B82F6" strokeDasharray="5 5" name="Target Calories" />
                   <Line type="monotone" dataKey="protein" stroke="#10B981" strokeWidth={2} name="Protein" />
                   <Line type="monotone" dataKey="targetProtein" stroke="#10B981" strokeDasharray="5 5" name="Target Protein" />
+                  <Line type="monotone" dataKey="carbs" stroke="#F59E0B" strokeWidth={2} name="Carbs" />
+                  <Line type="monotone" dataKey="targetCarbs" stroke="#F59E0B" strokeDasharray="5 5" name="Target Carbs" />
+                  <Line type="monotone" dataKey="fat" stroke="#EF4444" strokeWidth={2} name="Fat" />
+                  <Line type="monotone" dataKey="targetFat" stroke="#EF4444" strokeDasharray="5 5" name="Target Fat" />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
