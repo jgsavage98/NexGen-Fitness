@@ -866,7 +866,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/trainer/pending-chat-approvals', isAuthenticated, async (req: any, res) => {
     try {
       const trainerId = req.user?.claims?.sub;
-      if (!trainerId || !trainerId.startsWith('coach_')) {
+      
+      // Check if user is a trainer
+      const trainer = await storage.getTrainer(trainerId);
+      if (!trainer) {
         return res.status(403).json({ message: "Unauthorized - Trainer access required" });
       }
 
@@ -881,7 +884,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/trainer/approve-chat/:messageId', isAuthenticated, async (req: any, res) => {
     try {
       const trainerId = req.user?.claims?.sub;
-      if (!trainerId || !trainerId.startsWith('coach_')) {
+      
+      // Check if user is a trainer
+      const trainer = await storage.getTrainer(trainerId);
+      if (!trainer) {
         return res.status(403).json({ message: "Unauthorized - Trainer access required" });
       }
 
@@ -905,7 +911,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/trainer/reject-chat/:messageId', isAuthenticated, async (req: any, res) => {
     try {
       const trainerId = req.user?.claims?.sub;
-      if (!trainerId || !trainerId.startsWith('coach_')) {
+      
+      // Check if user is a trainer
+      const trainer = await storage.getTrainer(trainerId);
+      if (!trainer) {
         return res.status(403).json({ message: "Unauthorized - Trainer access required" });
       }
 
