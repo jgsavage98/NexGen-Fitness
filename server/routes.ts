@@ -1793,6 +1793,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate PDF report for download (same as send-message but returns PDF directly)
+  app.post('/api/trainer/generate-pdf-report', isAuthenticated, async (req: any, res) => {
+    try {
+      const { reportData } = req.body;
+      
+      if (!reportData) {
+        return res.status(400).json({ message: "Report data is required" });
+      }
+      
+      const reportDate = reportData.reportDate || new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      const progressData: ProgressReportData = {
+        client: reportData.client,
+        currentWeight: reportData.currentWeight,
+        weightChange: reportData.weightChange,
+        avgAdherence: reportData.avgAdherence,
+        reportDate
+      };
+      
+      // Generate PDF
+      const pdfBuffer = await generateProgressReportPDF(progressData);
+      
+      // Set headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="progress-report-${reportData.client.firstName}-${reportData.client.lastName}-${Date.now()}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      
+      // Send PDF buffer
+      res.send(pdfBuffer);
+      
+    } catch (error: any) {
+      console.error('PDF generation error:', error);
+      res.status(500).json({ 
+        message: "Failed to generate PDF report",
+        error: error.message 
+      });
+    }
+  });
+
   // Trainer send message to client with PDF report support
   app.post('/api/trainer/client/:clientId/send-message', isAuthenticated, async (req: any, res) => {
     try {
