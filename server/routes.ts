@@ -1749,12 +1749,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .map(msg => msg.id);
       
       if (clientMessageIds.length > 0) {
-        await db
-          .update(chatMessages)
-          .set({
-            metadata: sql`COALESCE(${chatMessages.metadata}, '{}') || '{"trainerViewed": true}'::jsonb`
-          })
-          .where(sql`${chatMessages.id} = ANY(${clientMessageIds})`);
+        // Update each message individually to mark as viewed by trainer
+        for (const messageId of clientMessageIds) {
+          // Get current metadata and merge with trainerViewed flag
+          const [currentMessage] = await db
+            .select({ metadata: chatMessages.metadata })
+            .from(chatMessages)
+            .where(eq(chatMessages.id, messageId));
+          
+          const currentMetadata = currentMessage?.metadata || {};
+          const updatedMetadata = { ...currentMetadata, trainerViewed: true };
+          
+          await db
+            .update(chatMessages)
+            .set({ metadata: updatedMetadata })
+            .where(eq(chatMessages.id, messageId));
+        }
       }
       
       res.json(messages);
