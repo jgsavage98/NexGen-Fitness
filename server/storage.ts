@@ -393,16 +393,32 @@ export class DatabaseStorage implements IStorage {
 
   // Macro target operations
   async getUserMacroTargets(userId: string, date: Date): Promise<MacroTarget | undefined> {
+    const dateString = date.toISOString().split('T')[0];
+    
+    // First try to get targets for the specific date
     const [targets] = await db
       .select()
       .from(macroTargets)
       .where(
         and(
           eq(macroTargets.userId, userId),
-          eq(macroTargets.date, date.toISOString().split('T')[0])
+          eq(macroTargets.date, dateString)
         )
       );
-    return targets;
+    
+    if (targets) {
+      return targets;
+    }
+    
+    // If no targets for today, get the most recent targets for this user
+    const [mostRecentTargets] = await db
+      .select()
+      .from(macroTargets)
+      .where(eq(macroTargets.userId, userId))
+      .orderBy(desc(macroTargets.date))
+      .limit(1);
+    
+    return mostRecentTargets;
   }
 
   async setMacroTargets(targets: InsertMacroTarget): Promise<MacroTarget> {
