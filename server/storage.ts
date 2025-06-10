@@ -481,10 +481,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async saveChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
-    // If this is an AI message, set it to pending approval by default
+    // If this is an AI message but doesn't have an explicit status, set it to pending approval
+    // If status is already set (e.g., by trainer), preserve it
     const messageWithStatus = {
       ...message,
-      status: message.isAI ? 'pending_approval' : 'approved',
+      status: message.status || (message.isAI ? 'pending_approval' : 'approved'),
       originalAIResponse: message.isAI ? message.message : undefined
     };
 
