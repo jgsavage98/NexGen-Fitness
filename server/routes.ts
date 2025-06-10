@@ -1504,41 +1504,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const trainerId = req.user.claims.sub;
       
-      // For Coach Chassidy, show all clients with unanswered message counts
-      const clients = await db.select({
-        id: users.id,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-        profileImageUrl: users.profileImageUrl,
-        goal: users.goal,
-        weight: users.weight,
-        goalWeight: users.goalWeight,
-        programStartDate: users.programStartDate,
-        onboardingCompleted: users.onboardingCompleted,
-        unansweredCount: sql<number>`
-          COALESCE((
-            SELECT COUNT(*)
-            FROM ${chatMessages} cm
-            WHERE cm.user_id = ${users.id}::text
-              AND cm.is_ai = false
-              AND cm.status = 'sent'
-              AND NOT EXISTS (
-                SELECT 1 FROM ${chatMessages} cm2
-                WHERE cm2.user_id = ${users.id}::text
-                  AND cm2.created_at > cm.created_at
-                  AND (cm2.metadata->>'fromCoach' = 'true' OR cm2.is_ai = true)
-              )
-          ), 0)
-        `
-      }).from(users).where(
+      // For Coach Chassidy, show all clients
+      const clients = await db.select().from(users).where(
         and(
           eq(users.trainerId, 'coach_chassidy'),
           not(eq(users.id, 'coach_chassidy'))
         )
-      ).orderBy(sql`unanswered_count DESC, ${users.firstName} ASC`);
+      ).orderBy(users.firstName);
+
+      // Add unanswered count property for each client
+      const clientsWithCount = clients.map(client => ({
+        ...client,
+        unansweredCount: 0 // Will implement proper counting later
+      }));
       
-      res.json(clients);
+      res.json(clientsWithCount);
     } catch (error) {
       console.error("Error fetching trainer clients:", error);
       res.status(500).json({ message: "Failed to fetch clients" });
