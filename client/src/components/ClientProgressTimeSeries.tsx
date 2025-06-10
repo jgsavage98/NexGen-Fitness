@@ -581,6 +581,23 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                       }}
                     />
                   )}
+                  
+                  {/* Starting weight reference line */}
+                  {weightProgress.weightEntries.length > 1 && (
+                    <ReferenceLine 
+                      y={weightProgress.weightEntries[0].weight} 
+                      stroke="#9CA3AF" 
+                      strokeDasharray="4 4"
+                      strokeWidth={1}
+                      label={{ 
+                        value: `Start: ${weightProgress.weightEntries[0].weight} lbs`, 
+                        position: "bottom",
+                        offset: 10,
+                        fontSize: 12,
+                        fill: "#9CA3AF"
+                      }}
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -595,20 +612,20 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {weightProgress.currentWeight && (
+                  {weightProgress.weightEntries.length > 0 && (
                     <div>
                       <span className="text-gray-400">Current Weight:</span>
                       <div className="text-2xl font-bold text-green-400">
-                        {weightProgress.currentWeight} lbs
+                        {weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight} lbs
                       </div>
                     </div>
                   )}
                   
-                  {weightProgress.goalWeight && weightProgress.currentWeight && (
+                  {weightProgress.goalWeight && weightProgress.weightEntries.length > 0 && (
                     <div>
                       <span className="text-gray-400">Progress to Goal:</span>
                       <div className="text-2xl font-bold text-blue-400">
-                        {Math.abs(weightProgress.currentWeight - weightProgress.goalWeight).toFixed(1)} lbs
+                        {Math.abs(weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight - weightProgress.goalWeight).toFixed(1)} lbs
                         {weightProgress.goal === 'weight-loss' ? ' to lose' : ' to gain'}
                       </div>
                     </div>
