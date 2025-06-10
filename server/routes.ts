@@ -17,7 +17,8 @@ import {
   users,
   macroChanges,
   chatMessages,
-  dailyMacros
+  dailyMacros,
+  progressEntries
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, not } from "drizzle-orm";
@@ -1719,6 +1720,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching client macro updates:", error);
       res.status(500).json({ message: "Failed to fetch client macro updates" });
+    }
+  });
+
+  // Get weight progress for a client
+  app.get('/api/trainer/client/:clientId/weight-progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const { clientId } = req.params;
+      const { days = '90' } = req.query;
+      
+      const daysCount = parseInt(days as string);
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysCount);
+      
+      // Get user's goal weight and current weight
+      const [user] = await db.select({
+        weight: users.weight,
+        goalWeight: users.goalWeight,
+        goal: users.goal,
+        programStartDate: users.programStartDate
+      }).from(users).where(eq(users.id, clientId));
+      
+      // Get weight progress entries
+      const weightEntries = await db
+        .select({
+          id: progressEntries.id,
+          weight: progressEntries.weight,
+          recordedAt: progressEntries.recordedAt,
+          notes: progressEntries.notes
+        })
+        .from(progressEntries)
+        .where(
+          and(
+            eq(progressEntries.userId, clientId),
+            gte(progressEntries.recordedAt, startDate)
+          )
+        )
+        .orderBy(progressEntries.recordedAt);
+      
+      // Add starting weight from user profile if no entries exist for the period
+      const allWeightData = [...weightEntries];
+      if (user && user.weight && weightEntries.length === 0) {
+        allWeightData.unshift({
+          id: 0,
+          weight: user.weight,
+          recordedAt: user.programStartDate || new Date(),
+          notes: 'Starting weight'
+        });
+      }
+      
+      res.json({
+        weightEntries: allWeightData,
+        goalWeight: user?.goalWeight || null,
+        currentWeight: user?.weight || null,
+        goal: user?.goal || null
+      });
+    } catch (error) {
+      console.error("Error fetching client weight progress:", error);
+      res.status(500).json({ message: "Failed to fetch client weight progress" });
     }
   });
 

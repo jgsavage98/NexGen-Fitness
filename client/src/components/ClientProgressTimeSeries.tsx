@@ -34,6 +34,20 @@ interface MacroUpdate {
   trainerNotes?: string;
 }
 
+interface WeightEntry {
+  id: number;
+  weight: number;
+  recordedAt: string;
+  notes?: string;
+}
+
+interface WeightProgress {
+  weightEntries: WeightEntry[];
+  goalWeight: number | null;
+  currentWeight: number | null;
+  goal: string | null;
+}
+
 interface Client {
   id: string;
   firstName: string;
@@ -50,7 +64,7 @@ interface ClientProgressTimeSeriesProps {
 
 export default function ClientProgressTimeSeries({ clientId }: ClientProgressTimeSeriesProps) {
   const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d' | '90d'>('30d');
-  const [viewType, setViewType] = useState<'macros' | 'wellness' | 'adherence'>('macros');
+  const [viewType, setViewType] = useState<'macros' | 'wellness' | 'adherence' | 'weight'>('macros');
 
   // Fetch client data
   const { data: client } = useQuery<Client>({
@@ -77,6 +91,12 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
   // Fetch macro updates/changes for markers
   const { data: macroUpdates = [] } = useQuery<MacroUpdate[]>({
     queryKey: [`/api/trainer/client/${clientId}/macro-updates?days=${getDaysForRange(timeRange)}`],
+    enabled: !!clientId,
+  });
+
+  // Fetch weight progress data
+  const { data: weightProgress } = useQuery<WeightProgress>({
+    queryKey: [`/api/trainer/client/${clientId}/weight-progress?days=${getDaysForRange(timeRange)}`],
     enabled: !!clientId,
   });
 
@@ -182,6 +202,7 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
               <SelectItem value="macros">Macros</SelectItem>
               <SelectItem value="wellness">Wellness</SelectItem>
               <SelectItem value="adherence">Adherence</SelectItem>
+              <SelectItem value="weight">Weight Progress</SelectItem>
             </SelectContent>
           </Select>
 
