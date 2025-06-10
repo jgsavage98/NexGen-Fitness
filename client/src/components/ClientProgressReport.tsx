@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, ReferenceLine, BarChart, Bar, Tooltip, Legend } from 'recharts';
-import { Download, FileText, Calendar, Target, TrendingDown, Award } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Download, FileText, Calendar, Target, TrendingDown, Award, MessageSquare } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface DailyMacros {
   id: number;
@@ -66,6 +68,62 @@ export default function ClientProgressReport({ clientId, onClose }: ClientProgre
     queryKey: [`/api/trainer/client/${clientId}/weight-progress?days=90`],
     enabled: !!clientId,
   });
+
+  const { toast } = useToast();
+
+  // Send report to client via chat
+  const sendToClientMutation = useMutation({
+    mutationFn: async () => {
+      const currentWeight = weightProgress?.weightEntries.length > 0 
+        ? weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight 
+        : client?.weight;
+      const startWeight = weightProgress?.weightEntries.length > 0 
+        ? weightProgress.weightEntries[0].weight 
+        : client?.weight;
+      const weightChange = (currentWeight || 0) - (startWeight || 0);
+      const avgAdherence = macrosData.length > 0 
+        ? Math.round(macrosData.reduce((sum, day) => sum + (day.adherenceScore || 0), 0) / macrosData.length)
+        : 0;
+
+      const reportSummary = `📊 **Progress Report - ${new Date().toLocaleDateString()}**
+
+Hey ${client?.firstName}! Here's your latest progress update:
+
+**Weight Progress:**
+• Current: ${currentWeight} lbs
+• Change: ${Math.abs(weightChange).toFixed(1)} lbs ${weightChange < 0 ? 'lost' : 'gained'}
+• Goal Progress: Making excellent progress toward your ${client?.goal?.replace('-', ' ')} goal!
+
+**Macro Adherence:**
+• Average adherence: ${avgAdherence}%
+
+Keep up the great work! 💪 Let me know if you have any questions about your progress.
+
+- Coach Chassidy`;
+
+      return await apiRequest(`/api/trainer/client/${clientId}/send-message`, {
+        method: 'POST',
+        body: { message: reportSummary, isCoach: true }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Progress Report Sent",
+        description: `Report successfully sent to ${client?.firstName} via chat.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Send Failed", 
+        description: "Unable to send progress report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleSendToClient = () => {
+    sendToClientMutation.mutate();
+  };
 
   const handlePrint = () => {
     window.print();
@@ -149,15 +207,38 @@ export default function ClientProgressReport({ clientId, onClose }: ClientProgre
         <div className="bg-gray-100 p-4 flex justify-between items-center border-b print:hidden">
           <h2 className="text-xl font-bold text-gray-900">Client Progress Report</h2>
           <div className="flex space-x-2">
-            <Button onClick={handlePrint} variant="outline" size="sm">
+            <Button 
+              onClick={handleSendToClient} 
+              className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600" 
+              size="sm"
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Send to Client
+            </Button>
+            <Button 
+              onClick={handlePrint} 
+              className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50" 
+              variant="outline" 
+              size="sm"
+            >
               <FileText className="w-4 h-4 mr-2" />
               Print
             </Button>
-            <Button onClick={handleDownload} variant="outline" size="sm">
+            <Button 
+              onClick={handleDownload} 
+              className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50" 
+              variant="outline" 
+              size="sm"
+            >
               <Download className="w-4 h-4 mr-2" />
               Download
             </Button>
-            <Button onClick={onClose} variant="outline" size="sm">
+            <Button 
+              onClick={onClose} 
+              className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50" 
+              variant="outline" 
+              size="sm"
+            >
               Close
             </Button>
           </div>

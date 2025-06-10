@@ -1792,6 +1792,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Trainer send message to client
+  app.post('/api/trainer/client/:clientId/send-message', isAuthenticated, async (req: any, res) => {
+    try {
+      const { clientId } = req.params;
+      const { message, isCoach = true } = req.body;
+      
+      if (!message || !message.trim()) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+      
+      // Save the coach message to the chat
+      await storage.saveChatMessage({
+        userId: clientId,
+        message: message.trim(),
+        isAI: false, // This is a human coach message, not AI
+        metadata: { fromCoach: true, coachId: req.user.claims.sub },
+      });
+      
+      res.json({ success: true, message: "Message sent successfully" });
+    } catch (error) {
+      console.error("Error sending message to client:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // WebSocket server for real-time chat
