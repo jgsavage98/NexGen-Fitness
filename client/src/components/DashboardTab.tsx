@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import MacroBars from "./MacroBars";
+import MacroVisualizationOptions from "./MacroVisualizationOptions";
 import AnimatedExerciseThumbnail from "./AnimatedExerciseThumbnail";
 import { Workout, MacroTarget } from "@/lib/types";
 import { Link } from "wouter";
@@ -131,7 +132,7 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
           <h2 className="text-xl font-bold mb-4 text-white">Today's Overview</h2>
           
           {/* Macro Progress Bars */}
-          <MacroBars summary={macroSummary} />
+          <MacroVisualizationOptions summary={macroSummary} />
 
           <div className="bg-dark rounded-lg p-4">
             <div className="flex justify-between items-center mb-2">
