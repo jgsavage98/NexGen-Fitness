@@ -587,9 +587,15 @@ export class DatabaseStorage implements IStorage {
     const whereClause = trainerId 
       ? and(
           eq(chatMessages.status, 'pending_approval'),
-          eq(users.trainerId, trainerId)
+          eq(users.trainerId, trainerId),
+          // Exclude messages directly from coach
+          sql`NOT (${chatMessages.metadata}->>'fromCoach' = 'true')`
         )
-      : eq(chatMessages.status, 'pending_approval');
+      : and(
+          eq(chatMessages.status, 'pending_approval'),
+          // Exclude messages directly from coach
+          sql`NOT (${chatMessages.metadata}->>'fromCoach' = 'true')`
+        );
 
     const pendingMessages = await db
       .select({
