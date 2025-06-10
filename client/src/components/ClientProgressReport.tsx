@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, ReferenceLine, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, ReferenceLine, BarChart, Bar, Tooltip, Legend } from 'recharts';
 import { Download, FileText, Calendar, Target, TrendingDown, Award } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -199,33 +199,107 @@ export default function ClientProgressReport({ clientId, onClose }: ClientProgre
           <div className="mb-8">
             <h3 className="text-xl font-bold mb-4 flex items-center">
               <TrendingDown className="w-5 h-5 mr-2 text-blue-600" />
-              Weight Progress Over Time
+              Weight Progress Over Time (12 Week Program)
             </h3>
             <div className="h-64 border border-gray-300 rounded-lg p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weightProgress.weightEntries.map(entry => ({
-                  date: new Date(entry.recordedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                  weight: entry.weight,
-                  goalWeight: weightProgress.goalWeight
-                }))}>
+                <LineChart data={(() => {
+                  // Create comprehensive timeline with all actual weight entries plus weekly markers
+                  const programStart = new Date('2025-06-09');
+                  const timelineData = [];
+                  const processedDates = new Set();
+                  
+                  // First, add all actual weight entries
+                  weightProgress.weightEntries.forEach(entry => {
+                    const entryDate = new Date(entry.recordedAt);
+                    const dateKey = entryDate.toDateString();
+                    
+                    if (!processedDates.has(dateKey)) {
+                      timelineData.push({
+                        date: entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        weight: entry.weight,
+                        goalWeight: weightProgress.goalWeight,
+                        isActualData: true,
+                        sortDate: entryDate.getTime()
+                      });
+                      processedDates.add(dateKey);
+                    }
+                  });
+                  
+                  // Then add weekly timeline markers for empty weeks (for full 12-week view)
+                  for (let week = 0; week < 12; week++) {
+                    const weekDate = new Date(programStart);
+                    weekDate.setDate(programStart.getDate() + (week * 7));
+                    const dateKey = weekDate.toDateString();
+                    
+                    if (!processedDates.has(dateKey)) {
+                      timelineData.push({
+                        date: weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        weight: null,
+                        goalWeight: weightProgress.goalWeight,
+                        isActualData: false,
+                        sortDate: weekDate.getTime()
+                      });
+                    }
+                  }
+                  
+                  // Sort by date
+                  return timelineData.sort((a, b) => a.sortDate - b.sortDate);
+                })()}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis dataKey="date" stroke="#666" fontSize={10} />
-                  <YAxis stroke="#666" fontSize={10} />
+                  <YAxis 
+                    domain={[
+                      Math.min(
+                        weightProgress.goalWeight ? weightProgress.goalWeight - 5 : 999,
+                        weightProgress.weightEntries.length > 0 ? Math.min(...weightProgress.weightEntries.map(e => e.weight)) - 5 : 999
+                      ),
+                      Math.max(
+                        weightProgress.goalWeight ? weightProgress.goalWeight + 5 : 0,
+                        weightProgress.weightEntries.length > 0 ? Math.max(...weightProgress.weightEntries.map(e => e.weight)) + 5 : 0
+                      )
+                    ]} 
+                    stroke="#666" 
+                    fontSize={10}
+                  />
                   <Line 
                     type="monotone" 
                     dataKey="weight" 
-                    stroke="#2563eb" 
-                    strokeWidth={2} 
-                    dot={{ fill: '#2563eb', r: 3 }}
+                    stroke="#10B981" 
+                    strokeWidth={3} 
+                    dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                    connectNulls={false}
                   />
                   {weightProgress.goalWeight && (
                     <ReferenceLine 
                       y={weightProgress.goalWeight} 
-                      stroke="#dc2626" 
-                      strokeDasharray="4 4"
-                      label={{ value: `Goal: ${weightProgress.goalWeight} lbs`, position: "top" }}
+                      stroke="#3B82F6" 
+                      strokeDasharray="8 4"
+                      strokeWidth={2}
+                      label={{ 
+                        value: `Goal: ${weightProgress.goalWeight} lbs`, 
+                        position: "top",
+                        offset: 10,
+                        fontSize: 10,
+                        fill: "#3B82F6",
+                        fontWeight: "bold"
+                      }}
                     />
                   )}
+                  <ReferenceLine 
+                    y={180} 
+                    stroke="#F59E0B" 
+                    strokeDasharray="4 4"
+                    strokeWidth={2}
+                    label={{ 
+                      value: `Baseline: 180 lbs`, 
+                      position: "top",
+                      offset: 10,
+                      fontSize: 10,
+                      fill: "#F59E0B",
+                      fontWeight: "bold"
+                    }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -235,19 +309,87 @@ export default function ClientProgressReport({ clientId, onClose }: ClientProgre
           <div className="mb-8">
             <h3 className="text-xl font-bold mb-4 flex items-center">
               <Target className="w-5 h-5 mr-2 text-green-600" />
-              30-Day Macro Adherence
+              Macro Adherence (Last 30 Days)
             </h3>
-            <div className="h-48 border border-gray-300 rounded-lg p-4">
+            <div className="h-64 border border-gray-300 rounded-lg p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={macrosData.slice(-14).map((day, index) => ({
-                  date: new Date(day.date).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }),
-                  adherence: day.adherenceScore || 0
-                }))}>
+                <LineChart data={macrosData.slice(-30).map(day => ({
+                  date: new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  fullDate: day.date,
+                  // Calculated percentages to match online version
+                  caloriesPercent: day.targetCalories ? (day.extractedCalories / day.targetCalories) * 100 : 0,
+                  proteinPercent: day.targetProtein ? (day.extractedProtein / day.targetProtein) * 100 : 0,
+                  carbsPercent: day.targetCarbs ? (day.extractedCarbs / day.targetCarbs) * 100 : 0,
+                  fatPercent: day.targetFat ? (day.extractedFat / day.targetFat) * 100 : 0,
+                  // Raw values for tooltip
+                  calories: day.extractedCalories,
+                  protein: day.extractedProtein,
+                  carbs: day.extractedCarbs,
+                  fat: day.extractedFat,
+                  targetCalories: day.targetCalories,
+                  targetProtein: day.targetProtein,
+                  targetCarbs: day.targetCarbs,
+                  targetFat: day.targetFat
+                })).reverse()}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis dataKey="date" stroke="#666" fontSize={10} />
-                  <YAxis domain={[0, 100]} stroke="#666" fontSize={10} />
-                  <Bar dataKey="adherence" fill="#10b981" />
-                </BarChart>
+                  <YAxis 
+                    domain={[0, 150]} 
+                    stroke="#666" 
+                    fontSize={10}
+                    label={{ value: 'Adherence %', angle: -90, position: 'insideLeft' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="caloriesPercent" 
+                    stroke="#3B82F6" 
+                    strokeWidth={2} 
+                    dot={{ fill: '#3B82F6', r: 3 }}
+                    name="Calories"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="proteinPercent" 
+                    stroke="#10B981" 
+                    strokeWidth={2} 
+                    dot={{ fill: '#10B981', r: 3 }}
+                    name="Protein"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="carbsPercent" 
+                    stroke="#F59E0B" 
+                    strokeWidth={2} 
+                    dot={{ fill: '#F59E0B', r: 3 }}
+                    name="Carbs"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="fatPercent" 
+                    stroke="#EF4444" 
+                    strokeWidth={2} 
+                    dot={{ fill: '#EF4444', r: 3 }}
+                    name="Fat"
+                  />
+                  <ReferenceLine 
+                    y={100} 
+                    stroke="#6B7280" 
+                    strokeDasharray="2 2"
+                    strokeWidth={1}
+                    label={{ 
+                      value: "Target (100%)", 
+                      position: "top",
+                      fontSize: 10,
+                      fill: "#6B7280"
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    iconType="line"
+                    wrapperStyle={{ fontSize: '12px' }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
