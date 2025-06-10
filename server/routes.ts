@@ -1758,15 +1758,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
         .orderBy(progressEntries.recordedAt);
       
-      // Add starting weight from user profile if no entries exist for the period
+      // Always add baseline weight as first data point (June 9th, 2025)
       const allWeightData = [...weightEntries];
-      if (user && user.weight && weightEntries.length === 0) {
-        allWeightData.unshift({
-          id: 0,
-          weight: user.weight,
-          recordedAt: user.programStartDate || new Date(),
-          notes: 'Starting weight'
+      if (user && user.weight) {
+        // Create June 9th baseline entry
+        const baselineDate = new Date('2025-06-09T00:00:00.000Z');
+        
+        // Only add if we don't already have an entry for that exact date
+        const hasBaselineEntry = weightEntries.some(entry => {
+          const entryDate = new Date(entry.recordedAt);
+          return entryDate.toDateString() === baselineDate.toDateString();
         });
+        
+        if (!hasBaselineEntry) {
+          allWeightData.unshift({
+            id: 0,
+            weight: user.weight, // 180 lbs baseline
+            recordedAt: baselineDate,
+            notes: 'Baseline weight'
+          });
+        }
       }
       
       res.json({
