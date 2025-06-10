@@ -662,26 +662,21 @@ export default function TrainerDashboard() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="bg-gray-800 p-4 rounded-lg">
-                        <Label className="text-sm text-gray-400 mb-2 block">AI Generated Response:</Label>
-                        <p className="text-white">{message.message}</p>
+                      <div className="bg-blue-900/20 border border-blue-600/30 p-4 rounded-lg">
+                        <Label className="text-sm text-blue-300 mb-2 block">Client's Question:</Label>
+                        <p className="text-white italic">{(message as any).clientQuestion}</p>
+                        <p className="text-gray-400 text-xs mt-2">
+                          Asked: {new Date((message as any).clientQuestionTime).toLocaleString()}
+                        </p>
                       </div>
                       
                       <div className="space-y-2">
-                        <Label className="text-sm text-gray-400">Edit Message (Optional):</Label>
+                        <Label className="text-sm text-gray-400">AI Generated Response (Edit as needed):</Label>
                         <Textarea
-                          placeholder="Edit the AI response or leave blank to approve as-is..."
-                          className="bg-gray-800 border-gray-600 text-white min-h-[100px]"
+                          defaultValue={message.message}
+                          className="bg-gray-800 border-gray-600 text-white min-h-[120px]"
                           id={`edit-message-${message.id}`}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="text-sm text-gray-400">Trainer Notes (Optional):</Label>
-                        <Textarea
-                          placeholder="Add notes about your approval decision..."
-                          className="bg-gray-800 border-gray-600 text-white"
-                          id={`trainer-notes-${message.id}`}
+                          placeholder="Edit the AI response directly..."
                         />
                       </div>
                       
@@ -689,41 +684,16 @@ export default function TrainerDashboard() {
                         <Button
                           onClick={() => {
                             const editedMessage = (document.getElementById(`edit-message-${message.id}`) as HTMLTextAreaElement)?.value;
-                            const trainerNotes = (document.getElementById(`trainer-notes-${message.id}`) as HTMLTextAreaElement)?.value;
                             
                             approveChatMutation.mutate({
                               messageId: message.id,
-                              approvedMessage: editedMessage || undefined,
-                              trainerNotes: trainerNotes || undefined
+                              approvedMessage: editedMessage || message.message,
                             });
                           }}
                           disabled={approveChatMutation.isPending}
                           className="bg-green-600 hover:bg-green-700"
                         >
-                          Approve & Send
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => {
-                            const trainerNotes = (document.getElementById(`trainer-notes-${message.id}`) as HTMLTextAreaElement)?.value;
-                            
-                            if (!trainerNotes) {
-                              toast({
-                                title: "Notes Required",
-                                description: "Please provide trainer notes when rejecting a message",
-                                variant: "destructive",
-                              });
-                              return;
-                            }
-                            
-                            rejectChatMutation.mutate({
-                              messageId: message.id,
-                              trainerNotes
-                            });
-                          }}
-                          disabled={rejectChatMutation.isPending}
-                        >
-                          Reject
+                          {approveChatMutation.isPending ? "Approving..." : "Approve & Send to Client"}
                         </Button>
                       </div>
                     </CardContent>

@@ -613,29 +613,25 @@ export class DatabaseStorage implements IStorage {
       .where(whereClause)
       .orderBy(desc(chatMessages.createdAt));
 
-    // For each pending AI message, find the previous user message
+    // For each pending AI message, find the previous user message using raw SQL
     const enrichedMessages = await Promise.all(
       pendingMessages.map(async (message) => {
-        const previousUserMessage = await db
-          .select({
-            message: chatMessages.message,
-            createdAt: chatMessages.createdAt,
-          })
-          .from(chatMessages)
-          .where(
-            and(
-              eq(chatMessages.userId, message.userId),
-              eq(chatMessages.isAI, false),
-              lt(chatMessages.createdAt, message.createdAt)
-            )
-          )
-          .orderBy(desc(chatMessages.createdAt))
-          .limit(1);
+        const previousUserMessage = await db.execute(
+          sql`
+            SELECT message, created_at 
+            FROM chat_messages 
+            WHERE user_id = ${message.userId} 
+              AND is_ai = false 
+              AND created_at < ${message.createdAt}
+            ORDER BY created_at DESC 
+            LIMIT 1
+          `
+        );
 
         return {
           ...message,
-          clientQuestion: previousUserMessage[0]?.message || 'No previous question found',
-          clientQuestionTime: previousUserMessage[0]?.createdAt || message.createdAt,
+          clientQuestion: previousUserMessage.rows[0]?.message || 'No previous question found',
+          clientQuestionTime: previousUserMessage.rows[0]?.created_at || message.createdAt,
         };
       })
     );
