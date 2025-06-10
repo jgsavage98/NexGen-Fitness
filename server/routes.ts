@@ -1754,6 +1754,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate AI response for trainer
+  app.post('/api/trainer/generate-ai-response', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { clientId, context } = req.body;
+      
+      // Get client info
+      const client = await storage.getUser(clientId);
+      if (!client || client.trainerId !== trainerId) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+
+      // Get recent chat messages for context
+      const recentMessages = await storage.getClientChatMessages(clientId, trainerId, 10);
+      
+      // Generate AI response
+      const aiResponse = await aiCoach.getChatResponse(
+        `Generate a helpful response for ${client.firstName}. Context: ${context}`,
+        client,
+        recentMessages.map((m: any) => m.message)
+      );
+
+      res.json({ message: aiResponse.message });
+    } catch (error: any) {
+      console.error('Error generating AI response:', error);
+      res.status(500).json({ error: 'Failed to generate AI response' });
+    }
+  });
+
   // Get chat messages for a specific client (trainer view)
   app.get('/api/trainer/client-chat/:clientId', isAuthenticated, async (req: any, res) => {
     try {
