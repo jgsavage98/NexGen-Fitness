@@ -522,7 +522,16 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
                   <YAxis 
-                    domain={['dataMin - 5', 'dataMax + 5']} 
+                    domain={[
+                      Math.min(
+                        weightProgress.goalWeight ? weightProgress.goalWeight - 5 : 999,
+                        weightProgress.weightEntries.length > 0 ? Math.min(...weightProgress.weightEntries.map(e => e.weight)) - 5 : 999
+                      ),
+                      Math.max(
+                        weightProgress.goalWeight ? weightProgress.goalWeight + 5 : 0,
+                        weightProgress.weightEntries.length > 0 ? Math.max(...weightProgress.weightEntries.map(e => e.weight)) + 5 : 0
+                      )
+                    ]} 
                     stroke="#9CA3AF" 
                     fontSize={12}
                     label={{ value: 'Weight (lbs)', angle: -90, position: 'insideLeft' }}
@@ -583,18 +592,19 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                   )}
                   
                   {/* Starting weight reference line */}
-                  {weightProgress.weightEntries.length > 1 && (
+                  {weightProgress.weightEntries.length > 0 && (
                     <ReferenceLine 
                       y={weightProgress.weightEntries[0].weight} 
-                      stroke="#9CA3AF" 
+                      stroke="#F59E0B" 
                       strokeDasharray="4 4"
-                      strokeWidth={1}
+                      strokeWidth={2}
                       label={{ 
                         value: `Start: ${weightProgress.weightEntries[0].weight} lbs`, 
-                        position: "bottom",
+                        position: "topLeft",
                         offset: 10,
                         fontSize: 12,
-                        fill: "#9CA3AF"
+                        fill: "#F59E0B",
+                        fontWeight: "bold"
                       }}
                     />
                   )}
