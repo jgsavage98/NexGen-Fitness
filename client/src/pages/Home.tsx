@@ -31,7 +31,34 @@ export default function Home() {
     retry: false,
   });
 
+  // Get unread messages count for notification badge
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ['/api/chat/unread-count'],
+    retry: false,
+    refetchInterval: 30000, // Refetch every 30 seconds to check for new messages
+  });
+
   const isPendingApproval = macroTargets?.status === 'pending_trainer_approval' || false;
+  const unreadCount = unreadData?.count || 0;
+
+  // Mark messages as read when chat tab is opened
+  const markAsReadMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest('POST', '/api/chat/mark-read', {});
+    },
+    onSuccess: () => {
+      // Invalidate unread count to refresh the badge
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
+    }
+  });
+
+  // Handle tab change and mark messages as read when opening chat
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (tab === 'chat' && unreadCount > 0) {
+      markAsReadMutation.mutate();
+    }
+  };
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -143,8 +170,9 @@ export default function Home() {
         {currentView === 'tabs' && (
           <TabNavigation 
             activeTab={activeTab} 
-            onTabChange={setActiveTab} 
+            onTabChange={handleTabChange} 
             isPendingApproval={isPendingApproval}
+            unreadCount={unreadCount}
           />
         )}
       </div>
