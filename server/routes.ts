@@ -844,24 +844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Trainer chat routes
-  app.get('/api/trainer/client-chat/:clientId', async (req: any, res) => {
-    try {
-      const trainerId = req.user?.claims?.sub;
-      if (!trainerId || !trainerId.startsWith('coach_')) {
-        return res.status(403).json({ message: "Unauthorized - Trainer access required" });
-      }
-
-      const { clientId } = req.params;
-      const { limit } = req.query;
-      
-      const messages = await storage.getClientChatMessages(clientId, trainerId, limit ? parseInt(limit as string) : 50);
-      res.json(messages.reverse()); // Return in chronological order
-    } catch (error) {
-      console.error("Error fetching client chat messages:", error);
-      res.status(500).json({ message: "Failed to fetch client chat messages" });
-    }
-  });
+  // Trainer chat routes - moved to proper location with authentication
 
   app.get('/api/trainer/pending-chat-approvals', isAuthenticated, async (req: any, res) => {
     try {
@@ -1777,7 +1760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (trainerId !== 'coach_chassidy') {
         console.log("Access denied for trainer:", trainerId);
-        return res.status(403).json({ message: "Access denied", providedId: trainerId });
+        return res.status(403).json({ message: "Unauthorized - Trainer access required" });
       }
 
       const clientId = req.params.clientId;
