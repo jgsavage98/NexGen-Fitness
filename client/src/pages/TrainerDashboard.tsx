@@ -258,7 +258,6 @@ export default function TrainerDashboard() {
   // Query to fetch chat messages for selected client
   const { data: clientChatMessages = [], refetch: refetchClientChat } = useQuery({
     queryKey: ['/api/trainer/client-chat', selectedClientForMessage],
-    queryFn: () => selectedClientForMessage ? fetch(`/api/trainer/client-chat/${selectedClientForMessage}`).then(res => res.json()) : [],
     enabled: !!selectedClientForMessage,
   });
 
@@ -798,7 +797,7 @@ export default function TrainerDashboard() {
                 <CardContent className="space-y-4">
                   {/* Chat Messages */}
                   <div className="h-96 overflow-y-auto border border-gray-600 rounded-lg p-4 space-y-3 bg-gray-900">
-                    {clientChatMessages.length === 0 ? (
+                    {!Array.isArray(clientChatMessages) || clientChatMessages.length === 0 ? (
                       <div className="text-center text-gray-500 py-8">
                         <p>No conversation yet. Start by sending a message!</p>
                       </div>

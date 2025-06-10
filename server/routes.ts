@@ -1742,10 +1742,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get chat messages for a specific client (trainer view)
   app.get('/api/trainer/client-chat/:clientId', isAuthenticated, async (req: any, res) => {
     try {
-      const trainerId = req.user.claims.sub;
+      console.log("Client chat request - user object:", req.user);
+      const trainerId = req.user?.claims?.sub || req.user?.id;
+      console.log("Extracted trainer ID:", trainerId);
       
       if (trainerId !== 'coach_chassidy') {
-        return res.status(403).json({ message: "Access denied" });
+        console.log("Access denied for trainer:", trainerId);
+        return res.status(403).json({ message: "Access denied", providedId: trainerId });
       }
 
       const clientId = req.params.clientId;
