@@ -73,6 +73,16 @@ export default function ChatTab() {
     },
   });
 
+  const markMessagesAsReadMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/chat/mark-read", {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/unread-count"] });
+    },
+  });
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -80,6 +90,11 @@ export default function ChatTab() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Mark messages as read when Chat tab opens
+  useEffect(() => {
+    markMessagesAsReadMutation.mutate();
+  }, []);
 
   const handleSendMessage = () => {
     if (newMessage.trim() && !sendMessageMutation.isPending) {

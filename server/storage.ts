@@ -522,7 +522,7 @@ export class DatabaseStorage implements IStorage {
           );
       }
     } else {
-      // Mark all unread messages from coach as read
+      // Mark all unread approved messages as read (both coach messages and AI responses)
       await db
         .update(chatMessages)
         .set({ isRead: true })
@@ -530,7 +530,8 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(chatMessages.userId, userId),
             eq(chatMessages.isRead, false),
-            sql`${chatMessages.metadata}->>'fromCoach' = 'true'`
+            eq(chatMessages.status, 'approved'),
+            eq(chatMessages.isAI, true)
           )
         );
     }
