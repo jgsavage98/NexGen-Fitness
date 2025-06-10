@@ -490,16 +490,18 @@ export class DatabaseStorage implements IStorage {
 
   async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
     if (messageIds && messageIds.length > 0) {
-      // Mark specific messages as read
-      await db
-        .update(chatMessages)
-        .set({ isRead: true })
-        .where(
-          and(
-            eq(chatMessages.userId, userId),
-            inArray(chatMessages.id, messageIds)
-          )
-        );
+      // Mark specific messages as read - use a simple loop for now
+      for (const messageId of messageIds) {
+        await db
+          .update(chatMessages)
+          .set({ isRead: true })
+          .where(
+            and(
+              eq(chatMessages.userId, userId),
+              eq(chatMessages.id, messageId)
+            )
+          );
+      }
     } else {
       // Mark all unread messages from coach as read
       await db

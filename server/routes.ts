@@ -819,6 +819,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get unread messages count
+  app.get('/api/chat/unread-count', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const count = await storage.getUnreadMessagesCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread messages count:", error);
+      res.status(500).json({ message: "Failed to fetch unread messages count" });
+    }
+  });
+
+  // Mark messages as read
+  app.post('/api/chat/mark-read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { messageIds } = req.body;
+      await storage.markMessagesAsRead(userId, messageIds);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+      res.status(500).json({ message: "Failed to mark messages as read" });
+    }
+  });
+
   app.post('/api/chat/message', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

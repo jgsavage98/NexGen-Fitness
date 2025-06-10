@@ -4,9 +4,10 @@ interface TabNavigationProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   isPendingApproval?: boolean;
+  unreadCount?: number;
 }
 
-export default function TabNavigation({ activeTab, onTabChange, isPendingApproval }: TabNavigationProps) {
+export default function TabNavigation({ activeTab, onTabChange, isPendingApproval, unreadCount }: TabNavigationProps) {
   const tabs = [
     { id: 'dashboard' as TabType, icon: 'fas fa-home', label: 'Home', disabled: false },
     { id: 'nutrition' as TabType, icon: 'fas fa-camera', label: 'Nutrition', disabled: isPendingApproval },
@@ -24,7 +25,7 @@ export default function TabNavigation({ activeTab, onTabChange, isPendingApprova
               key={tab.id}
               onClick={() => !tab.disabled && onTabChange(tab.id)}
               disabled={tab.disabled}
-              className={`flex-1 py-3 px-4 text-center tab-btn ${
+              className={`flex-1 py-3 px-4 text-center tab-btn relative ${
                 activeTab === tab.id ? 'active' : ''
               } ${tab.disabled ? 'disabled' : ''}`}
             >
@@ -34,6 +35,11 @@ export default function TabNavigation({ activeTab, onTabChange, isPendingApprova
               <span className={`text-xs ${
                 tab.disabled ? 'text-gray-600' : ''
               }`}>{tab.label}</span>
+              {tab.id === 'chat' && unreadCount && unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] font-bold">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
