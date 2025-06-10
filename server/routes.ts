@@ -1774,6 +1774,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate AI draft response for trainer review
+  app.post('/api/trainer/generate-draft-response', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user?.claims?.sub || req.user?.id;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Unauthorized - Trainer access required" });
+      }
+
+      const { clientId, lastMessage, messageContext } = req.body;
+
+      // Get client information
+      const client = await storage.getUser(clientId);
+      if (!client || client.trainerId !== trainerId) {
+        return res.status(404).json({ message: "Client not found or not assigned to you" });
+      }
+
+      // Use AI coach to generate a draft response
+      const aiResponse = await aiCoach.getChatResponse(
+        lastMessage,
+        {
+          id: client.id,
+          firstName: client.firstName,
+          lastName: client.lastName,
+          goal: client.goal,
+          weight: client.weight,
+          goalWeight: client.goalWeight,
+          age: client.age,
+          gender: client.gender,
+          activityLevel: client.activityLevel,
+          injuries: client.injuries || [],
+          equipment: client.equipment || []
+        },
+        messageContext || []
+      );
+
+      res.json({ 
+        draftResponse: aiResponse.message,
+        confidence: aiResponse.confidence 
+      });
+    } catch (error) {
+      console.error("Error generating draft response:", error);
+      res.status(500).json({ message: "Failed to generate draft response" });
+    }
+  });
+
   app.get('/api/trainer/client-progress/:clientId', isAuthenticated, async (req: any, res) => {
     try {
       const clientId = req.params.clientId;

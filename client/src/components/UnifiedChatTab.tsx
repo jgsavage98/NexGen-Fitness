@@ -298,26 +298,39 @@ export default function UnifiedChatTab() {
                         onClick={async () => {
                           setIsGeneratingAI(true);
                           try {
-                            const response = await fetch('/api/trainer/generate-ai-response', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ 
-                                clientId: selectedChatClient,
-                                context: 'General coaching support' 
-                              })
+                            // Get the last client message to respond to
+                            const messages = Array.isArray(clientChatMessages) ? clientChatMessages : [];
+                            const lastClientMessage = messages
+                              .filter((msg: ChatMessage) => !msg.isAI && (!msg.metadata || !(msg.metadata as any)?.fromCoach))
+                              .slice(-1)[0];
+                            
+                            if (!lastClientMessage) {
+                              toast({ 
+                                title: "No message to respond to", 
+                                description: "There are no client messages to generate a response for",
+                                variant: "destructive" 
+                              });
+                              return;
+                            }
+
+                            const response = await apiRequest('POST', '/api/trainer/generate-draft-response', {
+                              clientId: selectedChatClient,
+                              lastMessage: lastClientMessage.message,
+                              messageContext: messages.slice(-5) // Send last 5 messages for context
                             });
                             
-                            if (response.ok) {
-                              refetchClientChat();
+                            const data = await response.json();
+                            if (data.draftResponse) {
+                              setNewMessage(data.draftResponse);
                               toast({ 
-                                title: "AI Response Generated", 
-                                description: "New AI response added to chat" 
+                                title: "AI Draft Generated", 
+                                description: "Review and edit the draft before sending" 
                               });
                             }
                           } catch (error) {
                             toast({ 
                               title: "Error", 
-                              description: "Failed to generate AI response",
+                              description: "Failed to generate AI draft response",
                               variant: "destructive" 
                             });
                           } finally {
