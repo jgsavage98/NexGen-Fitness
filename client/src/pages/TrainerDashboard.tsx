@@ -481,6 +481,10 @@ export default function TrainerDashboard() {
               <Settings className="w-4 h-4 mr-2" />
               Macro Reviews ({pendingChanges.length})
             </TabsTrigger>
+            <TabsTrigger value="chat-approvals" className="data-[state=active]:bg-primary-500">
+              <Bell className="w-4 h-4 mr-2" />
+              Chat Approvals ({pendingChatApprovals.length})
+            </TabsTrigger>
             <TabsTrigger value="chat-logs" className="data-[state=active]:bg-primary-500">
               <MessageSquare className="w-4 h-4 mr-2" />
               Chat Logs
@@ -611,6 +615,119 @@ export default function TrainerDashboard() {
               <div className="space-y-6">
                 {pendingChanges.map((change) => (
                   <MacroChangeCard key={change.id} change={change} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="chat-approvals" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">AI Chat Message Approvals</h2>
+              <Badge variant="secondary" className="bg-orange-500/20 text-orange-400">
+                {pendingChatApprovals.length} Pending
+              </Badge>
+            </div>
+
+            {pendingChatApprovals.length === 0 ? (
+              <Card className="bg-surface border-gray-700">
+                <CardContent className="p-8 text-center">
+                  <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-400">No pending AI chat messages for approval</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingChatApprovals.map((message) => (
+                  <Card key={message.id} className="bg-surface border-gray-700">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src="/john-profile.png"
+                            alt={`${message.userFirstName} ${message.userLastName}`}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <h3 className="text-white font-semibold">
+                              {message.userFirstName} {message.userLastName}
+                            </h3>
+                            <p className="text-gray-400 text-sm">
+                              AI Response • {new Date(message.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="bg-orange-500/20 text-orange-400">
+                          Pending Approval
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="bg-gray-800 p-4 rounded-lg">
+                        <Label className="text-sm text-gray-400 mb-2 block">AI Generated Response:</Label>
+                        <p className="text-white">{message.message}</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-sm text-gray-400">Edit Message (Optional):</Label>
+                        <Textarea
+                          placeholder="Edit the AI response or leave blank to approve as-is..."
+                          className="bg-gray-800 border-gray-600 text-white min-h-[100px]"
+                          id={`edit-message-${message.id}`}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-sm text-gray-400">Trainer Notes (Optional):</Label>
+                        <Textarea
+                          placeholder="Add notes about your approval decision..."
+                          className="bg-gray-800 border-gray-600 text-white"
+                          id={`trainer-notes-${message.id}`}
+                        />
+                      </div>
+                      
+                      <div className="flex space-x-3">
+                        <Button
+                          onClick={() => {
+                            const editedMessage = (document.getElementById(`edit-message-${message.id}`) as HTMLTextAreaElement)?.value;
+                            const trainerNotes = (document.getElementById(`trainer-notes-${message.id}`) as HTMLTextAreaElement)?.value;
+                            
+                            approveChatMutation.mutate({
+                              messageId: message.id,
+                              approvedMessage: editedMessage || undefined,
+                              trainerNotes: trainerNotes || undefined
+                            });
+                          }}
+                          disabled={approveChatMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Approve & Send
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => {
+                            const trainerNotes = (document.getElementById(`trainer-notes-${message.id}`) as HTMLTextAreaElement)?.value;
+                            
+                            if (!trainerNotes) {
+                              toast({
+                                title: "Notes Required",
+                                description: "Please provide trainer notes when rejecting a message",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            
+                            rejectChatMutation.mutate({
+                              messageId: message.id,
+                              trainerNotes
+                            });
+                          }}
+                          disabled={rejectChatMutation.isPending}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}

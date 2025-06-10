@@ -469,7 +469,12 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(chatMessages)
-      .where(eq(chatMessages.userId, userId))
+      .where(
+        and(
+          eq(chatMessages.userId, userId),
+          eq(chatMessages.status, 'approved') // Only show approved messages to clients
+        )
+      )
       .orderBy(desc(chatMessages.createdAt))
       .limit(limit);
   }
