@@ -592,15 +592,15 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                   )}
                   
                   {/* Starting weight reference line */}
-                  {weightProgress.weightEntries.length > 0 && (
+                  {weightProgress.currentWeight && (
                     <ReferenceLine 
-                      y={weightProgress.weightEntries[0].weight} 
+                      y={180} 
                       stroke="#F59E0B" 
                       strokeDasharray="4 4"
                       strokeWidth={2}
                       label={{ 
-                        value: `Start: ${weightProgress.weightEntries[0].weight} lbs`, 
-                        position: "topLeft",
+                        value: `Baseline: 180 lbs`, 
+                        position: "topRight",
                         offset: 10,
                         fontSize: 12,
                         fill: "#F59E0B",
