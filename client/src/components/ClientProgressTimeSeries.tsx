@@ -512,13 +512,37 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={weightProgress.weightEntries.map(entry => ({
-                  date: new Date(entry.recordedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                  weight: entry.weight,
-                  goalWeight: weightProgress.goalWeight,
-                  fullDate: entry.recordedAt,
-                  notes: entry.notes
-                }))}>
+                <LineChart data={(() => {
+                  // Create 12-week timeline starting from June 9, 2025
+                  const programStart = new Date('2025-06-09');
+                  const timelineData = [];
+                  
+                  // Generate 12 weeks of timeline (84 days), showing every week
+                  for (let week = 0; week < 12; week++) {
+                    const weekDate = new Date(programStart);
+                    weekDate.setDate(programStart.getDate() + (week * 7));
+                    
+                    // Find actual weight entry for this week
+                    const weekEntry = weightProgress.weightEntries.find(entry => {
+                      const entryDate = new Date(entry.recordedAt);
+                      const weekStart = new Date(weekDate);
+                      const weekEnd = new Date(weekDate);
+                      weekEnd.setDate(weekEnd.getDate() + 6);
+                      return entryDate >= weekStart && entryDate <= weekEnd;
+                    });
+                    
+                    timelineData.push({
+                      date: weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                      weight: weekEntry?.weight || null,
+                      goalWeight: weightProgress.goalWeight,
+                      fullDate: weekEntry?.recordedAt || weekDate.toISOString(),
+                      notes: weekEntry?.notes || null,
+                      isActualData: !!weekEntry
+                    });
+                  }
+                  
+                  return timelineData;
+                })()}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
                   <YAxis 
@@ -571,6 +595,7 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                     strokeWidth={3} 
                     name="Weight"
                     dot={{ fill: '#10B981', strokeWidth: 2, r: 5 }}
+                    connectNulls={false}
                   />
                   
                   {/* Goal weight reference line */}
@@ -600,7 +625,7 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                       strokeWidth={2}
                       label={{ 
                         value: `Baseline: 180 lbs`, 
-                        position: "topRight",
+                        position: "top",
                         offset: 10,
                         fontSize: 12,
                         fill: "#F59E0B",
@@ -682,7 +707,7 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                     </div>
                   )}
                   
-                  {weightProgress.goalWeight && weightProgress.currentWeight && (
+                  {weightProgress.goalWeight && weightProgress.weightEntries.length > 0 && (
                     <div>
                       <span className="text-gray-400">Progress:</span>
                       <div className="mt-2">
@@ -691,16 +716,16 @@ export default function ClientProgressTimeSeries({ clientId }: ClientProgressTim
                             className="bg-blue-500 h-3 rounded-full transition-all duration-300"
                             style={{
                               width: `${Math.min(100, Math.abs(
-                                (weightProgress.currentWeight - (weightProgress.weightEntries[0]?.weight || weightProgress.currentWeight)) /
-                                (weightProgress.goalWeight - (weightProgress.weightEntries[0]?.weight || weightProgress.currentWeight))
+                                (weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight - weightProgress.weightEntries[0].weight) /
+                                (weightProgress.goalWeight - weightProgress.weightEntries[0].weight)
                               ) * 100)}%`
                             }}
                           ></div>
                         </div>
                         <div className="text-sm text-gray-400 mt-1">
                           {Math.min(100, Math.abs(
-                            (weightProgress.currentWeight - (weightProgress.weightEntries[0]?.weight || weightProgress.currentWeight)) /
-                            (weightProgress.goalWeight - (weightProgress.weightEntries[0]?.weight || weightProgress.currentWeight))
+                            (weightProgress.weightEntries[weightProgress.weightEntries.length - 1].weight - weightProgress.weightEntries[0].weight) /
+                            (weightProgress.goalWeight - weightProgress.weightEntries[0].weight)
                           ) * 100).toFixed(0)}% to goal
                         </div>
                       </div>
