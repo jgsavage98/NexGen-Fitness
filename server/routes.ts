@@ -1655,6 +1655,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get recent macros for time series analysis
+  app.get('/api/trainer/client/:clientId/recent-macros', isAuthenticated, async (req: any, res) => {
+    try {
+      const { clientId } = req.params;
+      const { days = '30' } = req.query;
+      
+      const daysCount = parseInt(days as string);
+      const macros = await storage.getRecentMacros(clientId, daysCount);
+      
+      // Get macro targets for the same period
+      const macrosWithTargets = await Promise.all(
+        macros.map(async (macro) => {
+          const targets = await storage.getUserMacroTargets(clientId, new Date(macro.date));
+          return {
+            ...macro,
+            targetCalories: targets?.calories || 0,
+            targetProtein: targets?.protein || 0,
+            targetCarbs: targets?.carbs || 0,
+            targetFat: targets?.fat || 0,
+          };
+        })
+      );
+      
+      res.json(macrosWithTargets);
+    } catch (error) {
+      console.error("Error fetching client recent macros:", error);
+      res.status(500).json({ message: "Failed to fetch client recent macros" });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // WebSocket server for real-time chat

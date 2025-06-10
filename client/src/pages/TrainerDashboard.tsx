@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut, Bell } from "lucide-react";
+import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut, Bell, BarChart3, Heart, Zap, Target } from "lucide-react";
 import ProfileSettings from "@/pages/ProfileSettings";
 import ClientUploadHistory from "@/components/ClientUploadHistory";
+import ClientProgressTimeSeries from "@/components/ClientProgressTimeSeries";
 import { calculateJourneyDay } from "@/lib/dateUtils";
 
 interface Client {
@@ -412,7 +413,7 @@ export default function TrainerDashboard() {
               Chat Logs
             </TabsTrigger>
             <TabsTrigger value="client-progress" className="data-[state=active]:bg-primary-500">
-              <User className="w-4 h-4 mr-2" />
+              <BarChart3 className="w-4 h-4 mr-2" />
               Client Progress
             </TabsTrigger>
             <TabsTrigger value="client-setup" className="data-[state=active]:bg-primary-500">
@@ -595,54 +596,88 @@ export default function TrainerDashboard() {
           </TabsContent>
 
           <TabsContent value="client-progress" className="space-y-6">
-            <h2 className="text-xl font-bold text-white">Client Progress Overview</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {clients.map((client) => {
-                const { daysInProgram } = getClientProgress(client);
-                return (
-                  <Card key={client.id} className="bg-surface border-gray-700">
-                    <CardHeader>
-                      <div className="flex items-center space-x-3">
-                        <img
-                          src="/john-profile.png"
-                          alt={`${client.firstName} ${client.lastName}`}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div>
-                          <CardTitle className="text-white text-lg">
-                            {client.firstName} {client.lastName}
-                          </CardTitle>
-                          <p className="text-gray-400 text-sm">{client.goal}</p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Program Day:</span>
-                          <span className="text-white font-semibold">{daysInProgram}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Current Weight:</span>
-                          <span className="text-white font-semibold">{client.weight} lbs</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Goal Weight:</span>
-                          <span className="text-white font-semibold">{client.goalWeight} lbs</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Status:</span>
-                          <Badge variant={client.onboardingCompleted ? "default" : "outline"}>
-                            {client.onboardingCompleted ? "Active" : "Onboarding"}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">Client Progress & Macro Analytics</h2>
+              <div className="flex space-x-2">
+                <select 
+                  className="bg-gray-800 border border-gray-600 text-white rounded px-3 py-1"
+                  value={selectedClient || ""}
+                  onChange={(e) => setSelectedClient(e.target.value || null)}
+                >
+                  <option value="">Select Client for Analysis</option>
+                  {clients.filter(c => c.onboardingCompleted).map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.firstName} {client.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            {selectedClient ? (
+              <ClientProgressTimeSeries clientId={selectedClient} />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {clients.map((client) => {
+                  const { daysInProgram } = getClientProgress(client);
+                  return (
+                    <Card key={client.id} className="bg-surface border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors" 
+                          onClick={() => setSelectedClient(client.id)}>
+                      <CardHeader>
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src="/john-profile.png"
+                            alt={`${client.firstName} ${client.lastName}`}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <CardTitle className="text-white text-lg">
+                              {client.firstName} {client.lastName}
+                            </CardTitle>
+                            <p className="text-gray-400 text-sm">{client.goal}</p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Program Day:</span>
+                            <span className="text-white font-semibold">{daysInProgram}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Current Weight:</span>
+                            <span className="text-white font-semibold">{client.weight} lbs</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Goal Weight:</span>
+                            <span className="text-white font-semibold">{client.goalWeight} lbs</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Status:</span>
+                            <Badge variant={client.onboardingCompleted ? "default" : "outline"}>
+                              {client.onboardingCompleted ? "Active" : "Onboarding"}
+                            </Badge>
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-gray-600">
+                            <Button 
+                              size="sm" 
+                              className="w-full bg-primary-600 hover:bg-primary-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedClient(client.id);
+                              }}
+                            >
+                              <BarChart3 className="w-4 h-4 mr-2" />
+                              View Analytics
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="client-setup" className="space-y-6">
