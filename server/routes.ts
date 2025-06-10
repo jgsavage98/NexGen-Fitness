@@ -1739,6 +1739,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get chat messages for a specific client (trainer view)
+  app.get('/api/trainer/client-chat/:clientId', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const clientId = req.params.clientId;
+      const { limit = 50 } = req.query;
+
+      // Verify the client exists and belongs to this trainer
+      const client = await storage.getUser(clientId);
+      if (!client || client.trainerId !== trainerId) {
+        return res.status(404).json({ message: "Client not found or not assigned to you" });
+      }
+
+      const messages = await storage.getClientChatMessages(clientId, trainerId, parseInt(limit as string));
+      
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching client chat messages:", error);
+      res.status(500).json({ message: "Failed to fetch client chat messages" });
+    }
+  });
+
   app.get('/api/trainer/client-progress/:clientId', isAuthenticated, async (req: any, res) => {
     try {
       const clientId = req.params.clientId;

@@ -68,6 +68,7 @@ export default function TrainerDashboard() {
   const [previousPendingCount, setPreviousPendingCount] = useState(0);
   const [selectedClientForMessage, setSelectedClientForMessage] = useState<string>("");
   const [newMessage, setNewMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -254,6 +255,13 @@ export default function TrainerDashboard() {
     },
   });
 
+  // Query to fetch chat messages for selected client
+  const { data: clientChatMessages = [], refetch: refetchClientChat } = useQuery({
+    queryKey: ['/api/trainer/client-chat', selectedClientForMessage],
+    queryFn: () => selectedClientForMessage ? fetch(`/api/trainer/client-chat/${selectedClientForMessage}`).then(res => res.json()) : [],
+    enabled: !!selectedClientForMessage,
+  });
+
   // Send message to client mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ clientId, message }: { clientId: string; message: string }) => {
@@ -269,7 +277,8 @@ export default function TrainerDashboard() {
         description: "Message sent to client successfully",
       });
       setNewMessage("");
-      setSelectedClientForMessage("");
+      // Refetch chat messages to show the new message
+      refetchClientChat();
     },
     onError: () => {
       toast({
@@ -737,77 +746,133 @@ export default function TrainerDashboard() {
 
           <TabsContent value="send-message" className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">Send Message to Client</h2>
+              <h2 className="text-xl font-bold text-white">Client Conversation</h2>
               <Badge variant="outline" className="text-blue-400 border-blue-400">
                 Direct Communication
               </Badge>
             </div>
 
+            {/* Client Selection */}
             <Card className="bg-surface border-gray-700">
               <CardHeader>
-                <CardTitle className="text-white">Compose Message</CardTitle>
-                <p className="text-gray-400">Send a direct message to your client as Coach Chassidy</p>
+                <CardTitle className="text-white">Select Client</CardTitle>
+                <p className="text-gray-400">Choose a client to view and continue your conversation</p>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm text-gray-400">Select Client:</Label>
-                  <select 
-                    className="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2"
-                    value={selectedClientForMessage}
-                    onChange={(e) => setSelectedClientForMessage(e.target.value)}
-                  >
-                    <option value="">Choose a client...</option>
-                    {clients.map((client) => (
-                      <option key={client.id} value={client.id}>
-                        {client.firstName} {client.lastName} ({client.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-sm text-gray-400">Message:</Label>
-                  <Textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message to the client..."
-                    className="bg-gray-800 border-gray-600 text-white min-h-[120px] resize-none"
-                    disabled={sendMessageMutation.isPending}
-                  />
-                  <p className="text-xs text-gray-500">
-                    This message will appear in the client's chat as coming from Coach Chassidy
-                  </p>
-                </div>
-                
-                <div className="flex space-x-3">
-                  <Button
-                    onClick={() => {
-                      if (selectedClientForMessage && newMessage.trim()) {
-                        sendMessageMutation.mutate({
-                          clientId: selectedClientForMessage,
-                          message: newMessage.trim()
-                        });
-                      }
-                    }}
-                    disabled={!selectedClientForMessage || !newMessage.trim() || sendMessageMutation.isPending}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {sendMessageMutation.isPending ? "Sending..." : "Send Message"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setNewMessage("");
-                      setSelectedClientForMessage("");
-                    }}
-                    disabled={sendMessageMutation.isPending}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                  >
-                    Clear
-                  </Button>
-                </div>
+              <CardContent>
+                <select 
+                  className="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2"
+                  value={selectedClientForMessage}
+                  onChange={(e) => setSelectedClientForMessage(e.target.value)}
+                >
+                  <option value="">Choose a client...</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.firstName} {client.lastName} ({client.email})
+                    </option>
+                  ))}
+                </select>
               </CardContent>
             </Card>
+
+            {/* Chat Thread */}
+            {selectedClientForMessage && (
+              <Card className="bg-surface border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
+                        {(() => {
+                          const client = clients.find(c => c.id === selectedClientForMessage);
+                          return client ? `${client.firstName[0]}${client.lastName[0]}` : '?';
+                        })()}
+                      </span>
+                    </div>
+                    <span>
+                      {(() => {
+                        const client = clients.find(c => c.id === selectedClientForMessage);
+                        return client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
+                      })()}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Chat Messages */}
+                  <div className="h-96 overflow-y-auto border border-gray-600 rounded-lg p-4 space-y-3 bg-gray-900">
+                    {clientChatMessages.length === 0 ? (
+                      <div className="text-center text-gray-500 py-8">
+                        <p>No conversation yet. Start by sending a message!</p>
+                      </div>
+                    ) : (
+                      clientChatMessages.map((message: any) => (
+                        <div key={message.id} className={`flex ${message.isAI ? 'justify-start' : 'justify-end'}`}>
+                          <div className={`max-w-[70%] rounded-lg p-3 ${
+                            message.isAI 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-gray-700 text-gray-100'
+                          }`}>
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-xs font-medium">
+                                {message.isAI ? 'Coach Chassidy' : clients.find(c => c.id === selectedClientForMessage)?.firstName || 'Client'}
+                              </span>
+                              <span className="text-xs opacity-70">
+                                {new Date(message.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                            <p className="text-sm break-words">{message.message}</p>
+                            {message.metadata?.fromCoach && (
+                              <Badge variant="outline" className="mt-1 text-xs border-blue-300 text-blue-300">
+                                Direct Message
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Message Input */}
+                  <div className="space-y-3">
+                    <Textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type your message..."
+                      className="bg-gray-800 border-gray-600 text-white min-h-[80px] resize-none"
+                      disabled={sendMessageMutation.isPending}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          if (newMessage.trim()) {
+                            sendMessageMutation.mutate({
+                              clientId: selectedClientForMessage,
+                              message: newMessage.trim()
+                            });
+                          }
+                        }
+                      }}
+                    />
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-gray-500">
+                        Press Enter to send, Shift+Enter for new line
+                      </p>
+                      <Button
+                        onClick={() => {
+                          if (newMessage.trim()) {
+                            sendMessageMutation.mutate({
+                              clientId: selectedClientForMessage,
+                              message: newMessage.trim()
+                            });
+                          }
+                        }}
+                        disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {sendMessageMutation.isPending ? "Sending..." : "Send"}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="chat-logs" className="space-y-6">
