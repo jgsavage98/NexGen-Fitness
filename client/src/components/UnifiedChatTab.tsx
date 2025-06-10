@@ -63,6 +63,16 @@ export default function UnifiedChatTab() {
     scrollToBottom();
   }, [clientChatMessages]);
 
+  // Invalidate client list when a chat is opened to update unanswered counts
+  useEffect(() => {
+    if (selectedChatClient) {
+      // Small delay to ensure the backend has processed the "read" status
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      }, 500);
+    }
+  }, [selectedChatClient, queryClient]);
+
   // Send message to client mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ clientId, message }: { clientId: string; message: string }) => {

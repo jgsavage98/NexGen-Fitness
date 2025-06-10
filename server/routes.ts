@@ -1743,6 +1743,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const messages = await storage.getClientChatMessages(clientId, trainerId, parseInt(limit as string));
       
+      // Mark client messages as "read" by updating metadata to indicate trainer has viewed them
+      const clientMessageIds = messages
+        .filter(msg => !msg.isAI && (!msg.metadata || !(msg.metadata as any)?.fromCoach))
+        .map(msg => msg.id);
+      
+      if (clientMessageIds.length > 0) {
+        await db
+          .update(chatMessages)
+          .set({
+            metadata: sql`COALESCE(${chatMessages.metadata}, '{}') || '{"trainerViewed": true}'::jsonb`
+          })
+          .where(sql`${chatMessages.id} = ANY(${clientMessageIds})`);
+      }
+      
       res.json(messages);
     } catch (error) {
       console.error("Error fetching client chat messages:", error);

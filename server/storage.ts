@@ -585,27 +585,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnansweredMessageCount(clientId: string, trainerId: string): Promise<number> {
-    // Get the most recent message from the client that isn't from AI or coach
-    const latestClientMessage = await db
+    // Get the most recent message from the client that isn't from AI or coach and hasn't been viewed by trainer
+    const latestUnviewedClientMessage = await db
       .select()
       .from(chatMessages)
       .where(
         and(
           eq(chatMessages.userId, clientId),
           eq(chatMessages.isAI, false),
-          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'fromCoach' != 'true')`
+          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'fromCoach' != 'true')`,
+          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`
         )
       )
       .orderBy(desc(chatMessages.createdAt))
       .limit(1);
 
-    if (latestClientMessage.length === 0) {
-      return 0; // No client messages
+    if (latestUnviewedClientMessage.length === 0) {
+      return 0; // No unviewed client messages
     }
 
-    const latestClientMessageTime = latestClientMessage[0].createdAt;
+    const latestUnviewedMessageTime = latestUnviewedClientMessage[0].createdAt;
 
-    // Check if there's any DIRECT trainer response (not AI) after the latest client message
+    // Check if there's any DIRECT trainer response (not AI) after the latest unviewed client message
     const trainerResponseAfter = await db
       .select()
       .from(chatMessages)
@@ -613,12 +614,12 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(chatMessages.userId, clientId),
           sql`${chatMessages.metadata}->>'fromCoach' = 'true'`,
-          sql`${chatMessages.createdAt} > ${latestClientMessageTime}`
+          sql`${chatMessages.createdAt} > ${latestUnviewedMessageTime}`
         )
       )
       .limit(1);
 
-    // If no direct trainer response after latest client message, count as unanswered
+    // If no direct trainer response after latest unviewed client message, count as unanswered
     return trainerResponseAfter.length === 0 ? 1 : 0;
   }
 
