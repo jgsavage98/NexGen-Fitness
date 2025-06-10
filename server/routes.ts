@@ -836,10 +836,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { messageIds } = req.body;
-      console.log('Mark read request body:', req.body);
-      console.log('MessageIds:', messageIds);
-      console.log('MessageIds type:', typeof messageIds);
-      console.log('MessageIds length:', messageIds?.length);
       await storage.markMessagesAsRead(userId, messageIds);
       res.json({ success: true });
     } catch (error) {

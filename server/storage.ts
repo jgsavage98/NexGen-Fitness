@@ -531,8 +531,7 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(chatMessages.userId, userId),
             eq(chatMessages.isRead, false),
-            eq(chatMessages.status, 'approved'),
-            eq(chatMessages.isAI, true)
+            eq(chatMessages.status, 'approved')
           )
         );
       console.log('Mark as read result:', result);
