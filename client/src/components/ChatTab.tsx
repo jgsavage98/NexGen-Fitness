@@ -205,7 +205,7 @@ export default function ChatTab() {
 
         {messages.map((message) => (
           <div key={message.id} className="mb-4">
-            {message.isAI ? (
+            {message.isAI || message.metadata?.fromCoach ? (
               <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
                   <img 
