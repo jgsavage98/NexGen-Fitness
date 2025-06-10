@@ -35,7 +35,7 @@ import {
   type UpdateUserProfile,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, sql, asc } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, asc, lt, count } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -584,60 +584,63 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]> {
-    if (trainerId) {
-      const result = await db
-        .select({
-          id: chatMessages.id,
-          userId: chatMessages.userId,
-          message: chatMessages.message,
-          isAI: chatMessages.isAI,
-          metadata: chatMessages.metadata,
-          isRead: chatMessages.isRead,
-          status: chatMessages.status,
-          trainerId: chatMessages.trainerId,
-          trainerNotes: chatMessages.trainerNotes,
-          approvedAt: chatMessages.approvedAt,
-          originalAIResponse: chatMessages.originalAIResponse,
-          createdAt: chatMessages.createdAt,
-          userFirstName: users.firstName,
-          userLastName: users.lastName,
-        })
-        .from(chatMessages)
-        .innerJoin(users, eq(chatMessages.userId, users.id))
-        .where(
-          and(
-            eq(chatMessages.status, 'pending_approval'),
-            eq(users.trainerId, trainerId)
-          )
+    const whereClause = trainerId 
+      ? and(
+          eq(chatMessages.status, 'pending_approval'),
+          eq(users.trainerId, trainerId)
         )
-        .orderBy(desc(chatMessages.createdAt));
+      : eq(chatMessages.status, 'pending_approval');
+
+    const pendingMessages = await db
+      .select({
+        id: chatMessages.id,
+        userId: chatMessages.userId,
+        message: chatMessages.message,
+        isAI: chatMessages.isAI,
+        metadata: chatMessages.metadata,
+        isRead: chatMessages.isRead,
+        status: chatMessages.status,
+        trainerId: chatMessages.trainerId,
+        trainerNotes: chatMessages.trainerNotes,
+        approvedAt: chatMessages.approvedAt,
+        originalAIResponse: chatMessages.originalAIResponse,
+        createdAt: chatMessages.createdAt,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+      })
+      .from(chatMessages)
+      .innerJoin(users, eq(chatMessages.userId, users.id))
+      .where(whereClause)
+      .orderBy(desc(chatMessages.createdAt));
+
+    // For each pending AI message, find the previous user message
+    const enrichedMessages = await Promise.all(
+      pendingMessages.map(async (message) => {
+        const previousUserMessage = await db
+          .select({
+            message: chatMessages.message,
+            createdAt: chatMessages.createdAt,
+          })
+          .from(chatMessages)
+          .where(
+            and(
+              eq(chatMessages.userId, message.userId),
+              eq(chatMessages.isAI, false),
+              lt(chatMessages.createdAt, message.createdAt)
+            )
+          )
+          .orderBy(desc(chatMessages.createdAt))
+          .limit(1);
+
+        return {
+          ...message,
+          clientQuestion: previousUserMessage[0]?.message || 'No previous question found',
+          clientQuestionTime: previousUserMessage[0]?.createdAt || message.createdAt,
+        };
+      })
+    );
       
-      return result as ChatMessage[];
-    } else {
-      const result = await db
-        .select({
-          id: chatMessages.id,
-          userId: chatMessages.userId,
-          message: chatMessages.message,
-          isAI: chatMessages.isAI,
-          metadata: chatMessages.metadata,
-          isRead: chatMessages.isRead,
-          status: chatMessages.status,
-          trainerId: chatMessages.trainerId,
-          trainerNotes: chatMessages.trainerNotes,
-          approvedAt: chatMessages.approvedAt,
-          originalAIResponse: chatMessages.originalAIResponse,
-          createdAt: chatMessages.createdAt,
-          userFirstName: users.firstName,
-          userLastName: users.lastName,
-        })
-        .from(chatMessages)
-        .innerJoin(users, eq(chatMessages.userId, users.id))
-        .where(eq(chatMessages.status, 'pending_approval'))
-        .orderBy(desc(chatMessages.createdAt));
-      
-      return result as ChatMessage[];
-    }
+    return enrichedMessages as any;
   }
 
   async approveChatMessage(messageId: number, trainerId: string, approvedMessage?: string, trainerNotes?: string): Promise<ChatMessage> {
