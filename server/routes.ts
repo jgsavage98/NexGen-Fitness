@@ -6,6 +6,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { aiCoach, extractNutritionFromScreenshot } from "./openai";
 import { seedTestData, clearTestData } from "./testData";
+import { getTodayInTimezone, getDateInTimezone, getMonthBoundsInTimezone } from "./timezone";
 import { 
   updateUserProfileSchema, 
   insertMealSchema, 

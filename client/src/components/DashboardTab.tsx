@@ -6,6 +6,7 @@ import AnimatedExerciseThumbnail from "./AnimatedExerciseThumbnail";
 import { Workout, MacroTarget } from "@/lib/types";
 import { Link } from "wouter";
 import { User, Calendar, Target } from "lucide-react";
+import { getTodayInTimezone } from "@/lib/dateUtils";
 import { TabType } from "@/pages/Home";
 
 interface DashboardTabProps {
@@ -13,7 +14,14 @@ interface DashboardTabProps {
 }
 
 export default function DashboardTab({ onTabChange }: DashboardTabProps) {
-  const today = new Date().toISOString().split('T')[0];
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
+
+  // Use user's timezone for all date calculations
+  const userTimezone = (user as any)?.timezone || 'America/New_York';
+  const today = getTodayInTimezone(userTimezone);
 
   const { data: workout } = useQuery<Workout>({
     queryKey: ["/api/workout/today"],
@@ -29,14 +37,12 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
   });
 
   // Only show extracted macros if screenshot was uploaded today and processed
-  // Use Eastern Time for John's timezone
-  const easternTime = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
   const hasUploadedToday = dailyMacros && 
     (dailyMacros as any).screenshotUrl && 
     (dailyMacros as any).visionProcessedAt &&
-    (dailyMacros as any).date === easternTime;
+    (dailyMacros as any).date === today;
     
-  console.log('Dashboard check:', { dailyMacros, hasUploadedToday, easternTime });
+  console.log('Dashboard check:', { dailyMacros, hasUploadedToday, today, userTimezone });
   
   const consumedMacros = hasUploadedToday ? {
     calories: (dailyMacros as any).extractedCalories || 0,

@@ -1,4 +1,39 @@
 /**
+ * Get today's date in user's timezone as YYYY-MM-DD string
+ * @param timezone - User's timezone (optional, defaults to system timezone)
+ * @returns Date string in YYYY-MM-DD format
+ */
+export function getTodayInTimezone(timezone?: string): string {
+  const today = new Date();
+  if (timezone) {
+    try {
+      return today.toLocaleDateString("en-CA", { timeZone: timezone });
+    } catch (error) {
+      console.warn('Timezone conversion failed, using local time:', error);
+    }
+  }
+  return today.toLocaleDateString("en-CA");
+}
+
+/**
+ * Get a specific date in user's timezone as YYYY-MM-DD string
+ * @param date - The date to convert
+ * @param timezone - User's timezone (optional, defaults to system timezone)
+ * @returns Date string in YYYY-MM-DD format
+ */
+export function getDateInTimezone(date: Date | string, timezone?: string): string {
+  const dateObj = new Date(date);
+  if (timezone) {
+    try {
+      return dateObj.toLocaleDateString("en-CA", { timeZone: timezone });
+    } catch (error) {
+      console.warn('Timezone conversion failed, using local time:', error);
+    }
+  }
+  return dateObj.toLocaleDateString("en-CA");
+}
+
+/**
  * Calculate the number of days since the user started their program
  * @param programStartDate - The date the user started their program
  * @param timezone - User's timezone (optional, defaults to local timezone)
@@ -7,38 +42,16 @@
 export function calculateJourneyDay(programStartDate: string | Date, timezone?: string): number {
   if (!programStartDate) return 1;
 
-  const startDate = new Date(programStartDate);
-  const today = new Date();
+  const todayString = getTodayInTimezone(timezone);
+  const startString = getDateInTimezone(programStartDate, timezone);
   
-  // If timezone is provided, get dates in user's timezone
-  if (timezone) {
-    try {
-      // Get the calendar date in user's timezone
-      const todayInTimezone = new Date(today.toLocaleString("en-US", { timeZone: timezone }));
-      const startInTimezone = new Date(startDate.toLocaleString("en-US", { timeZone: timezone }));
-      
-      // Reset time to midnight for both dates to calculate calendar days
-      const todayCalendar = new Date(todayInTimezone.getFullYear(), todayInTimezone.getMonth(), todayInTimezone.getDate());
-      const startCalendar = new Date(startInTimezone.getFullYear(), startInTimezone.getMonth(), startInTimezone.getDate());
-      
-      // Calculate calendar days difference
-      const diffTime = todayCalendar.getTime() - startCalendar.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      return Math.max(1, diffDays + 1); // +1 because day 1 is the start date
-    } catch (error) {
-      console.warn('Timezone calculation failed, using local time:', error);
-    }
-  }
+  const today = new Date(todayString);
+  const startDate = new Date(startString);
   
-  // Fallback to local timezone calculation using calendar dates
-  const todayCalendar = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const startCalendar = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-  
-  const diffTime = todayCalendar.getTime() - startCalendar.getTime();
+  const diffTime = today.getTime() - startDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
-  return Math.max(1, diffDays + 1);
+  return Math.max(1, diffDays + 1); // +1 because day 1 is the start date
 }
 
 /**
