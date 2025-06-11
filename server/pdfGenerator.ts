@@ -26,10 +26,10 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   
-  // Try to embed the Ignite logo
+  // Try to embed the Ignite logo (black text version for white background)
   let logoImage = null;
   try {
-    const logoPath = path.join(process.cwd(), 'public', 'ignite-logo.png');
+    const logoPath = path.join(process.cwd(), 'public', 'ignite-logo-black.png');
     const logoBytes = await fs.readFile(logoPath);
     logoImage = await pdfDoc.embedPng(logoBytes);
   } catch (error) {

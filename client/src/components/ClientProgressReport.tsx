@@ -266,7 +266,7 @@ Your detailed PDF progress report is attached below. Great work on your progress
             </div>
             <div className="flex-shrink-0 ml-8">
               <img 
-                src="/ignite-logo.png" 
+                src="/ignite-logo-black.png" 
                 alt="Ignite" 
                 className="h-20 w-auto"
               />
