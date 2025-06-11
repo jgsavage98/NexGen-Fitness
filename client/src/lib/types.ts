@@ -26,8 +26,8 @@ export interface Exercise {
   exerciseType?: string;
   equipmentType?: string;
   bodyPart?: string;
-  primaryMuscles: string[];
-  secondaryMuscles: string[];
+  primaryMuscles?: string[];
+  secondaryMuscles?: string[];
   equipment?: string;
   difficulty?: string;
   videoUrl?: string;
