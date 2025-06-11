@@ -204,41 +204,21 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Development mode: check multiple auth sources
   if (process.env.NODE_ENV === 'development') {
     const session = req.session as any;
-    const authToken = req.cookies?.auth_token;
+    const cookieToken = req.cookies?.auth_token;
     const urlAuth = req.query.auth as string;
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
     
     console.log('Auth check:', { 
-      hasCookie: !!authToken, 
-      cookieValue: authToken?.substring(0, 20) + '...',
+      hasCookie: !!cookieToken, 
+      hasBearer: !!bearerToken,
       hasUrlAuth: !!urlAuth,
       path: req.path
     });
     
-    // Check URL-based auth first (for demo switching)
-    if (urlAuth) {
-      try {
-        const decoded = Buffer.from(urlAuth, 'base64').toString();
-        const [userId] = decoded.split(':');
-        
-        // Validate user exists in database
-        const user = await storage.getUser(userId);
-        if (user) {
-          console.log('Auth successful via URL for user:', userId);
-          
-          (req as any).user = {
-            claims: {
-              sub: userId,
-              email: user.email || `${userId}@example.com`,
-            }
-          };
-          return next();
-        }
-      } catch (error) {
-        console.error('URL auth decode error:', error);
-      }
-    }
+    // Try multiple auth sources in order of preference
+    const authToken = bearerToken || cookieToken || urlAuth;
     
-    // Fallback to cookie-based auth
     if (!authToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -248,28 +228,24 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
       const decoded = Buffer.from(authToken, 'base64').toString();
       const [userId] = decoded.split(':');
       
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      
       // Validate user exists in database
       const user = await storage.getUser(userId);
-      if (!user) {
+      if (user) {
+        console.log('Auth successful for user:', userId);
+        
+        (req as any).user = {
+          claims: {
+            sub: userId,
+            email: user.email || `${userId}@example.com`,
+          }
+        };
+        return next();
+      } else {
+        console.log('User not found for token:', userId);
         return res.status(401).json({ message: "Unauthorized" });
       }
-      
-      console.log('Auth successful via cookie for user:', userId);
-      
-      // Attach user info to request for compatibility
-      (req as any).user = {
-        claims: {
-          sub: userId,
-          email: user.email || `${userId}@example.com`,
-        }
-      };
-      return next();
     } catch (error) {
-      console.error('Auth token decode error:', error);
+      console.error('Token decode error:', error);
       return res.status(401).json({ message: "Unauthorized" });
     }
   }
