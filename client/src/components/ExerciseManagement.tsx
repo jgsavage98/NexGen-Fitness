@@ -66,7 +66,7 @@ export default function ExerciseManagement() {
       };
       
       console.log("Full exercise data:", fullExerciseData);
-      return await apiRequest("/api/exercises", "POST", fullExerciseData);
+      return await apiRequest("POST", "/api/exercises", fullExerciseData);
     },
     onSuccess: (data) => {
       console.log("Exercise created successfully:", data);
