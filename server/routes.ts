@@ -2441,6 +2441,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Exercise dataset management endpoints
+  app.get('/api/exercises', isAuthenticated, async (req: any, res) => {
+    try {
+      const { exerciseType, equipmentType, bodyPart, difficulty } = req.query;
+      
+      const filters = {
+        exerciseType: exerciseType as string,
+        equipmentType: equipmentType as string,
+        bodyPart: bodyPart as string,
+        difficulty: difficulty as string,
+      };
+      
+      const exercises = await storage.getExercisesByFilters(filters);
+      res.json(exercises);
+    } catch (error) {
+      console.error("Error fetching exercises:", error);
+      res.status(500).json({ message: "Failed to fetch exercises" });
+    }
+  });
+
+  app.post('/api/exercises/import', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied - trainer required" });
+      }
+
+      const { exercises: exerciseData } = req.body;
+      
+      if (!Array.isArray(exerciseData) || exerciseData.length === 0) {
+        return res.status(400).json({ message: "Exercise data array is required" });
+      }
+
+      // Transform your dataset format to our schema
+      const transformedExercises = exerciseData.map((exercise: any) => ({
+        name: exercise.name || exercise.Name,
+        exerciseType: exercise.exerciseType || exercise['Exercise type'] || exercise.type,
+        equipmentType: exercise.equipmentType || exercise['Equipment type'] || exercise.equipment,
+        bodyPart: exercise.bodyPart || exercise['Body part'] || exercise.muscle,
+        animatedGifUrl: exercise.animatedGifUrl || exercise.gif || exercise.animation,
+        // Set reasonable defaults for optional fields
+        category: exercise.exerciseType || exercise['Exercise type'] || 'strength',
+        difficulty: exercise.difficulty || 'intermediate',
+        description: exercise.description || `${exercise.name || exercise.Name} targeting ${exercise.bodyPart || exercise['Body part']}`,
+      }));
+
+      const importedExercises = await storage.bulkImportExercises(transformedExercises);
+      
+      res.json({ 
+        success: true, 
+        message: `Successfully imported ${importedExercises.length} exercises`,
+        count: importedExercises.length 
+      });
+    } catch (error) {
+      console.error("Error importing exercises:", error);
+      res.status(500).json({ message: "Failed to import exercises" });
+    }
+  });
+
+  app.post('/api/exercises', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied - trainer required" });
+      }
+
+      const exerciseData = req.body;
+      const newExercise = await storage.createExercise(exerciseData);
+      
+      res.json(newExercise);
+    } catch (error) {
+      console.error("Error creating exercise:", error);
+      res.status(500).json({ message: "Failed to create exercise" });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // WebSocket server for real-time chat

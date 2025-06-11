@@ -101,6 +101,17 @@ export interface IStorage {
   
   // Client data operations for trainers
   getClientMacrosForMonth(clientId: string, startDate: Date, endDate: Date): Promise<DailyMacros[]>;
+  
+  // Exercise operations
+  getAllExercises(): Promise<Exercise[]>;
+  getExercisesByFilters(filters: {
+    exerciseType?: string;
+    equipmentType?: string;
+    bodyPart?: string;
+    difficulty?: string;
+  }): Promise<Exercise[]>;
+  createExercise(exercise: InsertExercise): Promise<Exercise>;
+  bulkImportExercises(exercises: InsertExercise[]): Promise<Exercise[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -781,6 +792,68 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return message;
+  }
+
+  // Exercise operations
+  async getAllExercises(): Promise<Exercise[]> {
+    return await db.select().from(exercises).orderBy(asc(exercises.name));
+  }
+
+  async getExercisesByFilters(filters: {
+    exerciseType?: string;
+    equipmentType?: string;
+    bodyPart?: string;
+    difficulty?: string;
+  }): Promise<Exercise[]> {
+    const conditions = [];
+    
+    if (filters.exerciseType) {
+      conditions.push(eq(exercises.exerciseType, filters.exerciseType));
+    }
+    if (filters.equipmentType) {
+      conditions.push(eq(exercises.equipmentType, filters.equipmentType));
+    }
+    if (filters.bodyPart) {
+      conditions.push(eq(exercises.bodyPart, filters.bodyPart));
+    }
+    if (filters.difficulty) {
+      conditions.push(eq(exercises.difficulty, filters.difficulty));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    return await db
+      .select()
+      .from(exercises)
+      .where(whereClause)
+      .orderBy(asc(exercises.name));
+  }
+
+  async createExercise(exercise: InsertExercise): Promise<Exercise> {
+    const [newExercise] = await db
+      .insert(exercises)
+      .values(exercise)
+      .returning();
+    return newExercise;
+  }
+
+  async bulkImportExercises(exerciseList: InsertExercise[]): Promise<Exercise[]> {
+    if (exerciseList.length === 0) return [];
+    
+    // Insert in batches of 100 to avoid database limits
+    const batchSize = 100;
+    const results: Exercise[] = [];
+    
+    for (let i = 0; i < exerciseList.length; i += batchSize) {
+      const batch = exerciseList.slice(i, i + batchSize);
+      const batchResults = await db
+        .insert(exercises)
+        .values(batch)
+        .returning();
+      results.push(...batchResults);
+    }
+    
+    return results;
   }
 }
 
