@@ -48,38 +48,9 @@ export default function UserSwitcher() {
 
   const loginMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await fetch('/api/auth/demo-login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ userId })
-      });
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // Set auth token as cookie manually
-      if (data.authToken) {
-        document.cookie = `auth_token=${data.authToken}; path=/; max-age=${7 * 24 * 60 * 60}; samesite=lax`;
-        
-        // Also store in localStorage as backup
-        localStorage.setItem('demo_auth_token', data.authToken);
-        localStorage.setItem('demo_user_id', data.userId);
-      }
-      
-      // Force a page reload to ensure the new auth takes effect
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
-      
-      toast({
-        title: "Switched accounts",
-        description: "Successfully switched to the selected account",
-      });
+      // Use the correct switch endpoint that redirects with auth token
+      window.location.href = `/api/auth/switch/${userId}`;
+      return { success: true };
     },
     onError: (error) => {
       toast({
