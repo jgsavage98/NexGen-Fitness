@@ -12,19 +12,17 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Add auth parameter from localStorage or URL if present
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlAuthParam = urlParams.get('auth');
-  const storedAuthParam = localStorage.getItem('url_auth_token');
-  const authParam = urlAuthParam || storedAuthParam;
+  // Get auth token from localStorage
+  const authToken = localStorage.getItem('url_auth_token');
   
-  let finalUrl = url;
-  if (authParam) {
-    const separator = url.includes('?') ? '&' : '?';
-    finalUrl += `${separator}auth=${authParam}`;
+  let headers: Record<string, string> = {};
+  
+  // Include auth token in cookie header if present
+  if (authToken) {
+    document.cookie = `auth_token=${authToken}; path=/; max-age=${7 * 24 * 60 * 60}; samesite=lax`;
+    headers['Authorization'] = `Bearer ${authToken}`;
   }
 
-  let headers: Record<string, string> = {};
   let body: BodyInit | undefined;
 
   if (data) {
@@ -37,7 +35,7 @@ export async function apiRequest(
     }
   }
 
-  const res = await fetch(finalUrl, {
+  const res = await fetch(url, {
     method,
     headers,
     body,
@@ -54,21 +52,20 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    let url = queryKey[0] as string;
+    const url = queryKey[0] as string;
     
-    // Add auth parameter from localStorage or URL if present
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlAuthParam = urlParams.get('auth');
-    const storedAuthParam = localStorage.getItem('url_auth_token');
-    const authParam = urlAuthParam || storedAuthParam;
+    // Get auth token from localStorage and set cookie
+    const authToken = localStorage.getItem('url_auth_token');
+    let headers: Record<string, string> = {};
     
-    if (authParam) {
-      const separator = url.includes('?') ? '&' : '?';
-      url += `${separator}auth=${authParam}`;
+    if (authToken) {
+      document.cookie = `auth_token=${authToken}; path=/; max-age=${7 * 24 * 60 * 60}; samesite=lax`;
+      headers['Authorization'] = `Bearer ${authToken}`;
     }
     
     const res = await fetch(url, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

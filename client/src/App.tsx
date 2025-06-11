@@ -23,7 +23,10 @@ function Router() {
     const urlParams = new URLSearchParams(window.location.search);
     const authToken = urlParams.get('auth');
     
+    console.log('Auth token check:', { authToken, currentUrl: window.location.href });
+    
     if (authToken) {
+      console.log('Storing auth token:', authToken);
       // Store the auth token for API requests
       localStorage.setItem('url_auth_token', authToken);
       
