@@ -35,7 +35,7 @@ import {
   type UpdateUserProfile,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, sql, asc, lt, count, or } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, asc, lt, count, or, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -195,6 +195,47 @@ export class DatabaseStorage implements IStorage {
         gte(dailyMacros.date, startDate.toISOString().split('T')[0])
       ))
       .orderBy(desc(dailyMacros.date));
+  }
+
+  async getRecentUploadsAllClients(trainerId?: string, days: number = 7): Promise<any[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const whereClause = trainerId 
+      ? and(
+          gte(dailyMacros.screenshotUploadedAt, startDate),
+          isNotNull(dailyMacros.screenshotUrl),
+          eq(users.trainerId, trainerId)
+        )
+      : and(
+          gte(dailyMacros.screenshotUploadedAt, startDate),
+          isNotNull(dailyMacros.screenshotUrl)
+        );
+
+    return await db
+      .select({
+        id: dailyMacros.id,
+        userId: dailyMacros.userId,
+        date: dailyMacros.date,
+        screenshotUrl: dailyMacros.screenshotUrl,
+        screenshotUploadedAt: dailyMacros.screenshotUploadedAt,
+        extractedCalories: dailyMacros.extractedCalories,
+        extractedProtein: dailyMacros.extractedProtein,
+        extractedCarbs: dailyMacros.extractedCarbs,
+        extractedFat: dailyMacros.extractedFat,
+        visionConfidence: dailyMacros.visionConfidence,
+        adherenceScore: dailyMacros.adherenceScore,
+        createdAt: dailyMacros.createdAt,
+        user: {
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        }
+      })
+      .from(dailyMacros)
+      .innerJoin(users, eq(dailyMacros.userId, users.id))
+      .where(whereClause)
+      .orderBy(desc(dailyMacros.screenshotUploadedAt));
   }
 
   // Macro changes operations (Coach Chassidy approval)

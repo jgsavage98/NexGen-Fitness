@@ -1691,6 +1691,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fetch recent uploads across all clients
+  app.get('/api/trainer/recent-uploads', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      const { days = '7' } = req.query;
+      
+      const uploads = await storage.getRecentUploadsAllClients(trainerId, parseInt(days as string));
+      res.json(uploads);
+    } catch (error) {
+      console.error("Error fetching recent uploads:", error);
+      res.status(500).json({ message: "Failed to fetch recent uploads" });
+    }
+  });
+
   // Send message from trainer to client
   app.post('/api/trainer/send-message', isAuthenticated, async (req: any, res) => {
     try {
