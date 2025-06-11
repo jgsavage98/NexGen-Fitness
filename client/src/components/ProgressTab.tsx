@@ -124,6 +124,16 @@ export default function ProgressTab() {
     }
   });
 
+  // Get monthly data for report calculations (last 30 days)
+  const { data: monthlyMacros = [] } = useQuery({
+    queryKey: ["/api/daily-macros/recent", 30],
+    queryFn: async () => {
+      const response = await fetch("/api/daily-macros/recent?days=30");
+      if (!response.ok) throw new Error("Failed to fetch monthly macros");
+      return response.json();
+    }
+  });
+
   // Calculate actual macro adherence for this week
   const thisWeekMacros = recentMacros.filter((macro: any) => 
     new Date(macro.date) >= thisWeekStart
@@ -134,11 +144,30 @@ export default function ProgressTab() {
         acc + (macro.adherenceScore || 0), 0) / thisWeekMacros.length)
     : 0;
 
-  const weeklyStats = {
-    workoutsCompleted: thisWeekWorkouts.length,
-    workoutsPlanned: (user as any)?.weeklyWorkoutGoal || 5,
-    avgMacroAdherence: macroAdherence,
-  };
+  // Calculate monthly stats for the Monthly Report
+  const monthStart = new Date();
+  monthStart.setDate(1); // First day of current month
+  
+  const monthlyWorkouts = workoutLogs.filter(log => 
+    new Date(log.completedAt || '') >= monthStart
+  );
+  
+  const monthlyMacroData = monthlyMacros.filter((macro: any) => 
+    new Date(macro.date) >= monthStart
+  );
+  
+  // Calculate monthly adherence and performance
+  const monthlyMacroAdherence = monthlyMacroData.length > 0 
+    ? Math.round(monthlyMacroData.reduce((acc: number, macro: any) => 
+        acc + (macro.adherenceScore || 85), 0) / monthlyMacroData.length) // Default to 85 if no adherence score
+    : 0;
+
+  // Calculate workout consistency (assumes 5 workouts per week target)
+  const daysInMonth = new Date().getDate(); // Days passed in current month
+  const expectedWorkouts = Math.floor((daysInMonth / 7) * 5); // ~5 workouts per week
+  const workoutConsistency = expectedWorkouts > 0 
+    ? Math.min(100, Math.round((monthlyWorkouts.length / expectedWorkouts) * 100))
+    : 0;
 
   // Get weight entries from progress data
   const weightEntries = progressEntries.filter(entry => entry.weight !== null);
@@ -156,6 +185,19 @@ export default function ProgressTab() {
     trend: weightEntries.length >= 2 ? 
       weightEntries[weightEntries.length - 1].weight! - weightEntries[weightEntries.length - 2].weight! : 0
   } : null;
+
+  // Calculate goal progress
+  const monthlyWeightProgress = weightProgress ? {
+    changeFromBaseline: weightProgress.changeFromBaseline,
+    remaining: weightProgress.remaining,
+    progressPercentage: Math.abs(weightProgress.changeFromBaseline) / Math.abs(baselineWeight - goalWeight) * 100
+  } : null;
+
+  const weeklyStats = {
+    workoutsCompleted: thisWeekWorkouts.length,
+    workoutsPlanned: (user as any)?.weeklyWorkoutGoal || 5,
+    avgMacroAdherence: macroAdherence,
+  };
 
   const achievements = [
     {
@@ -430,33 +472,76 @@ export default function ProgressTab() {
             <div className="flex items-center justify-between py-3 border-b border-gray-700">
               <div>
                 <div className="font-medium text-white">Workout Consistency</div>
-                <div className="text-sm text-gray-400">16 of 20 workouts completed</div>
+                <div className="text-sm text-gray-400">
+                  {monthlyWorkouts.length} of {expectedWorkouts} expected workouts
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold text-success">A</div>
-                <div className="text-xs text-gray-400">80%</div>
+                <div className={`text-lg font-bold ${
+                  workoutConsistency >= 90 ? 'text-success' : 
+                  workoutConsistency >= 75 ? 'text-yellow-400' : 'text-red-400'
+                }`}>
+                  {workoutConsistency >= 90 ? 'A' : 
+                   workoutConsistency >= 80 ? 'A-' :
+                   workoutConsistency >= 75 ? 'B+' :
+                   workoutConsistency >= 70 ? 'B' :
+                   workoutConsistency >= 65 ? 'B-' :
+                   workoutConsistency >= 60 ? 'C+' : 'C'}
+                </div>
+                <div className="text-xs text-gray-400">{workoutConsistency}%</div>
               </div>
             </div>
 
             <div className="flex items-center justify-between py-3 border-b border-gray-700">
               <div>
                 <div className="font-medium text-white">Nutrition Adherence</div>
-                <div className="text-sm text-gray-400">Average macro target hit</div>
+                <div className="text-sm text-gray-400">
+                  {monthlyMacroData.length > 0 
+                    ? `${monthlyMacroData.length} days tracked this month`
+                    : 'No macro data available'
+                  }
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold text-success">A-</div>
-                <div className="text-xs text-gray-400">85%</div>
+                <div className={`text-lg font-bold ${
+                  monthlyMacroAdherence >= 85 ? 'text-success' : 
+                  monthlyMacroAdherence >= 70 ? 'text-yellow-400' : 'text-red-400'
+                }`}>
+                  {monthlyMacroAdherence >= 90 ? 'A+' :
+                   monthlyMacroAdherence >= 85 ? 'A' :
+                   monthlyMacroAdherence >= 80 ? 'A-' :
+                   monthlyMacroAdherence >= 75 ? 'B+' :
+                   monthlyMacroAdherence >= 70 ? 'B' :
+                   monthlyMacroAdherence >= 65 ? 'B-' : 'C'}
+                </div>
+                <div className="text-xs text-gray-400">{monthlyMacroAdherence}%</div>
               </div>
             </div>
 
             <div className="flex items-center justify-between py-3">
               <div>
                 <div className="font-medium text-white">Goal Progress</div>
-                <div className="text-sm text-gray-400">Weight loss target</div>
+                <div className="text-sm text-gray-400">
+                  {(user as any)?.goal === 'weight-loss' ? 'Weight loss target' : 
+                   (user as any)?.goal === 'muscle-gain' ? 'Muscle gain target' : 'Fitness goal'}
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold text-primary-500">B+</div>
-                <div className="text-xs text-gray-400">-2.3kg</div>
+                <div className={`text-lg font-bold ${
+                  monthlyWeightProgress && monthlyWeightProgress.progressPercentage >= 25 ? 'text-success' : 
+                  monthlyWeightProgress && monthlyWeightProgress.progressPercentage >= 10 ? 'text-yellow-400' : 'text-primary-500'
+                }`}>
+                  {monthlyWeightProgress && monthlyWeightProgress.progressPercentage >= 40 ? 'A' :
+                   monthlyWeightProgress && monthlyWeightProgress.progressPercentage >= 25 ? 'B+' :
+                   monthlyWeightProgress && monthlyWeightProgress.progressPercentage >= 10 ? 'B' :
+                   monthlyWeightProgress ? 'B-' : 'In Progress'}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {monthlyWeightProgress ? 
+                    `${monthlyWeightProgress.changeFromBaseline > 0 ? '+' : ''}${monthlyWeightProgress.changeFromBaseline.toFixed(1)} lbs` :
+                    'Track progress'
+                  }
+                </div>
               </div>
             </div>
           </div>
@@ -506,73 +591,7 @@ export default function ProgressTab() {
         </div>
       </div>
 
-      {/* Testing Panel for Development */}
-      <Card className="bg-gray-800 border-yellow-600 border-2">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-yellow-300">Development Testing</h3>
-            <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded">
-              Demo Mode
-            </span>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-300 mb-3">
-                Simulate multiple days of realistic usage data including weight logs, macro tracking, and workout history.
-              </p>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Button
-                  onClick={() => handleSeedData(7)}
-                  disabled={isSeeding}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  size="sm"
-                >
-                  {isSeeding ? "Generating..." : "1 Week"}
-                </Button>
-                
-                <Button
-                  onClick={() => handleSeedData(14)}
-                  disabled={isSeeding}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  size="sm"
-                >
-                  {isSeeding ? "Generating..." : "2 Weeks"}
-                </Button>
-                
-                <Button
-                  onClick={() => handleSeedData(30)}
-                  disabled={isSeeding}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  size="sm"
-                >
-                  {isSeeding ? "Generating..." : "1 Month"}
-                </Button>
-                
-                <Button
-                  onClick={() => handleSeedData(60)}
-                  disabled={isSeeding}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  size="sm"
-                >
-                  {isSeeding ? "Generating..." : "2 Months"}
-                </Button>
-              </div>
-            </div>
-            
-            <div className="text-xs text-gray-400 bg-gray-900 p-3 rounded">
-              <p className="font-semibold mb-1">Generated data includes:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Daily weight entries with realistic fluctuations and overall trend toward goal</li>
-                <li>Nutrition screenshot uploads with macro tracking and adherence scores</li>
-                <li>Workout logs with progressive overload and consistent training patterns</li>
-                <li>Chat history with Coach Chassidy showing progress feedback</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   );
 }
