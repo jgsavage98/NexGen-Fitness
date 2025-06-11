@@ -146,6 +146,8 @@ export default function TrainerDashboard() {
   // Fetch recent chat messages across all clients
   const { data: recentChats = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/trainer/recent-chats"],
+    refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
+    refetchIntervalInBackground: true,
   });
 
   // Fetch pending chat approvals
@@ -228,7 +230,9 @@ export default function TrainerDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-chat-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-chats"] });
       toast({
         title: "Success",
         description: "Chat message approved and sent to client",
@@ -256,7 +260,9 @@ export default function TrainerDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-chat-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-chats"] });
       toast({
         title: "Success", 
         description: "Chat message rejected",
@@ -296,7 +302,9 @@ export default function TrainerDashboard() {
       refetchClientChat();
       // Invalidate client list to update navigation badge counts immediately
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-chats"] });
     },
     onError: () => {
       toast({
