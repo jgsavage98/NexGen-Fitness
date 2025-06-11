@@ -142,11 +142,6 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <img 
-                src="/ignite-logo.png" 
-                alt="Ignite" 
-                className="h-12 w-auto"
-              />
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -156,6 +151,11 @@ export default function Home() {
               >
                 <LogOut className="w-4 h-4" />
               </Button>
+              <img 
+                src="/ignite-logo.png" 
+                alt="Ignite" 
+                className="h-24 w-auto"
+              />
             </div>
           </div>
         </header>
