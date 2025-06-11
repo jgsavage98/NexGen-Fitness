@@ -237,8 +237,10 @@ export default function TrainerDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-chat-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-uploads"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-uploads"] });
       toast({
         title: "Success",
         description: "Chat message approved and sent to client",
@@ -267,8 +269,10 @@ export default function TrainerDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-chat-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-uploads"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-uploads"] });
       toast({
         title: "Success", 
         description: "Chat message rejected",
