@@ -63,12 +63,16 @@ export const exercises = pgTable("exercises", {
   description: text("description"),
   instructions: text("instructions"),
   category: varchar("category"), // strength, cardio, flexibility
+  exerciseType: varchar("exercise_type"), // Your dataset field: strength, cardio, flexibility, etc.
+  equipmentType: varchar("equipment_type"), // Your dataset field: barbell, dumbbell, bodyweight, etc.
+  bodyPart: varchar("body_part"), // Your dataset field: chest, legs, back, etc.
   primaryMuscles: text("primary_muscles").array().default([]),
   secondaryMuscles: text("secondary_muscles").array().default([]),
   equipment: varchar("equipment"),
   difficulty: varchar("difficulty"), // beginner, intermediate, advanced
   videoUrl: varchar("video_url"),
   imageUrl: varchar("image_url"),
+  animatedGifUrl: varchar("animated_gif_url"), // Your animated GIF field
   regressionId: integer("regression_id"),
   progressionId: integer("progression_id"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -415,6 +419,8 @@ export const updateUserProfileSchema = z.object({
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+
 export type Trainer = typeof trainers.$inferSelect;
 export type InsertTrainer = z.infer<typeof insertTrainerSchema>;
 export type DailyMacros = typeof dailyMacros.$inferSelect;
