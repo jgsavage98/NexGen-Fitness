@@ -7,6 +7,7 @@ import ProgressTab from "@/components/ProgressTab";
 import ScreenshotUploadTab from "@/components/ScreenshotUploadTab";
 import ProfileSettings from "@/pages/ProfileSettings";
 import { useAuth } from "@/hooks/useAuth";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { Button } from "@/components/ui/button";
 import { Settings, LogOut, User } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -23,6 +24,21 @@ export default function Home() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+
+  // WebSocket for real-time updates
+  const { isConnected } = useWebSocket((message) => {
+    if (message.type === 'macro_approved' && message.userId === user?.id) {
+      // Refresh relevant queries when macro targets are updated
+      queryClient.invalidateQueries({ queryKey: ['/api/macro-targets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/messages'] });
+      
+      // Show the dashboard tab if they're on a restricted tab
+      if (activeTab === 'nutrition' || activeTab === 'workout') {
+        setActiveTab('dashboard');
+      }
+    }
+  });
 
   // Get macro targets status for tab restrictions
   const today = new Date().toISOString().split('T')[0];
