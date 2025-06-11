@@ -257,11 +257,11 @@ export default function ExerciseCard({
               <div className="space-y-4">
                 {/* Exercise thumbnail/GIF */}
                 {exerciseDetails.animatedGifUrl && (
-                  <div className="w-full h-48 bg-gray-800 rounded-lg overflow-hidden">
+                  <div className="w-full bg-gray-800 rounded-lg overflow-hidden flex justify-center">
                     <img
                       src={exerciseDetails.animatedGifUrl}
                       alt={exerciseDetails.name}
-                      className="w-full h-full object-cover"
+                      className="w-full max-w-md object-contain rounded-lg"
                     />
                   </div>
                 )}
