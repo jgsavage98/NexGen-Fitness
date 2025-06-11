@@ -302,9 +302,10 @@ export default function UserSwitcher() {
                   <CardContent>
                     <Button 
                       className={`w-full ${buttonColor}`}
-                      onClick={() => window.location.href = `/api/auth/switch/${user.id}`}
+                      onClick={() => loginMutation.mutate(user.id)}
+                      disabled={loginMutation.isPending}
                     >
-                      Login as {user.firstName}
+                      {loginMutation.isPending ? 'Switching...' : `Login as ${user.firstName}`}
                     </Button>
                   </CardContent>
                 </Card>
