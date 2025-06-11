@@ -95,9 +95,23 @@ export default function ExerciseManagement() {
   });
 
   // Get unique values for filters
-  const exerciseTypes = [...new Set(exercises.map(e => e.exerciseType))];
-  const equipmentTypes = [...new Set(exercises.map(e => e.equipmentType))];
-  const bodyParts = [...new Set(exercises.map(e => e.bodyPart))];
+  const exerciseTypes = exercises.length > 0 ? 
+    exercises.reduce((acc: string[], e) => {
+      if (!acc.includes(e.exerciseType)) acc.push(e.exerciseType);
+      return acc;
+    }, []) : [];
+  
+  const equipmentTypes = exercises.length > 0 ? 
+    exercises.reduce((acc: string[], e) => {
+      if (!acc.includes(e.equipmentType)) acc.push(e.equipmentType);
+      return acc;
+    }, []) : [];
+  
+  const bodyParts = exercises.length > 0 ? 
+    exercises.reduce((acc: string[], e) => {
+      if (!acc.includes(e.bodyPart)) acc.push(e.bodyPart);
+      return acc;
+    }, []) : [];
 
   const handleAddExercise = () => {
     if (!newExercise.name.trim()) {

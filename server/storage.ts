@@ -829,13 +829,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(exercises.name));
   }
 
-  async createExercise(exercise: InsertExercise): Promise<Exercise> {
-    const [newExercise] = await db
-      .insert(exercises)
-      .values(exercise)
-      .returning();
-    return newExercise;
-  }
+
 
   async bulkImportExercises(exerciseList: InsertExercise[]): Promise<Exercise[]> {
     if (exerciseList.length === 0) return [];
