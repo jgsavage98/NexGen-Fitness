@@ -8,8 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function ChatTab() {
   const [newMessage, setNewMessage] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
@@ -44,38 +42,7 @@ export default function ChatTab() {
     },
   });
 
-  const sendVoiceMutation = useMutation({
-    mutationFn: async (audioBlob: Blob) => {
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const response = await fetch("/api/chat/voice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/octet-stream",
-        },
-        body: arrayBuffer,
-        credentials: "include",
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to process voice message");
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/chat/unread-count"] });
-      setIsRecording(false);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to process voice message. Please try again.",
-        variant: "destructive",
-      });
-      setIsRecording(false);
-    },
-  });
+
 
   const markMessagesAsReadMutation = useMutation({
     mutationFn: async () => {
@@ -122,54 +89,7 @@ export default function ChatTab() {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const audioChunks: Blob[] = [];
 
-      recorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
-
-      recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-        sendVoiceMutation.mutate(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      recorder.start();
-      setMediaRecorder(recorder);
-      setIsRecording(true);
-
-      // Auto-stop after 60 seconds
-      setTimeout(() => {
-        if (recorder.state === "recording") {
-          recorder.stop();
-        }
-      }, 60000);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Could not access microphone. Please check permissions.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.stop();
-    }
-  };
-
-  const handleVoiceButton = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  };
 
 
 
@@ -263,9 +183,6 @@ export default function ChatTab() {
                     
                     <span className="text-xs text-primary-300">
                       {formatTime(message.createdAt)}
-                      {message.metadata?.isVoice && (
-                        <i className="fas fa-microphone ml-2"></i>
-                      )}
                     </span>
                   </div>
                 </div>
@@ -279,9 +196,6 @@ export default function ChatTab() {
                     </p>
                     <span className="text-xs mt-2 block text-white/70">
                       {formatTime(message.createdAt)}
-                      {message.metadata?.isVoice && (
-                        <i className="fas fa-microphone ml-2"></i>
-                      )}
                     </span>
                   </div>
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
@@ -327,17 +241,7 @@ export default function ChatTab() {
             </button>
           </div>
           
-          <Button
-            onClick={handleVoiceButton}
-            className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-colors ${
-              isRecording
-                ? "bg-error recording animate-pulse"
-                : "bg-primary-500 hover:bg-primary-600"
-            }`}
-            disabled={sendVoiceMutation.isPending}
-          >
-            <i className={`fas ${isRecording ? "fa-stop" : "fa-microphone"}`}></i>
-          </Button>
+
         </div>
       </div>
     </div>
