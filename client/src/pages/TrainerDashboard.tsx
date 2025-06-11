@@ -320,99 +320,99 @@ export default function TrainerDashboard() {
 
     return (
       <Card className="bg-surface border-gray-700">
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
             <div className="flex items-center space-x-3">
               <img
                 src="/john-profile.png"
                 alt={`${change.user.firstName} ${change.user.lastName}`}
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
               />
               <div>
-                <CardTitle className="text-white text-lg">
+                <CardTitle className="text-white text-base sm:text-lg">
                   {change.user.firstName} {change.user.lastName}
                 </CardTitle>
-                <p className="text-gray-400 text-sm">{change.user.email}</p>
+                <p className="text-gray-400 text-xs sm:text-sm">{change.user.email}</p>
               </div>
             </div>
-            <Badge variant="outline" className="text-yellow-400 border-yellow-400">
+            <Badge variant="outline" className="text-yellow-400 border-yellow-400 text-xs">
               Pending Review
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <div className="space-y-4">
             <div>
-              <h4 className="text-white font-semibold mb-2">AI Reasoning:</h4>
-              <p className="text-gray-300 text-sm bg-gray-800 p-3 rounded">{change.reasoning}</p>
+              <h4 className="text-white font-semibold mb-2 text-sm sm:text-base">AI Reasoning:</h4>
+              <p className="text-gray-300 text-xs sm:text-sm bg-gray-800 p-2 sm:p-3 rounded">{change.reasoning}</p>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               <div className="text-center">
-                <Label className="text-gray-400">Calories</Label>
+                <Label className="text-gray-400 text-xs sm:text-sm">Calories</Label>
                 {editMode ? (
                   <Input
                     type="number"
                     value={editedMacros.calories}
                     onChange={(e) => setEditedMacros(prev => ({ ...prev, calories: parseInt(e.target.value) || 0 }))}
-                    className="bg-gray-800 border-gray-600 text-white mt-1"
+                    className="bg-gray-800 border-gray-600 text-white mt-1 text-sm"
                   />
                 ) : (
-                  <p className="text-white font-semibold">{change.proposedCalories}</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">{change.proposedCalories}</p>
                 )}
               </div>
               <div className="text-center">
-                <Label className="text-gray-400">Protein</Label>
+                <Label className="text-gray-400 text-xs sm:text-sm">Protein</Label>
                 {editMode ? (
                   <Input
                     type="number"
                     value={editedMacros.protein}
                     onChange={(e) => setEditedMacros(prev => ({ ...prev, protein: parseInt(e.target.value) || 0 }))}
-                    className="bg-gray-800 border-gray-600 text-white mt-1"
+                    className="bg-gray-800 border-gray-600 text-white mt-1 text-sm"
                   />
                 ) : (
-                  <p className="text-white font-semibold">{change.proposedProtein}g</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">{change.proposedProtein}g</p>
                 )}
               </div>
               <div className="text-center">
-                <Label className="text-gray-400">Carbs</Label>
+                <Label className="text-gray-400 text-xs sm:text-sm">Carbs</Label>
                 {editMode ? (
                   <Input
                     type="number"
                     value={editedMacros.carbs}
                     onChange={(e) => setEditedMacros(prev => ({ ...prev, carbs: parseInt(e.target.value) || 0 }))}
-                    className="bg-gray-800 border-gray-600 text-white mt-1"
+                    className="bg-gray-800 border-gray-600 text-white mt-1 text-sm"
                   />
                 ) : (
-                  <p className="text-white font-semibold">{change.proposedCarbs}g</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">{change.proposedCarbs}g</p>
                 )}
               </div>
               <div className="text-center">
-                <Label className="text-gray-400">Fat</Label>
+                <Label className="text-gray-400 text-xs sm:text-sm">Fat</Label>
                 {editMode ? (
                   <Input
                     type="number"
                     value={editedMacros.fat}
                     onChange={(e) => setEditedMacros(prev => ({ ...prev, fat: parseInt(e.target.value) || 0 }))}
-                    className="bg-gray-800 border-gray-600 text-white mt-1"
+                    className="bg-gray-800 border-gray-600 text-white mt-1 text-sm"
                   />
                 ) : (
-                  <p className="text-white font-semibold">{change.proposedFat}g</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">{change.proposedFat}g</p>
                 )}
               </div>
             </div>
 
             <div>
-              <Label className="text-gray-400">Trainer Notes (Optional)</Label>
+              <Label className="text-gray-400 text-xs sm:text-sm">Trainer Notes (Optional)</Label>
               <Textarea
                 value={trainerNotes}
                 onChange={(e) => setTrainerNotes(e.target.value)}
                 placeholder="Add notes for the client..."
-                className="bg-gray-800 border-gray-600 text-white mt-1"
+                className="bg-gray-800 border-gray-600 text-white mt-1 text-sm"
               />
             </div>
 
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
               {editMode ? (
                 <>
                   <Button
@@ -424,7 +424,7 @@ export default function TrainerDashboard() {
                       });
                       setEditMode(false);
                     }}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white text-sm w-full sm:w-auto"
                     disabled={editMacroMutation.isPending}
                   >
                     Save & Approve
@@ -432,7 +432,7 @@ export default function TrainerDashboard() {
                   <Button
                     onClick={() => setEditMode(false)}
                     variant="outline"
-                    className="border-gray-600 text-gray-300"
+                    className="border-gray-600 text-gray-300 text-sm w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
@@ -441,7 +441,7 @@ export default function TrainerDashboard() {
                 <>
                   <Button
                     onClick={() => approveMacroMutation.mutate({ changeId: change.id, notes: trainerNotes })}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white text-sm w-full sm:w-auto"
                     disabled={approveMacroMutation.isPending}
                   >
                     Approve as-is
@@ -449,7 +449,7 @@ export default function TrainerDashboard() {
                   <Button
                     onClick={() => setEditMode(true)}
                     variant="secondary"
-                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 hover:text-white"
+                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 hover:text-white text-sm w-full sm:w-auto"
                   >
                     Edit & Approve
                   </Button>
