@@ -726,9 +726,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Check if hunger level is >= 4 and trigger automatic macro adjustment
+      let macroAdjustmentMessage = "";
+      if (hungerLevel && parseInt(hungerLevel) >= 4) {
+        try {
+          console.log(`High hunger level detected (${hungerLevel}/5), triggering macro adjustment...`);
+          
+          // Get user profile for macro adjustment calculation
+          const user = await storage.getUser(userId);
+          
+          if (user && dailyMacros) {
+            // Calculate hunger-based macro adjustment using AI
+            const openaiModule = await import('./openai');
+            const macroProposal = await openaiModule.aiCoach.calculateHungerBasedMacroAdjustment(
+              user, 
+              dailyMacros, 
+              parseInt(hungerLevel)
+            );
+            
+            // Create macro change request for trainer approval
+            const macroChange = await storage.createMacroChange({
+              userId,
+              proposedCalories: macroProposal.calories,
+              proposedProtein: macroProposal.protein,
+              proposedCarbs: macroProposal.carbs,
+              proposedFat: macroProposal.fat,
+              reason: macroProposal.reasoning,
+              requestedBy: 'ai_system',
+              status: 'pending',
+              isAiGenerated: true,
+              hungerLevel: parseInt(hungerLevel)
+            });
+            
+            macroAdjustmentMessage = ` Your hunger level of ${hungerLevel}/5 suggests your metabolism may be heating up. I've automatically calculated a 50-calorie increase and submitted it to Coach Chassidy for approval.`;
+            
+            console.log(`Macro adjustment created for user ${userId}:`, {
+              changeId: macroChange.id,
+              calories: macroProposal.calories,
+              reason: macroProposal.reasoning
+            });
+          }
+        } catch (error) {
+          console.error("Error creating hunger-based macro adjustment:", error);
+          // Don't fail the screenshot upload if macro adjustment fails
+          macroAdjustmentMessage = ` Your hunger level indicates you may need more food. I'll have Coach Chassidy review your nutrition plan.`;
+        }
+      }
+      
       res.json({
         success: true,
-        message: "Screenshot processed successfully",
+        message: `Screenshot processed successfully.${macroAdjustmentMessage}`,
         extraction,
         dailyMacros
       });

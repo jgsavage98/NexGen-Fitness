@@ -619,6 +619,123 @@ User Profile:
       adjustments: []
     };
   }
+
+  async calculateHungerBasedMacroAdjustment(
+    userProfile: any, 
+    currentMacros: any, 
+    hungerLevel: number
+  ): Promise<MacroProposal> {
+    try {
+      console.log("Calculating hunger-based macro adjustment...");
+      
+      // Get current macro targets or use extracted macros
+      const currentCalories = currentMacros.targetCalories || currentMacros.extractedCalories || 2000;
+      const currentProtein = currentMacros.targetProtein || currentMacros.extractedProtein || 150;
+      const currentCarbs = currentMacros.targetCarbs || currentMacros.extractedCarbs || 200;
+      const currentFat = currentMacros.targetFat || currentMacros.extractedFat || 67;
+      
+      // Calculate current macro percentages
+      const totalCurrentCalories = (currentProtein * 4) + (currentCarbs * 4) + (currentFat * 9);
+      const proteinPercentage = (currentProtein * 4) / totalCurrentCalories;
+      const carbPercentage = (currentCarbs * 4) / totalCurrentCalories;
+      const fatPercentage = (currentFat * 9) / totalCurrentCalories;
+      
+      // Increase calories by 50 due to high hunger level
+      const newCalories = currentCalories + 50;
+      const additionalCalories = 50;
+      
+      // Distribute additional calories proportionally
+      const additionalProteinCalories = additionalCalories * proteinPercentage;
+      const additionalCarbCalories = additionalCalories * carbPercentage;
+      const additionalFatCalories = additionalCalories * fatPercentage;
+      
+      // Convert back to grams
+      const newProtein = Math.round(currentProtein + (additionalProteinCalories / 4));
+      const newCarbs = Math.round(currentCarbs + (additionalCarbCalories / 4));
+      const newFat = Math.round(currentFat + (additionalFatCalories / 9));
+      
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: `You are Coach Chassidy Escobedo, an expert fitness and nutrition coach. A client has reported a hunger level of ${hungerLevel}/5, indicating their metabolism may be heating up. You've calculated a 50-calorie increase distributed proportionally across their current macros.
+
+Current macros: ${currentCalories} calories, ${currentProtein}g protein, ${currentCarbs}g carbs, ${currentFat}g fat
+Proposed adjustment: ${newCalories} calories, ${newProtein}g protein, ${newCarbs}g carbs, ${newFat}g fat
+
+Provide reasoning for this adjustment from your perspective as their coach. Explain why hunger level ${hungerLevel} indicates metabolic adaptation and why this macro increase is appropriate.
+
+Respond with JSON:
+{
+  "calories": ${newCalories},
+  "protein": ${newProtein},
+  "carbs": ${newCarbs}, 
+  "fat": ${newFat},
+  "reasoning": "explanation from Coach Chassidy's perspective using 'I' statements about metabolic adaptation and hunger signals",
+  "requiresTrainerApproval": true
+}`
+          },
+          {
+            role: "user", 
+            content: `Client ${userProfile.firstName} has uploaded their nutrition with hunger level ${hungerLevel}. Please provide reasoning for the macro adjustment.`
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || "{}");
+      
+      return {
+        calories: newCalories,
+        protein: newProtein,
+        carbs: newCarbs,
+        fat: newFat,
+        reasoning: result.reasoning || `Based on your hunger level of ${hungerLevel}/5, I'm recommending a 50-calorie increase to support your metabolic needs. This increase is distributed proportionally across your current macro ratios to maintain nutritional balance while addressing your body's signals for more fuel.`,
+        requiresTrainerApproval: true,
+        weightTrend: 0,
+        adherenceScore: 0,
+        programDay: 0
+      };
+    } catch (error) {
+      console.error("Hunger-based macro adjustment error:", error);
+      
+      // Fallback calculation without AI
+      const currentCalories = currentMacros.targetCalories || currentMacros.extractedCalories || 2000;
+      const currentProtein = currentMacros.targetProtein || currentMacros.extractedProtein || 150;
+      const currentCarbs = currentMacros.targetCarbs || currentMacros.extractedCarbs || 200;
+      const currentFat = currentMacros.targetFat || currentMacros.extractedFat || 67;
+      
+      const totalCurrentCalories = (currentProtein * 4) + (currentCarbs * 4) + (currentFat * 9);
+      const proteinPercentage = (currentProtein * 4) / totalCurrentCalories;
+      const carbPercentage = (currentCarbs * 4) / totalCurrentCalories;
+      const fatPercentage = (currentFat * 9) / totalCurrentCalories;
+      
+      const newCalories = currentCalories + 50;
+      const additionalCalories = 50;
+      
+      const additionalProteinCalories = additionalCalories * proteinPercentage;
+      const additionalCarbCalories = additionalCalories * carbPercentage;
+      const additionalFatCalories = additionalCalories * fatPercentage;
+      
+      const newProtein = Math.round(currentProtein + (additionalProteinCalories / 4));
+      const newCarbs = Math.round(currentCarbs + (additionalCarbCalories / 4));
+      const newFat = Math.round(currentFat + (additionalFatCalories / 9));
+      
+      return {
+        calories: newCalories,
+        protein: newProtein,
+        carbs: newCarbs,
+        fat: newFat,
+        reasoning: `Based on your hunger level of ${hungerLevel}/5, I'm recommending a 50-calorie increase to support your metabolic needs. Higher hunger levels often indicate your metabolism is adapting, and this small increase will help maintain your progress while keeping you satisfied.`,
+        requiresTrainerApproval: true,
+        weightTrend: 0,
+        adherenceScore: 0,
+        programDay: 0
+      };
+    }
+  }
 }
 
 export const aiCoach = new AICoach();
