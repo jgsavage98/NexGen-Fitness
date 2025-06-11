@@ -309,22 +309,34 @@ Your detailed PDF progress report is attached below. Great work on your progress
                   const timelineData = [];
                   const processedDates = new Set();
                   
+                  console.log('Weight Progress Debug - Raw entries:', weightProgress?.weightEntries);
+                  
                   // First, add all actual weight entries
-                  weightProgress.weightEntries.forEach(entry => {
-                    const entryDate = new Date(entry.recordedAt);
-                    const dateKey = entryDate.toDateString();
-                    
-                    if (!processedDates.has(dateKey)) {
-                      timelineData.push({
-                        date: entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  if (weightProgress?.weightEntries) {
+                    weightProgress.weightEntries.forEach(entry => {
+                      const entryDate = new Date(entry.recordedAt);
+                      const dateKey = entryDate.toDateString();
+                      
+                      console.log('Processing entry:', {
                         weight: entry.weight,
-                        goalWeight: weightProgress.goalWeight,
-                        isActualData: true,
-                        sortDate: entryDate.getTime()
+                        recordedAt: entry.recordedAt,
+                        entryDate: entryDate.toString(),
+                        dateKey,
+                        formattedDate: entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                       });
-                      processedDates.add(dateKey);
-                    }
-                  });
+                      
+                      if (!processedDates.has(dateKey)) {
+                        timelineData.push({
+                          date: entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                          weight: entry.weight,
+                          goalWeight: weightProgress.goalWeight,
+                          isActualData: true,
+                          sortDate: entryDate.getTime()
+                        });
+                        processedDates.add(dateKey);
+                      }
+                    });
+                  }
                   
                   // Then add weekly timeline markers for empty weeks (for full 12-week view)
                   for (let week = 0; week < 12; week++) {
@@ -344,7 +356,9 @@ Your detailed PDF progress report is attached below. Great work on your progress
                   }
                   
                   // Sort by date
-                  return timelineData.sort((a, b) => a.sortDate - b.sortDate);
+                  const finalData = timelineData.sort((a, b) => a.sortDate - b.sortDate);
+                  console.log('Weight Progress Debug - Final chart data:', finalData);
+                  return finalData;
                 })()}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis dataKey="date" stroke="#666" fontSize={10} />
