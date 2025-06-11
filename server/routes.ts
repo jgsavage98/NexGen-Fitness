@@ -1587,12 +1587,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select({
           id: macroChanges.id,
           userId: macroChanges.userId,
+          date: macroChanges.date,
           proposedCalories: macroChanges.aiCalories,
           proposedProtein: macroChanges.aiProtein,
           proposedCarbs: macroChanges.aiCarbs,
           proposedFat: macroChanges.aiFat,
           reasoning: macroChanges.aiReasoning,
           requestDate: macroChanges.createdAt,
+          screenshotUrl: macroChanges.screenshotUrl,
+          currentCalories: dailyMacros.extractedCalories,
+          currentProtein: dailyMacros.extractedProtein,
+          currentCarbs: dailyMacros.extractedCarbs,
+          currentFat: dailyMacros.extractedFat,
           user: {
             id: users.id,
             firstName: users.firstName,
@@ -1604,6 +1610,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(macroChanges)
         .innerJoin(users, eq(macroChanges.userId, users.id))
+        .leftJoin(dailyMacros, and(
+          eq(macroChanges.userId, dailyMacros.userId),
+          eq(macroChanges.date, dailyMacros.date)
+        ))
         .where(eq(macroChanges.status, 'pending'));
       
       // Add cache-busting timestamp to force frontend refresh
@@ -1629,7 +1639,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const changeId = parseInt(req.params.changeId);
       const { trainerNotes } = req.body;
       
+      // Get the macro change details before approving
+      const [macroChange] = await db
+        .select({
+          id: macroChanges.id,
+          userId: macroChanges.userId,
+          aiCalories: macroChanges.aiCalories,
+          aiProtein: macroChanges.aiProtein,
+          aiCarbs: macroChanges.aiCarbs,
+          aiFat: macroChanges.aiFat,
+          aiReasoning: macroChanges.aiReasoning,
+          currentCalories: dailyMacros.extractedCalories,
+          currentProtein: dailyMacros.extractedProtein,
+          currentCarbs: dailyMacros.extractedCarbs,
+          currentFat: dailyMacros.extractedFat,
+        })
+        .from(macroChanges)
+        .leftJoin(dailyMacros, and(
+          eq(macroChanges.userId, dailyMacros.userId),
+          eq(macroChanges.date, dailyMacros.date)
+        ))
+        .where(eq(macroChanges.id, changeId));
+      
+      if (!macroChange) {
+        return res.status(404).json({ message: "Macro change not found" });
+      }
+      
       const approvedChange = await storage.approveMacroChange(changeId, trainerId, trainerNotes);
+      
+      // Send notification message to client
+      const notificationMessage = `🎯 Your macro adjustment has been approved!\n\n**Changes:**\n• Calories: ${macroChange.currentCalories || 0} → ${macroChange.aiCalories}\n• Protein: ${macroChange.currentProtein || 0}g → ${macroChange.aiProtein}g\n• Carbs: ${macroChange.currentCarbs || 0}g → ${macroChange.aiCarbs}g\n• Fat: ${macroChange.currentFat || 0}g → ${macroChange.aiFat}g\n\n**Reasoning:** ${macroChange.aiReasoning}${trainerNotes ? `\n\n**Coach Notes:** ${trainerNotes}` : ''}\n\nYour new targets are now active. Keep up the great work! 💪`;
+      
+      await storage.createChatMessage({
+        userId: macroChange.userId,
+        message: notificationMessage,
+        isAI: false,
+        status: 'approved',
+        metadata: {
+          fromCoach: 'true',
+          messageType: 'macro_approval',
+          macroChangeId: changeId
+        }
+      });
+      
       res.json(approvedChange);
     } catch (error) {
       console.error("Error approving macro change:", error);

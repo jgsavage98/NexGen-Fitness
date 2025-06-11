@@ -33,12 +33,18 @@ interface Client {
 interface PendingMacroChange {
   id: number;
   userId: string;
+  date: string;
   proposedCalories: number;
   proposedProtein: number;
   proposedCarbs: number;
   proposedFat: number;
+  currentCalories: number;
+  currentProtein: number;
+  currentCarbs: number;
+  currentFat: number;
   reasoning: string;
   requestDate: string;
+  screenshotUrl: string;
   user: Client;
 }
 
@@ -400,58 +406,131 @@ export default function TrainerDashboard() {
               <p className="text-gray-300 text-xs sm:text-sm bg-gray-800 p-2 sm:p-3 rounded">{change.reasoning}</p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="text-center">
-                <Label className="text-gray-400 text-xs sm:text-sm">Calories</Label>
-                {editMode ? (
-                  <Input
-                    type="number"
-                    value={editedMacros.calories}
-                    onChange={(e) => setEditedMacros(prev => ({ ...prev, calories: parseInt(e.target.value) || 0 }))}
-                    className="bg-gray-800 border-gray-600 text-white mt-1 text-sm"
-                  />
-                ) : (
-                  <p className="text-white font-semibold text-sm sm:text-base">{change.proposedCalories}</p>
-                )}
-              </div>
-              <div className="text-center">
-                <Label className="text-gray-400 text-xs sm:text-sm">Protein</Label>
-                {editMode ? (
-                  <Input
-                    type="number"
-                    value={editedMacros.protein}
-                    onChange={(e) => setEditedMacros(prev => ({ ...prev, protein: parseInt(e.target.value) || 0 }))}
-                    className="bg-gray-800 border-gray-600 text-white mt-1 text-sm"
-                  />
-                ) : (
-                  <p className="text-white font-semibold text-sm sm:text-base">{change.proposedProtein}g</p>
-                )}
-              </div>
-              <div className="text-center">
-                <Label className="text-gray-400 text-xs sm:text-sm">Carbs</Label>
-                {editMode ? (
-                  <Input
-                    type="number"
-                    value={editedMacros.carbs}
-                    onChange={(e) => setEditedMacros(prev => ({ ...prev, carbs: parseInt(e.target.value) || 0 }))}
-                    className="bg-gray-800 border-gray-600 text-white mt-1 text-sm"
-                  />
-                ) : (
-                  <p className="text-white font-semibold text-sm sm:text-base">{change.proposedCarbs}g</p>
-                )}
-              </div>
-              <div className="text-center">
-                <Label className="text-gray-400 text-xs sm:text-sm">Fat</Label>
-                {editMode ? (
-                  <Input
-                    type="number"
-                    value={editedMacros.fat}
-                    onChange={(e) => setEditedMacros(prev => ({ ...prev, fat: parseInt(e.target.value) || 0 }))}
-                    className="bg-gray-800 border-gray-600 text-white mt-1 text-sm"
-                  />
-                ) : (
-                  <p className="text-white font-semibold text-sm sm:text-base">{change.proposedFat}g</p>
-                )}
+            {/* Current vs Proposed Macros Comparison */}
+            <div className="space-y-4">
+              <h4 className="text-white font-semibold text-sm sm:text-base">Macro Comparison:</h4>
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Current Values */}
+                  <div>
+                    <h5 className="text-gray-400 text-xs font-medium mb-3 uppercase tracking-wide">Current</h5>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-3">
+                      <div className="text-center">
+                        <p className="text-gray-400 text-xs">Calories</p>
+                        <p className="text-white font-semibold text-sm">{change.currentCalories || 0}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-400 text-xs">Protein</p>
+                        <p className="text-white font-semibold text-sm">{change.currentProtein || 0}g</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-400 text-xs">Carbs</p>
+                        <p className="text-white font-semibold text-sm">{change.currentCarbs || 0}g</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-400 text-xs">Fat</p>
+                        <p className="text-white font-semibold text-sm">{change.currentFat || 0}g</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow Separator */}
+                  <div className="flex items-center justify-center lg:hidden">
+                    <div className="w-full h-px bg-gray-600"></div>
+                    <span className="px-2 text-gray-400 text-xs">↓</span>
+                    <div className="w-full h-px bg-gray-600"></div>
+                  </div>
+                  <div className="hidden lg:flex items-center justify-center">
+                    <span className="text-gray-400 text-lg">→</span>
+                  </div>
+
+                  {/* Proposed Values */}
+                  <div>
+                    <h5 className="text-green-400 text-xs font-medium mb-3 uppercase tracking-wide">Proposed</h5>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-3">
+                      <div className="text-center">
+                        <p className="text-gray-400 text-xs">Calories</p>
+                        {editMode ? (
+                          <Input
+                            type="number"
+                            value={editedMacros.calories}
+                            onChange={(e) => setEditedMacros(prev => ({ ...prev, calories: parseInt(e.target.value) || 0 }))}
+                            className="bg-gray-700 border-gray-600 text-white h-6 text-xs text-center p-1"
+                          />
+                        ) : (
+                          <p className="text-green-400 font-semibold text-sm">
+                            {change.proposedCalories}
+                            {change.proposedCalories > (change.currentCalories || 0) && (
+                              <span className="text-xs text-green-300 ml-1">
+                                (+{change.proposedCalories - (change.currentCalories || 0)})
+                              </span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-400 text-xs">Protein</p>
+                        {editMode ? (
+                          <Input
+                            type="number"
+                            value={editedMacros.protein}
+                            onChange={(e) => setEditedMacros(prev => ({ ...prev, protein: parseInt(e.target.value) || 0 }))}
+                            className="bg-gray-700 border-gray-600 text-white h-6 text-xs text-center p-1"
+                          />
+                        ) : (
+                          <p className="text-green-400 font-semibold text-sm">
+                            {change.proposedProtein}g
+                            {change.proposedProtein > (change.currentProtein || 0) && (
+                              <span className="text-xs text-green-300 ml-1">
+                                (+{change.proposedProtein - (change.currentProtein || 0)})
+                              </span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-400 text-xs">Carbs</p>
+                        {editMode ? (
+                          <Input
+                            type="number"
+                            value={editedMacros.carbs}
+                            onChange={(e) => setEditedMacros(prev => ({ ...prev, carbs: parseInt(e.target.value) || 0 }))}
+                            className="bg-gray-700 border-gray-600 text-white h-6 text-xs text-center p-1"
+                          />
+                        ) : (
+                          <p className="text-green-400 font-semibold text-sm">
+                            {change.proposedCarbs}g
+                            {change.proposedCarbs > (change.currentCarbs || 0) && (
+                              <span className="text-xs text-green-300 ml-1">
+                                (+{change.proposedCarbs - (change.currentCarbs || 0)})
+                              </span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-400 text-xs">Fat</p>
+                        {editMode ? (
+                          <Input
+                            type="number"
+                            value={editedMacros.fat}
+                            onChange={(e) => setEditedMacros(prev => ({ ...prev, fat: parseInt(e.target.value) || 0 }))}
+                            className="bg-gray-700 border-gray-600 text-white h-6 text-xs text-center p-1"
+                          />
+                        ) : (
+                          <p className="text-green-400 font-semibold text-sm">
+                            {change.proposedFat}g
+                            {change.proposedFat > (change.currentFat || 0) && (
+                              <span className="text-xs text-green-300 ml-1">
+                                (+{change.proposedFat - (change.currentFat || 0)})
+                              </span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
