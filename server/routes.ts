@@ -747,15 +747,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create macro change request for trainer approval
             const macroChange = await storage.createMacroChange({
               userId,
-              proposedCalories: macroProposal.calories,
-              proposedProtein: macroProposal.protein,
-              proposedCarbs: macroProposal.carbs,
-              proposedFat: macroProposal.fat,
-              reason: macroProposal.reasoning,
-              requestedBy: 'ai_system',
+              date: new Date(),
+              aiCalories: macroProposal.calories,
+              aiProtein: macroProposal.protein,
+              aiCarbs: macroProposal.carbs,
+              aiFat: macroProposal.fat,
+              aiReasoning: macroProposal.reasoning,
+              aiProposal: {
+                type: 'hunger_based_adjustment',
+                hungerLevel: parseInt(hungerLevel),
+                requestedBy: 'ai_system',
+                calories: macroProposal.calories,
+                protein: macroProposal.protein,
+                carbs: macroProposal.carbs,
+                fat: macroProposal.fat
+              },
               status: 'pending',
-              isAiGenerated: true,
-              hungerLevel: parseInt(hungerLevel)
+              screenshotUrl: `screenshots/${file.filename}`
             });
             
             macroAdjustmentMessage = ` Your hunger level of ${hungerLevel}/5 suggests your metabolism may be heating up. I've automatically calculated a 50-calorie increase and submitted it to Coach Chassidy for approval.`;
