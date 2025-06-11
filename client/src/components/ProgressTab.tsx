@@ -199,32 +199,87 @@ export default function ProgressTab() {
     avgMacroAdherence: macroAdherence,
   };
 
-  const achievements = [
-    {
-      id: 1,
-      title: "First 5-day streak!",
-      description: "Completed workouts 5 days in a row",
-      icon: "fas fa-trophy",
-      color: "bg-warning",
-      earned: true,
-    },
-    {
-      id: 2,
-      title: "Macro Master",
-      description: "Hit all macro targets for 3 consecutive days",
-      icon: "fas fa-target",
-      color: "bg-success",
-      earned: true,
-    },
-    {
-      id: 3,
-      title: "Strength Gains",
-      description: "Increased bench press by 10lbs",
-      icon: "fas fa-dumbbell",
-      color: "bg-primary-500",
-      earned: false,
-    },
-  ];
+  // Calculate real achievements based on user data
+  const calculateAchievements = () => {
+    const achievements = [];
+    
+    // Weight Loss Achievement
+    if (weightProgress && weightProgress.changeFromBaseline < -1) {
+      achievements.push({
+        id: 1,
+        title: "Weight Loss Progress",
+        description: `Lost ${Math.abs(weightProgress.changeFromBaseline).toFixed(1)} lbs from starting weight`,
+        icon: "fas fa-weight",
+        color: "bg-success",
+        earned: true,
+      });
+    }
+    
+    // Consistency Achievement
+    if (monthlyMacroData.length >= 7) {
+      achievements.push({
+        id: 2,
+        title: "Tracking Champion",
+        description: `Tracked nutrition for ${monthlyMacroData.length} days this month`,
+        icon: "fas fa-chart-line",
+        color: "bg-primary-500",
+        earned: true,
+      });
+    }
+    
+    // Workout Consistency
+    if (monthlyWorkouts.length >= 8) {
+      achievements.push({
+        id: 3,
+        title: "Workout Warrior",
+        description: `Completed ${monthlyWorkouts.length} workouts this month`,
+        icon: "fas fa-dumbbell",
+        color: "bg-warning",
+        earned: true,
+      });
+    }
+    
+    // High Adherence Achievement
+    if (monthlyMacroAdherence >= 80) {
+      achievements.push({
+        id: 4,
+        title: "Macro Master",
+        description: `Achieved ${monthlyMacroAdherence}% nutrition adherence`,
+        icon: "fas fa-target",
+        color: "bg-success",
+        earned: true,
+      });
+    }
+    
+    // Goal Progress Achievement
+    if (monthlyWeightProgress && monthlyWeightProgress.progressPercentage >= 20) {
+      achievements.push({
+        id: 5,
+        title: "Goal Crusher",
+        description: `${Math.round(monthlyWeightProgress.progressPercentage)}% progress toward goal weight`,
+        icon: "fas fa-trophy",
+        color: "bg-success",
+        earned: true,
+      });
+    }
+    
+    // Program Commitment (if they've been active for more than a week)
+    const daysSinceStart = Math.floor((new Date().getTime() - new Date((user as any)?.programStartDate || new Date()).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSinceStart >= 7) {
+      achievements.push({
+        id: 6,
+        title: "Program Commitment", 
+        description: `Active for ${daysSinceStart} days in the program`,
+        icon: "fas fa-calendar-check",
+        color: "bg-primary-500",
+        earned: true,
+      });
+    }
+    
+    return achievements;
+  };
+
+  const achievements = calculateAchievements();
 
   return (
     <div className="px-6 py-6 space-y-6">
