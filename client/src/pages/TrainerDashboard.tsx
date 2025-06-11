@@ -71,6 +71,10 @@ export default function TrainerDashboard() {
   const [selectedChatClient, setSelectedChatClient] = useState<string>("");
   const [newMessage, setNewMessage] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  
+  // Activity filtering state
+  const [activityClientFilter, setActivityClientFilter] = useState<string>("all");
+  const [activityTypeFilter, setActivityTypeFilter] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -159,6 +163,12 @@ export default function TrainerDashboard() {
   // Fetch recent uploads with 3-second refresh interval
   const { data: recentUploads = [] } = useQuery({
     queryKey: ["/api/trainer/recent-uploads"],
+    refetchInterval: 3000, // 3 second polling for real-time updates
+  });
+
+  // Fetch recent weight entries with 3-second refresh interval
+  const { data: recentWeightEntries = [] } = useQuery({
+    queryKey: ["/api/trainer/recent-weight-entries"],
     refetchInterval: 3000, // 3 second polling for real-time updates
   });
 
@@ -650,13 +660,39 @@ export default function TrainerDashboard() {
             {/* Recent Activity */}
             <Card className="bg-surface border-gray-700">
               <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-white text-lg sm:text-xl">Recent Client Activity</CardTitle>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
+                  <CardTitle className="text-white text-lg sm:text-xl">Recent Client Activity</CardTitle>
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                    <select 
+                      className="bg-gray-800 border border-gray-600 text-white rounded px-3 py-1 text-sm"
+                      value={activityClientFilter}
+                      onChange={(e) => setActivityClientFilter(e.target.value)}
+                    >
+                      <option value="all">All Clients</option>
+                      {clients.filter(c => c.onboardingCompleted).map((client) => (
+                        <option key={client.id} value={client.id}>
+                          {client.firstName} {client.lastName}
+                        </option>
+                      ))}
+                    </select>
+                    <select 
+                      className="bg-gray-800 border border-gray-600 text-white rounded px-3 py-1 text-sm"
+                      value={activityTypeFilter}
+                      onChange={(e) => setActivityTypeFilter(e.target.value)}
+                    >
+                      <option value="all">All Activities</option>
+                      <option value="message">Messages</option>
+                      <option value="upload">Uploads</option>
+                      <option value="weight">Weight Logs</option>
+                    </select>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3 sm:space-y-4">
                   {(() => {
-                    // Combine chats and uploads into a unified timeline
-                    const chatActivities = recentChats.map((chat) => ({
+                    // Combine chats, uploads, and weight entries into a unified timeline
+                    const chatActivities = Array.isArray(recentChats) ? recentChats.map((chat) => ({
                       id: `chat-${chat.id}`,
                       type: 'message',
                       userId: chat.userId,
@@ -665,9 +701,9 @@ export default function TrainerDashboard() {
                       timestamp: new Date(chat.createdAt),
                       createdAt: chat.createdAt,
                       isAI: chat.isAI
-                    }));
+                    })) : [];
 
-                    const uploadActivities = recentUploads.map((upload) => ({
+                    const uploadActivities = Array.isArray(recentUploads) ? recentUploads.map((upload) => ({
                       id: `upload-${upload.id}`,
                       type: 'upload',
                       userId: upload.userId,
@@ -677,12 +713,37 @@ export default function TrainerDashboard() {
                       createdAt: upload.createdAt,
                       calories: upload.extractedCalories,
                       confidence: upload.visionConfidence
-                    }));
+                    })) : [];
 
-                    // Sort by timestamp descending and take first 8 items
-                    const combinedActivities = [...chatActivities, ...uploadActivities]
+                    const weightActivities = Array.isArray(recentWeightEntries) ? recentWeightEntries.map((entry) => ({
+                      id: `weight-${entry.id}`,
+                      type: 'weight',
+                      userId: entry.userId,
+                      user: entry.user,
+                      content: `Logged weight: ${entry.weight} lbs`,
+                      timestamp: new Date(entry.recordedAt),
+                      createdAt: entry.recordedAt,
+                      weight: entry.weight,
+                      notes: entry.notes
+                    })) : [];
+
+                    // Combine all activities
+                    let combinedActivities = [...chatActivities, ...uploadActivities, ...weightActivities];
+
+                    // Apply client filter
+                    if (activityClientFilter !== "all") {
+                      combinedActivities = combinedActivities.filter(activity => activity.userId === activityClientFilter);
+                    }
+
+                    // Apply activity type filter
+                    if (activityTypeFilter !== "all") {
+                      combinedActivities = combinedActivities.filter(activity => activity.type === activityTypeFilter);
+                    }
+
+                    // Sort by timestamp descending and take first 10 items
+                    combinedActivities = combinedActivities
                       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-                      .slice(0, 8);
+                      .slice(0, 10);
 
                     if (combinedActivities.length === 0) {
                       return (
@@ -713,6 +774,11 @@ export default function TrainerDashboard() {
                                   {activity.isAI ? "Coach" : "Message"}
                                 </Badge>
                               )}
+                              {activity.type === 'weight' && (
+                                <Badge variant="outline" className="text-xs border-purple-600 text-purple-400">
+                                  Weight Log
+                                </Badge>
+                              )}
                               <span className="text-gray-400 text-sm flex-shrink-0">
                                 {activity.timestamp.toLocaleDateString()}
                               </span>
@@ -721,14 +787,19 @@ export default function TrainerDashboard() {
                           <p className="text-gray-300 text-xs sm:text-sm break-words overflow-hidden">
                             {activity.type === 'message' && (
                               <span className="font-medium">
-                                {activity.isAI ? "Coach: " : "Client: "}
+                                {(activity as any).isAI ? "Coach: " : "Client: "}
                               </span>
                             )}
                             <span className="break-all">
                               {activity.content}
-                              {activity.type === 'upload' && activity.calories && (
+                              {activity.type === 'upload' && (activity as any).calories && (
                                 <span className="text-gray-400 ml-2">
-                                  ({Math.round(activity.calories)} cal)
+                                  ({Math.round((activity as any).calories)} cal)
+                                </span>
+                              )}
+                              {activity.type === 'weight' && (activity as any).notes && (
+                                <span className="text-gray-400 ml-2">
+                                  - {(activity as any).notes}
                                 </span>
                               )}
                             </span>

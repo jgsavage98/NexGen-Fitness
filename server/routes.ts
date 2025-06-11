@@ -1705,6 +1705,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fetch recent weight entries across all clients
+  app.get('/api/trainer/recent-weight-entries', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      const { days = '7' } = req.query;
+      
+      const weightEntries = await storage.getRecentWeightEntriesAllClients(trainerId, parseInt(days as string));
+      res.json(weightEntries);
+    } catch (error) {
+      console.error("Error fetching recent weight entries:", error);
+      res.status(500).json({ message: "Failed to fetch recent weight entries" });
+    }
+  });
+
   // Send message from trainer to client
   app.post('/api/trainer/send-message', isAuthenticated, async (req: any, res) => {
     try {

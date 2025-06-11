@@ -233,6 +233,35 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(dailyMacros.createdAt));
   }
 
+  async getRecentWeightEntriesAllClients(trainerId?: string, days: number = 7): Promise<any[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    return await db
+      .select({
+        id: progressEntries.id,
+        userId: progressEntries.userId,
+        weight: progressEntries.weight,
+        recordedAt: progressEntries.recordedAt,
+        notes: progressEntries.notes,
+        createdAt: progressEntries.recordedAt,
+        user: {
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        }
+      })
+      .from(progressEntries)
+      .innerJoin(users, eq(progressEntries.userId, users.id))
+      .where(
+        and(
+          gte(progressEntries.recordedAt, startDate),
+          eq(users.trainerId, 'coach_chassidy')
+        )
+      )
+      .orderBy(desc(progressEntries.recordedAt));
+  }
+
   // Macro changes operations (Coach Chassidy approval)
   async createMacroChange(change: InsertMacroChanges): Promise<MacroChanges> {
     const [newChange] = await db.insert(macroChanges).values(change).returning();
