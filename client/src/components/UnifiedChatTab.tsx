@@ -43,6 +43,8 @@ export default function UnifiedChatTab() {
   // Fetch all clients sorted by unanswered messages
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/trainer/clients"],
+    refetchInterval: 5000, // Refetch every 5 seconds to update message counts
+    refetchIntervalInBackground: true,
   });
 
   // Calculate total unanswered messages across all clients
@@ -52,11 +54,16 @@ export default function UnifiedChatTab() {
   const { data: clientChatMessages = [], refetch: refetchClientChat } = useQuery({
     queryKey: [`/api/trainer/client-chat/${selectedChatClient}`],
     enabled: !!selectedChatClient,
-    onSuccess: () => {
-      // When chat messages are successfully loaded, invalidate client list to update counters
+    refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
+    refetchIntervalInBackground: true, // Continue polling when tab is not focused
+  });
+
+  // Update client list when chat messages change to refresh unread counts
+  useEffect(() => {
+    if (clientChatMessages.length > 0) {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
     }
-  });
+  }, [clientChatMessages, queryClient]);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {

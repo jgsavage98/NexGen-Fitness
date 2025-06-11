@@ -17,6 +17,8 @@ export default function ChatTab() {
 
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/messages"],
+    refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
+    refetchIntervalInBackground: true, // Continue polling when tab is not focused
   });
 
   const { data: user } = useQuery({
