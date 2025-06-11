@@ -145,7 +145,7 @@ export default function Home() {
               <img 
                 src="/ignite-logo.png" 
                 alt="Ignite" 
-                className="h-8 w-auto"
+                className="h-12 w-auto"
               />
               <Button 
                 variant="ghost" 
