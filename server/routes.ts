@@ -1172,31 +1172,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/exercises', upload.single('gif'), async (req, res) => {
+  app.post('/api/exercises', isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Creating exercise with body:", req.body);
+      
+      const trainerId = req.user.claims.sub;
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied - trainer required" });
+      }
+
       const exerciseData = {
         ...req.body,
         primaryMuscles: Array.isArray(req.body.primaryMuscles) 
           ? req.body.primaryMuscles 
-          : JSON.parse(req.body.primaryMuscles || '[]'),
+          : (typeof req.body.primaryMuscles === 'string' ? JSON.parse(req.body.primaryMuscles) : []),
         secondaryMuscles: Array.isArray(req.body.secondaryMuscles)
           ? req.body.secondaryMuscles
-          : JSON.parse(req.body.secondaryMuscles || '[]'),
-        videoUrl: req.file ? `/exercises/${req.file.filename}` : undefined
+          : (typeof req.body.secondaryMuscles === 'string' ? JSON.parse(req.body.secondaryMuscles) : [])
       };
 
+      console.log("Processed exercise data:", exerciseData);
       const validatedData = insertExerciseSchema.parse(exerciseData);
+      console.log("Validated exercise data:", validatedData);
+      
       const exercise = await storage.createExercise(validatedData);
+      console.log("Created exercise:", exercise);
       res.status(201).json(exercise);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating exercise:", error);
-      if (error.name === 'ZodError') {
+      if (error?.name === 'ZodError') {
         return res.status(400).json({ 
           message: "Validation error", 
           errors: error.issues 
         });
       }
-      res.status(500).json({ message: "Failed to create exercise" });
+      res.status(500).json({ message: "Failed to create exercise", error: error?.message });
     }
   });
 
@@ -2501,23 +2511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/exercises', isAuthenticated, async (req: any, res) => {
-    try {
-      const trainerId = req.user.claims.sub;
-      
-      if (trainerId !== 'coach_chassidy') {
-        return res.status(403).json({ message: "Access denied - trainer required" });
-      }
 
-      const exerciseData = req.body;
-      const newExercise = await storage.createExercise(exerciseData);
-      
-      res.json(newExercise);
-    } catch (error) {
-      console.error("Error creating exercise:", error);
-      res.status(500).json({ message: "Failed to create exercise" });
-    }
-  });
 
   const httpServer = createServer(app);
   
