@@ -1049,11 +1049,19 @@ export default function TrainerDashboard() {
                       >
                         <CardContent className="p-4">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center">
-                              <span className="text-white font-semibold">
-                                {client.firstName[0]}{client.lastName[0]}
-                              </span>
-                            </div>
+                            {client.profileImageUrl ? (
+                              <img
+                                src={client.profileImageUrl}
+                                alt={`${client.firstName} ${client.lastName}`}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center">
+                                <span className="text-white font-semibold">
+                                  {client.firstName[0]}{client.lastName[0]}
+                                </span>
+                              </div>
+                            )}
                             <div>
                               <p className="text-white font-semibold">
                                 {client.firstName} {client.lastName}
