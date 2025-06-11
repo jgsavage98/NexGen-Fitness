@@ -23,14 +23,19 @@ export interface Exercise {
   description?: string;
   instructions?: string;
   category?: string;
+  exerciseType?: string;
+  equipmentType?: string;
+  bodyPart?: string;
   primaryMuscles: string[];
   secondaryMuscles: string[];
   equipment?: string;
   difficulty?: string;
   videoUrl?: string;
   imageUrl?: string;
+  animatedGifUrl?: string;
   regressionId?: number;
   progressionId?: number;
+  createdAt?: string;
 }
 
 export interface WorkoutExercise {
