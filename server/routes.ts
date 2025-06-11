@@ -1670,7 +1670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send notification message to client
       const notificationMessage = `🎯 Your macro adjustment has been approved!\n\n**Changes:**\n• Calories: ${macroChange.currentCalories || 0} → ${macroChange.aiCalories}\n• Protein: ${macroChange.currentProtein || 0}g → ${macroChange.aiProtein}g\n• Carbs: ${macroChange.currentCarbs || 0}g → ${macroChange.aiCarbs}g\n• Fat: ${macroChange.currentFat || 0}g → ${macroChange.aiFat}g\n\n**Reasoning:** ${macroChange.aiReasoning}${trainerNotes ? `\n\n**Coach Notes:** ${trainerNotes}` : ''}\n\nYour new targets are now active. Keep up the great work! 💪`;
       
-      await storage.createChatMessage({
+      await storage.saveChatMessage({
         userId: macroChange.userId,
         message: notificationMessage,
         isAI: false,
@@ -1695,7 +1695,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const changeId = parseInt(req.params.changeId);
       const { finalMacros, trainerNotes } = req.body;
       
+      // Get the macro change details before editing
+      const [macroChange] = await db
+        .select({
+          id: macroChanges.id,
+          userId: macroChanges.userId,
+          currentCalories: dailyMacros.extractedCalories,
+          currentProtein: dailyMacros.extractedProtein,
+          currentCarbs: dailyMacros.extractedCarbs,
+          currentFat: dailyMacros.extractedFat,
+        })
+        .from(macroChanges)
+        .leftJoin(dailyMacros, and(
+          eq(macroChanges.userId, dailyMacros.userId),
+          eq(macroChanges.date, dailyMacros.date)
+        ))
+        .where(eq(macroChanges.id, changeId));
+      
+      if (!macroChange) {
+        return res.status(404).json({ message: "Macro change not found" });
+      }
+      
       const editedChange = await storage.editMacroChange(changeId, trainerId, finalMacros, trainerNotes);
+      
+      // Send notification message to client with edited values
+      const notificationMessage = `🎯 Your macro adjustment has been approved with trainer modifications!\n\n**Changes:**\n• Calories: ${macroChange.currentCalories || 0} → ${finalMacros.calories}\n• Protein: ${macroChange.currentProtein || 0}g → ${finalMacros.protein}g\n• Carbs: ${macroChange.currentCarbs || 0}g → ${finalMacros.carbs}g\n• Fat: ${macroChange.currentFat || 0}g → ${finalMacros.fat}g${trainerNotes ? `\n\n**Coach Notes:** ${trainerNotes}` : ''}\n\nYour new targets are now active. Keep up the great work! 💪`;
+      
+      await storage.saveChatMessage({
+        userId: macroChange.userId,
+        message: notificationMessage,
+        isAI: false,
+        status: 'approved',
+        metadata: {
+          fromCoach: 'true',
+          messageType: 'macro_approval',
+          macroChangeId: changeId
+        }
+      });
+      
       res.json(editedChange);
     } catch (error) {
       console.error("Error editing macro change:", error);
