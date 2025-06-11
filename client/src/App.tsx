@@ -18,26 +18,13 @@ import UserSwitcher from "@/components/UserSwitcher";
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  // Handle auth token from URL parameters
+  // Simple auth token check on mount
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const authToken = urlParams.get('auth');
-    
-    console.log('Auth token check:', { authToken, currentUrl: window.location.href });
-    
-    if (authToken) {
-      console.log('Storing auth token:', authToken);
-      // Store the auth token for API requests
-      localStorage.setItem('url_auth_token', authToken);
-      
-      // Clean up the URL by removing the auth parameter
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('auth');
-      window.history.replaceState({}, '', newUrl.toString());
-      
-      // Force a refresh of auth state
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    }
+    const storedToken = localStorage.getItem('url_auth_token');
+    console.log('Auth state check:', { 
+      hasStoredToken: !!storedToken,
+      currentPath: window.location.pathname
+    });
   }, []);
 
   if (isLoading) {

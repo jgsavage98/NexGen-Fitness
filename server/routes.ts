@@ -226,10 +226,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Dynamic account switching by user ID
-  app.get('/api/auth/switch/:userId', async (req, res) => {
+  // Dynamic account switching by user ID - return JSON instead of redirect
+  app.post('/api/auth/switch', async (req, res) => {
     try {
-      const { userId } = req.params;
+      const { userId } = req.body;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -237,8 +237,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const authToken = Buffer.from(`${userId}:${Date.now()}`).toString('base64');
-      console.log(`Redirecting with ${userId} token:`, authToken);
-      res.redirect(`/?auth=${authToken}`);
+      console.log(`Generated auth token for ${userId}:`, authToken);
+      
+      // Set cookie and return token
+      res.cookie('auth_token', authToken, {
+        httpOnly: false,
+        secure: false,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        sameSite: 'lax'
+      });
+      
+      res.json({ 
+        success: true, 
+        authToken, 
+        userId,
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email
+        }
+      });
     } catch (error) {
       console.error("Error switching to user:", error);
       res.status(500).json({ message: "Failed to switch user" });
