@@ -12,9 +12,12 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Add auth parameter from URL if present
+  // Add auth parameter from localStorage or URL if present
   const urlParams = new URLSearchParams(window.location.search);
-  const authParam = urlParams.get('auth');
+  const urlAuthParam = urlParams.get('auth');
+  const storedAuthParam = localStorage.getItem('url_auth_token');
+  const authParam = urlAuthParam || storedAuthParam;
+  
   let finalUrl = url;
   if (authParam) {
     const separator = url.includes('?') ? '&' : '?';
@@ -53,9 +56,12 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     let url = queryKey[0] as string;
     
-    // Add auth parameter from URL if present
+    // Add auth parameter from localStorage or URL if present
     const urlParams = new URLSearchParams(window.location.search);
-    const authParam = urlParams.get('auth');
+    const urlAuthParam = urlParams.get('auth');
+    const storedAuthParam = localStorage.getItem('url_auth_token');
+    const authParam = urlAuthParam || storedAuthParam;
+    
     if (authParam) {
       const separator = url.includes('?') ? '&' : '?';
       url += `${separator}auth=${authParam}`;

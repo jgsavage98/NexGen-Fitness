@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
@@ -16,6 +17,25 @@ import UserSwitcher from "@/components/UserSwitcher";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
+
+  // Handle auth token from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authToken = urlParams.get('auth');
+    
+    if (authToken) {
+      // Store the auth token for API requests
+      localStorage.setItem('url_auth_token', authToken);
+      
+      // Clean up the URL by removing the auth parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('auth');
+      window.history.replaceState({}, '', newUrl.toString());
+      
+      // Force a refresh of auth state
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    }
+  }, []);
 
   if (isLoading) {
     return (
