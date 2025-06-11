@@ -1735,18 +1735,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Notify client via WebSocket about new message and macro update
-      if (global.wss) {
-        global.wss.clients.forEach((client: any) => {
+      console.log('Attempting to send WebSocket notification...');
+      console.log('Global WSS exists:', !!global.wss);
+      
+      if ((global as any).wss) {
+        const wss = (global as any).wss;
+        console.log('Number of connected clients:', wss.clients.size);
+        
+        const notificationData = {
+          type: 'macro_approved',
+          userId: macroChange.userId,
+          message: notificationMessage,
+          macros: finalMacros,
+          timestamp: new Date().toISOString()
+        };
+        
+        wss.clients.forEach((client: any) => {
           if (client.readyState === 1) { // WebSocket.OPEN
-            client.send(JSON.stringify({
-              type: 'macro_approved',
-              userId: macroChange.userId,
-              message: notificationMessage,
-              macros: finalMacros,
-              timestamp: new Date().toISOString()
-            }));
+            console.log('Sending WebSocket notification to client for user:', macroChange.userId);
+            client.send(JSON.stringify(notificationData));
           }
         });
+      } else {
+        console.log('No WebSocket server available for notifications');
       }
       
       res.json(editedChange);
@@ -2437,6 +2448,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Make WebSocket server globally accessible for notifications
   (global as any).wss = wss;
+  
+  console.log('WebSocket server initialized and stored globally');
   
   wss.on('connection', (ws: WebSocket, req) => {
     console.log('WebSocket connection established');
