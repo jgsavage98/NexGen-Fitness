@@ -14,6 +14,7 @@ import ProfileSettings from "@/pages/ProfileSettings";
 import ClientUploadHistory from "@/components/ClientUploadHistory";
 import ClientProgressTimeSeries from "@/components/ClientProgressTimeSeries";
 import UnifiedChatTab from "@/components/UnifiedChatTab";
+import ExerciseManagement from "@/components/ExerciseManagement";
 import { calculateJourneyDay } from "@/lib/dateUtils";
 
 interface Client {
@@ -1176,6 +1177,11 @@ export default function TrainerDashboard() {
                 </Card>
               )}
             </div>
+          </TabsContent>
+
+          {/* Exercises Tab */}
+          <TabsContent value="exercises" className="space-y-6">
+            <ExerciseManagement />
           </TabsContent>
 
           <TabsContent value="client-history" className="space-y-6">
