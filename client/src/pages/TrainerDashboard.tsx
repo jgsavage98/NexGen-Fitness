@@ -505,7 +505,19 @@ export default function TrainerDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.location.href = '/'}
+                onClick={() => {
+                  // Clear all authentication data
+                  localStorage.removeItem('url_auth_token');
+                  sessionStorage.clear();
+                  
+                  // Clear all cookies
+                  document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                  });
+                  
+                  // Redirect to account selection
+                  window.location.href = '/';
+                }}
                 className="border-gray-300 text-gray-900 bg-white hover:bg-gray-100 hover:border-gray-400 font-medium text-xs sm:text-sm"
               >
                 <LogOut className="w-4 h-4 mr-1 sm:mr-2" />
