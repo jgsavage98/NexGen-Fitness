@@ -55,9 +55,21 @@ export default function ExerciseManagement() {
   // Add new exercise mutation
   const addExerciseMutation = useMutation({
     mutationFn: async (exerciseData: any) => {
-      return await apiRequest("/api/exercises", "POST", exerciseData);
+      console.log("Creating exercise with data:", exerciseData);
+      
+      // Ensure required fields are included
+      const fullExerciseData = {
+        ...exerciseData,
+        category: exerciseData.bodyPart || "General", // Default category
+        primaryMuscles: exerciseData.primaryMuscles || [exerciseData.bodyPart || "General"],
+        secondaryMuscles: exerciseData.secondaryMuscles || []
+      };
+      
+      console.log("Full exercise data:", fullExerciseData);
+      return await apiRequest("/api/exercises", "POST", fullExerciseData);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Exercise created successfully:", data);
       toast({
         title: "Exercise Added",
         description: "New exercise has been successfully added to the database.",
@@ -75,9 +87,10 @@ export default function ExerciseManagement() {
       });
     },
     onError: (error: Error) => {
+      console.error("Exercise creation error:", error);
       toast({
         title: "Error",
-        description: "Failed to add exercise. Please try again.",
+        description: `Failed to add exercise: ${error.message}`,
         variant: "destructive",
       });
     },
