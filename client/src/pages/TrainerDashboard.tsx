@@ -663,7 +663,7 @@ export default function TrainerDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-          <TabsList className="bg-surface border border-gray-700 grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto gap-1 p-1">
+          <TabsList className="bg-surface border border-gray-700 grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 h-auto gap-1 p-1">
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
               <TrendingUp className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
               <span className="hidden sm:inline">Overview</span>
@@ -678,6 +678,11 @@ export default function TrainerDashboard() {
               <MessageSquare className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
               <span className="hidden sm:inline">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0)})</span>
               <span className="sm:hidden text-xs">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0)})</span>
+            </TabsTrigger>
+            <TabsTrigger value="exercises" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
+              <Dumbbell className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="hidden sm:inline">Exercises</span>
+              <span className="sm:hidden text-xs">Exercises</span>
             </TabsTrigger>
             <TabsTrigger value="client-progress" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
               <BarChart3 className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
