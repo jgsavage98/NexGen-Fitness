@@ -160,7 +160,7 @@ export default function ChatTab() {
                     {message.metadata?.hasPdfReport && message.metadata?.pdfUrl && (
                       <div className="mt-3 mb-2">
                         <div 
-                          onClick={() => window.open(message.metadata.pdfUrl, '_blank')}
+                          onClick={() => window.open(message.metadata?.pdfUrl, '_blank')}
                           className="cursor-pointer bg-white/10 border border-primary-300/30 rounded-lg p-3 hover:bg-white/20 transition-colors group"
                         >
                           <div className="flex items-center space-x-3">
@@ -169,7 +169,7 @@ export default function ChatTab() {
                             </div>
                             <div className="flex-1">
                               <p className="text-primary-100 font-medium text-sm">
-                                {message.metadata.reportTitle || 'Progress Report'}
+                                {message.metadata?.reportTitle || 'Progress Report'}
                               </p>
                               <p className="text-primary-300/70 text-xs">
                                 Click to download PDF report
