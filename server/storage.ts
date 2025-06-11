@@ -201,17 +201,6 @@ export class DatabaseStorage implements IStorage {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     
-    const whereClause = trainerId 
-      ? and(
-          gte(dailyMacros.screenshotUploadedAt, startDate),
-          isNotNull(dailyMacros.screenshotUrl),
-          eq(users.trainerId, trainerId)
-        )
-      : and(
-          gte(dailyMacros.screenshotUploadedAt, startDate),
-          isNotNull(dailyMacros.screenshotUrl)
-        );
-
     return await db
       .select({
         id: dailyMacros.id,
@@ -234,8 +223,14 @@ export class DatabaseStorage implements IStorage {
       })
       .from(dailyMacros)
       .innerJoin(users, eq(dailyMacros.userId, users.id))
-      .where(whereClause)
-      .orderBy(desc(dailyMacros.screenshotUploadedAt));
+      .where(
+        and(
+          gte(dailyMacros.createdAt, startDate),
+          sql`${dailyMacros.screenshotUrl} IS NOT NULL`,
+          eq(users.trainerId, 'coach_chassidy')
+        )
+      )
+      .orderBy(desc(dailyMacros.createdAt));
   }
 
   // Macro changes operations (Coach Chassidy approval)

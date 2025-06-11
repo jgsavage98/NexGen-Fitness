@@ -156,6 +156,12 @@ export default function TrainerDashboard() {
     refetchInterval: 10000, // Check for new messages every 10 seconds
   });
 
+  // Fetch recent uploads with 3-second refresh interval
+  const { data: recentUploads = [] } = useQuery({
+    queryKey: ["/api/trainer/recent-uploads"],
+    refetchInterval: 3000, // 3 second polling for real-time updates
+  });
+
   // Approve macro change mutation
   const approveMacroMutation = useMutation({
     mutationFn: async ({ changeId, notes }: { changeId: number; notes?: string }) => {
@@ -303,8 +309,10 @@ export default function TrainerDashboard() {
       // Invalidate client list to update navigation badge counts immediately
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-uploads"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-uploads"] });
     },
     onError: () => {
       toast({
@@ -642,33 +650,89 @@ export default function TrainerDashboard() {
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3 sm:space-y-4">
-                  {recentChats.slice(0, 5).map((chat) => (
-                    <div key={chat.id} className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 bg-gray-800 rounded-lg">
-                      <img
-                        src="/john-profile.png"
-                        alt={`${chat.user.firstName} ${chat.user.lastName}`}
-                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-1">
-                          <span className="text-white font-medium truncate text-sm sm:text-base">
-                            {chat.user.firstName} {chat.user.lastName}
-                          </span>
-                          <span className="text-gray-400 text-sm flex-shrink-0">
-                            {new Date(chat.createdAt).toLocaleDateString()}
-                          </span>
+                  {(() => {
+                    // Combine chats and uploads into a unified timeline
+                    const chatActivities = recentChats.map((chat) => ({
+                      id: `chat-${chat.id}`,
+                      type: 'message',
+                      userId: chat.userId,
+                      user: chat.user,
+                      content: chat.message,
+                      timestamp: new Date(chat.createdAt),
+                      createdAt: chat.createdAt,
+                      isAI: chat.isAI
+                    }));
+
+                    const uploadActivities = recentUploads.map((upload) => ({
+                      id: `upload-${upload.id}`,
+                      type: 'upload',
+                      userId: upload.userId,
+                      user: upload.user,
+                      content: `Uploaded nutrition screenshot for ${new Date(upload.date).toLocaleDateString()}`,
+                      timestamp: new Date(upload.createdAt),
+                      createdAt: upload.createdAt,
+                      calories: upload.extractedCalories,
+                      confidence: upload.visionConfidence
+                    }));
+
+                    // Sort by timestamp descending and take first 8 items
+                    const combinedActivities = [...chatActivities, ...uploadActivities]
+                      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+                      .slice(0, 8);
+
+                    if (combinedActivities.length === 0) {
+                      return (
+                        <p className="text-gray-400 text-center py-4">No recent activity</p>
+                      );
+                    }
+
+                    return combinedActivities.map((activity) => (
+                      <div key={activity.id} className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 bg-gray-800 rounded-lg">
+                        <img
+                          src="/john-profile.png"
+                          alt={`${activity.user.firstName} ${activity.user.lastName}`}
+                          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-1">
+                            <span className="text-white font-medium truncate text-sm sm:text-base">
+                              {activity.user.firstName} {activity.user.lastName}
+                            </span>
+                            <div className="flex items-center space-x-2">
+                              {activity.type === 'upload' && (
+                                <Badge variant="outline" className="text-xs border-green-600 text-green-400">
+                                  Upload
+                                </Badge>
+                              )}
+                              {activity.type === 'message' && (
+                                <Badge variant="outline" className="text-xs border-blue-600 text-blue-400">
+                                  {activity.isAI ? "Coach" : "Message"}
+                                </Badge>
+                              )}
+                              <span className="text-gray-400 text-sm flex-shrink-0">
+                                {activity.timestamp.toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-gray-300 text-xs sm:text-sm break-words overflow-hidden">
+                            {activity.type === 'message' && (
+                              <span className="font-medium">
+                                {activity.isAI ? "Coach: " : "Client: "}
+                              </span>
+                            )}
+                            <span className="break-all">
+                              {activity.content}
+                              {activity.type === 'upload' && activity.calories && (
+                                <span className="text-gray-400 ml-2">
+                                  ({Math.round(activity.calories)} cal)
+                                </span>
+                              )}
+                            </span>
+                          </p>
                         </div>
-                        <p className="text-gray-300 text-xs sm:text-sm break-words overflow-hidden">
-                          <span className="font-medium">
-                            {chat.isAI ? "Coach: " : "Client: "}
-                          </span>
-                          <span className="break-all">
-                            {chat.message}
-                          </span>
-                        </p>
                       </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </CardContent>
             </Card>
