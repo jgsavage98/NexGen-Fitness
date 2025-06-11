@@ -1724,14 +1724,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.saveChatMessage({
         userId: macroChange.userId,
         message: notificationMessage,
-        isAI: false,
+        isAI: true, // Mark as coach message
         status: 'approved',
         metadata: {
           fromCoach: 'true',
           messageType: 'macro_approval',
-          macroChangeId: changeId
+          macroChangeId: changeId,
+          trainerId: trainerId
         }
       });
+
+      // Notify client via WebSocket about new message and macro update
+      if (global.wss) {
+        global.wss.clients.forEach((client: any) => {
+          if (client.readyState === 1) { // WebSocket.OPEN
+            client.send(JSON.stringify({
+              type: 'macro_approved',
+              userId: macroChange.userId,
+              message: notificationMessage,
+              macros: finalMacros,
+              timestamp: new Date().toISOString()
+            }));
+          }
+        });
+      }
       
       res.json(editedChange);
     } catch (error) {
@@ -2418,6 +2434,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // WebSocket server for real-time chat
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Make WebSocket server globally accessible for notifications
+  (global as any).wss = wss;
   
   wss.on('connection', (ws: WebSocket, req) => {
     console.log('WebSocket connection established');
