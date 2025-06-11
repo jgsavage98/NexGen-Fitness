@@ -471,9 +471,9 @@ export default function TrainerDashboard() {
     <div className="min-h-screen bg-dark text-white">
       {/* Header */}
       <div className="border-b border-gray-700 bg-surface">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <button
                 onClick={() => setShowProfileSettings(true)}
                 className="flex-shrink-0 rounded-full hover:ring-2 hover:ring-white/20 transition-all"
@@ -481,20 +481,20 @@ export default function TrainerDashboard() {
                 <img
                   src="/chassidy-profile.jpeg"
                   alt="Coach Chassidy"
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                 />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-white">Coach Chassidy Dashboard</h1>
-                <p className="text-gray-400">Personal Trainer & Nutrition Coach</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">Coach Chassidy Dashboard</h1>
+                <p className="text-sm text-gray-400 hidden sm:block">Personal Trainer & Nutrition Coach</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Badge variant="outline" className="text-green-400 border-green-400">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <Badge variant="outline" className="text-green-400 border-green-400 text-xs">
                 {clients.length} Active Clients
               </Badge>
               <div className="relative">
-                <Badge variant="outline" className={`${pendingChanges.length > 0 ? 'text-yellow-400 border-yellow-400 animate-pulse' : 'text-gray-400 border-gray-400'}`}>
+                <Badge variant="outline" className={`text-xs ${pendingChanges.length > 0 ? 'text-yellow-400 border-yellow-400 animate-pulse' : 'text-gray-400 border-gray-400'}`}>
                   <Bell className="w-3 h-3 mr-1" />
                   {pendingChanges.length} Pending Reviews
                 </Badge>
@@ -506,94 +506,101 @@ export default function TrainerDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={() => window.location.href = '/'}
-                className="border-gray-300 text-gray-900 bg-white hover:bg-gray-100 hover:border-gray-400 font-medium"
+                className="border-gray-300 text-gray-900 bg-white hover:bg-gray-100 hover:border-gray-400 font-medium text-xs sm:text-sm"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Switch Account
+                <LogOut className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Switch Account</span>
+                <span className="sm:hidden">Switch</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-surface border border-gray-700">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-primary-500">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Overview
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+          <TabsList className="bg-surface border border-gray-700 grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto gap-1 p-1">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
+              <TrendingUp className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="hidden sm:inline">Overview</span>
+              <span className="sm:hidden text-xs">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="macro-reviews" className="data-[state=active]:bg-primary-500">
-              <Settings className="w-4 h-4 mr-2" />
-              Macro Reviews ({pendingChanges.length})
+            <TabsTrigger value="macro-reviews" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
+              <Settings className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="hidden sm:inline">Macro Reviews ({pendingChanges.length})</span>
+              <span className="sm:hidden text-xs">Reviews ({pendingChanges.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="chat" className="data-[state=active]:bg-primary-500">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0)})
+            <TabsTrigger value="chat" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
+              <MessageSquare className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="hidden sm:inline">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0)})</span>
+              <span className="sm:hidden text-xs">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0)})</span>
             </TabsTrigger>
-            <TabsTrigger value="client-progress" className="data-[state=active]:bg-primary-500">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Client Progress
+            <TabsTrigger value="client-progress" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
+              <BarChart3 className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="hidden sm:inline">Client Progress</span>
+              <span className="sm:hidden text-xs">Progress</span>
             </TabsTrigger>
-            <TabsTrigger value="client-setup" className="data-[state=active]:bg-primary-500">
-              <User className="w-4 h-4 mr-2" />
-              Client Setup
+            <TabsTrigger value="client-setup" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
+              <User className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="hidden sm:inline">Client Setup</span>
+              <span className="sm:hidden text-xs">Setup</span>
             </TabsTrigger>
-            <TabsTrigger value="client-history" className="data-[state=active]:bg-primary-500">
-              <Calendar className="w-4 h-4 mr-2" />
-              Upload History
+            <TabsTrigger value="client-history" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
+              <Calendar className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="hidden sm:inline">Upload History</span>
+              <span className="sm:hidden text-xs">History</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               <Card className="bg-surface border-gray-700">
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-400 text-sm">Total Clients</p>
-                      <p className="text-2xl font-bold text-white">{clients.length}</p>
+                      <p className="text-gray-400 text-xs sm:text-sm">Total Clients</p>
+                      <p className="text-xl sm:text-2xl font-bold text-white">{clients.length}</p>
                     </div>
-                    <User className="w-8 h-8 text-primary-500" />
+                    <User className="w-6 h-6 sm:w-8 sm:h-8 text-primary-500" />
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-surface border-gray-700">
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-400 text-sm">Pending Reviews</p>
-                      <p className="text-2xl font-bold text-yellow-400">{pendingChanges.length}</p>
+                      <p className="text-gray-400 text-xs sm:text-sm">Pending Reviews</p>
+                      <p className="text-xl sm:text-2xl font-bold text-yellow-400">{pendingChanges.length}</p>
                     </div>
-                    <Settings className="w-8 h-8 text-yellow-500" />
+                    <Settings className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-surface border-gray-700">
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-400 text-sm">Recent Messages</p>
-                      <p className="text-2xl font-bold text-white">{recentChats.length}</p>
+                      <p className="text-gray-400 text-xs sm:text-sm">Recent Messages</p>
+                      <p className="text-xl sm:text-2xl font-bold text-white">{recentChats.length}</p>
                     </div>
-                    <MessageSquare className="w-8 h-8 text-primary-500" />
+                    <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-primary-500" />
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-surface border-gray-700">
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-400 text-sm">Active Programs</p>
-                      <p className="text-2xl font-bold text-green-400">
+                      <p className="text-gray-400 text-xs sm:text-sm">Active Programs</p>
+                      <p className="text-xl sm:text-2xl font-bold text-green-400">
                         {clients.filter(c => c.onboardingCompleted).length}
                       </p>
                     </div>
-                    <Dumbbell className="w-8 h-8 text-green-500" />
+                    <Dumbbell className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
                   </div>
                 </CardContent>
               </Card>
@@ -601,28 +608,28 @@ export default function TrainerDashboard() {
 
             {/* Recent Activity */}
             <Card className="bg-surface border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white">Recent Client Activity</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-white text-lg sm:text-xl">Recent Client Activity</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-3 sm:space-y-4">
                   {recentChats.slice(0, 5).map((chat) => (
-                    <div key={chat.id} className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
+                    <div key={chat.id} className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 bg-gray-800 rounded-lg">
                       <img
                         src="/john-profile.png"
                         alt={`${chat.user.firstName} ${chat.user.lastName}`}
-                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-white font-medium truncate">
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-1">
+                          <span className="text-white font-medium truncate text-sm sm:text-base">
                             {chat.user.firstName} {chat.user.lastName}
                           </span>
                           <span className="text-gray-400 text-sm flex-shrink-0">
                             {new Date(chat.createdAt).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="text-gray-300 text-sm break-words overflow-hidden">
+                        <p className="text-gray-300 text-xs sm:text-sm break-words overflow-hidden">
                           <span className="font-medium">
                             {chat.isAI ? "Coach: " : "Client: "}
                           </span>
@@ -638,23 +645,23 @@ export default function TrainerDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="macro-reviews" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">Pending Macro Adjustments</h2>
-              <Badge variant="outline" className="text-yellow-400 border-yellow-400">
+          <TabsContent value="macro-reviews" className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+              <h2 className="text-lg sm:text-xl font-bold text-white">Pending Macro Adjustments</h2>
+              <Badge variant="outline" className="text-yellow-400 border-yellow-400 text-xs">
                 {pendingChanges.length} Reviews Needed
               </Badge>
             </div>
 
             {pendingChanges.length === 0 ? (
               <Card className="bg-surface border-gray-700">
-                <CardContent className="p-8 text-center">
-                  <Settings className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">No pending macro adjustments to review</p>
+                <CardContent className="p-6 sm:p-8 text-center">
+                  <Settings className="w-10 h-10 sm:w-12 sm:h-12 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400 text-sm sm:text-base">No pending macro adjustments to review</p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {pendingChanges.map((change) => (
                   <MacroChangeCard key={change.id} change={change} />
                 ))}
