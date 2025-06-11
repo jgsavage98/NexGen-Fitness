@@ -26,6 +26,16 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   
+  // Try to embed the Ignite logo
+  let logoImage = null;
+  try {
+    const logoPath = path.join(process.cwd(), 'public', 'ignite-logo.png');
+    const logoBytes = await fs.readFile(logoPath);
+    logoImage = await pdfDoc.embedPng(logoBytes);
+  } catch (error) {
+    console.log('Logo not found, proceeding without logo');
+  }
+  
   // Colors
   const primaryBlue = rgb(0.23, 0.51, 0.96); // #3B82F6
   const darkGray = rgb(0.22, 0.26, 0.32); // #374151
@@ -36,7 +46,7 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
   
   let yPosition = height - 40;
   
-  // Header Section
+  // Header Section with Logo
   page.drawText('Progress Report', {
     x: 50,
     y: yPosition,
@@ -45,10 +55,22 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
     color: darkGray,
   });
   
-  // Date in top right
+  // Add Ignite logo on the right side
+  if (logoImage) {
+    const logoWidth = 60;
+    const logoHeight = 40;
+    page.drawImage(logoImage, {
+      x: width - logoWidth - 50,
+      y: yPosition - 10,
+      width: logoWidth,
+      height: logoHeight,
+    });
+  }
+  
+  // Date below logo
   page.drawText(data.reportDate, {
     x: width - 150,
-    y: yPosition,
+    y: yPosition - 50,
     size: 10,
     font: helveticaFont,
     color: lightGray,

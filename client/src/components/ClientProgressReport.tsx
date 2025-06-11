@@ -257,11 +257,20 @@ Your detailed PDF progress report is attached below. Great work on your progress
         {/* Report Content */}
         <div id="progress-report" className="p-8 text-gray-900">
           {/* Header */}
-          <div className="text-center mb-8 border-b-2 border-gray-300 pb-6">
-            <h1 className="text-3xl font-bold mb-2">Progress Report</h1>
-            <h2 className="text-2xl text-gray-700 mb-2">{client.firstName} {client.lastName}</h2>
-            <p className="text-gray-600">Report Generated: {reportDate}</p>
-            <p className="text-gray-600">Coach: Chassidy Escobedo</p>
+          <div className="flex justify-between items-start mb-8 border-b-2 border-gray-300 pb-6">
+            <div className="text-center flex-1">
+              <h1 className="text-3xl font-bold mb-2">Progress Report</h1>
+              <h2 className="text-2xl text-gray-700 mb-2">{client.firstName} {client.lastName}</h2>
+              <p className="text-gray-600">Report Generated: {reportDate}</p>
+              <p className="text-gray-600">Coach: Chassidy Escobedo</p>
+            </div>
+            <div className="flex-shrink-0 ml-8">
+              <img 
+                src="/ignite-logo.png" 
+                alt="Ignite" 
+                className="h-20 w-auto"
+              />
+            </div>
           </div>
 
           {/* Key Metrics Grid */}
