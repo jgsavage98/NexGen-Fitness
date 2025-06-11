@@ -35,7 +35,8 @@ export default function Home() {
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ['/api/chat/unread-count'],
     retry: false,
-    refetchInterval: 30000, // Refetch every 30 seconds to check for new messages
+    refetchInterval: 3000, // Refetch every 3 seconds to match chat message polling
+    refetchIntervalInBackground: true,
   });
 
   const isPendingApproval = macroTargets?.status === 'pending_trainer_approval' || false;
@@ -49,6 +50,8 @@ export default function Home() {
     onSuccess: () => {
       // Invalidate unread count to refresh the badge
       queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
+      // Force immediate refetch to ensure badge updates
+      queryClient.refetchQueries({ queryKey: ['/api/chat/unread-count'] });
     }
   });
 

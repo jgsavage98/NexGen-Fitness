@@ -32,6 +32,7 @@ export default function ChatTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/unread-count"] });
       setNewMessage("");
     },
     onError: () => {
@@ -63,6 +64,7 @@ export default function ChatTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/unread-count"] });
       setIsRecording(false);
     },
     onError: () => {
