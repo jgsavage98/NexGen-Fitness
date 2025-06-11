@@ -182,6 +182,10 @@ export default function TrainerDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-macro-changes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-uploads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-weight-entries"] });
       toast({
         title: "Success",
         description: "Macro change approved successfully",
@@ -216,6 +220,10 @@ export default function TrainerDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-macro-changes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-uploads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-weight-entries"] });
       toast({
         title: "Success",
         description: "Macro change edited and approved",
@@ -248,9 +256,11 @@ export default function TrainerDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-uploads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-weight-entries"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-chats"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-uploads"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-weight-entries"] });
       toast({
         title: "Success",
         description: "Chat message approved and sent to client",
@@ -280,9 +290,11 @@ export default function TrainerDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-uploads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-weight-entries"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-chats"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-uploads"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-weight-entries"] });
       toast({
         title: "Success", 
         description: "Chat message rejected",
@@ -324,9 +336,11 @@ export default function TrainerDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-uploads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-weight-entries"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-chats"] });
       queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-uploads"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/recent-weight-entries"] });
     },
     onError: () => {
       toast({
