@@ -85,6 +85,8 @@ export default function TrainerDashboard() {
     queryKey: ["/api/trainer/clients"],
     staleTime: 0,
     refetchOnMount: true,
+    refetchInterval: 2000, // Refetch every 2 seconds to update message counts in real-time
+    refetchIntervalInBackground: true,
   });
 
   // Debug logging for clients query
@@ -225,6 +227,8 @@ export default function TrainerDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-chat-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
       toast({
         title: "Success",
         description: "Chat message approved and sent to client",
@@ -251,6 +255,8 @@ export default function TrainerDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-chat-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
       toast({
         title: "Success", 
         description: "Chat message rejected",
@@ -288,6 +294,9 @@ export default function TrainerDashboard() {
       setNewMessage("");
       // Refetch chat messages to show the new message
       refetchClientChat();
+      // Invalidate client list to update navigation badge counts immediately
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
     },
     onError: () => {
       toast({
