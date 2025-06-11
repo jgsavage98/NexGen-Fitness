@@ -57,7 +57,9 @@ export default function UserSwitcher() {
       // Store the auth token
       if (data.authToken) {
         localStorage.setItem('url_auth_token', data.authToken);
-        console.log('Stored auth token:', data.authToken);
+        // Set cookie immediately for future requests
+        document.cookie = `auth_token=${data.authToken}; path=/; max-age=${7 * 24 * 60 * 60}; samesite=lax`;
+        console.log('Stored auth token and set cookie:', data.authToken);
       }
       
       // Invalidate auth queries to refresh user state
