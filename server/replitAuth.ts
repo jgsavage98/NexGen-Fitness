@@ -201,28 +201,24 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Development mode: check multiple auth sources
-  if (process.env.NODE_ENV === 'development') {
-    const session = req.session as any;
-    const cookieToken = req.cookies?.auth_token;
-    const urlAuth = req.query.auth as string;
-    const authHeader = req.headers.authorization;
-    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-    
-    console.log('Auth check:', { 
-      hasCookie: !!cookieToken, 
-      hasBearer: !!bearerToken,
-      hasUrlAuth: !!urlAuth,
-      path: req.path
-    });
-    
-    // Try multiple auth sources in order of preference
-    const authToken = bearerToken || cookieToken || urlAuth;
-    
-    if (!authToken) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
+  // Check for demo authentication tokens first (works in both dev and production)
+  const cookieToken = req.cookies?.auth_token;
+  const urlAuth = req.query.auth as string;
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  
+  console.log('Auth check:', { 
+    hasCookie: !!cookieToken, 
+    hasBearer: !!bearerToken,
+    hasUrlAuth: !!urlAuth,
+    path: req.path,
+    nodeEnv: process.env.NODE_ENV
+  });
+  
+  // Try demo auth tokens first
+  const authToken = bearerToken || cookieToken || urlAuth;
+  
+  if (authToken) {
     try {
       // Decode the auth token
       const decoded = Buffer.from(authToken, 'base64').toString();
@@ -242,39 +238,43 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
         return next();
       } else {
         console.log('User not found for token:', userId);
-        return res.status(401).json({ message: "Unauthorized" });
+        // Fall through to Replit auth if demo auth fails
       }
     } catch (error) {
-      console.error('Token decode error:', error);
+      console.error('Demo token decode error:', error);
+      // Fall through to Replit auth if demo auth fails
+    }
+  }
+
+  // Fallback to Replit passport authentication
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    const user = req.user as any;
+    
+    if (!user.expires_at) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    if (now <= user.expires_at) {
+      return next();
+    }
+
+    // Try to refresh token if expired
+    const refreshToken = user.refresh_token;
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const config = await getOidcConfig();
+      const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+      updateUserSession(user, tokenResponse);
+      return next();
+    } catch (error) {
       return res.status(401).json({ message: "Unauthorized" });
     }
   }
 
-  // Production mode: use passport authentication
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user.expires_at) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
-    return next();
-  }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
+  // No authentication found
+  return res.status(401).json({ message: "Unauthorized" });
 };
