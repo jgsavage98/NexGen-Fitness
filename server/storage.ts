@@ -799,10 +799,11 @@ export class DatabaseStorage implements IStorage {
           ne(chatMessages.userId, trainerId), // Not from the trainer
           eq(chatMessages.isAI, false),
           eq(chatMessages.chatType, 'group'), // Use the chatType column directly
-          sql`(${chatMessages.metadata} IS NULL OR LENGTH(${chatMessages.metadata}) = 0 OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`
+          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}::text = '""' OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`
         )
       );
 
+    console.log(`Group chat unread count for trainer ${trainerId}:`, unreadMessages.length);
     return unreadMessages.length;
   }
 
