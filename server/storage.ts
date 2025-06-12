@@ -759,7 +759,7 @@ export class DatabaseStorage implements IStorage {
           eq(chatMessages.isAI, false),
           sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'fromCoach' != 'true')`,
           sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`,
-          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'chatType' != 'group')`
+          ne(chatMessages.chatType, 'group') // Use the chatType column directly
         )
       )
       .orderBy(desc(chatMessages.createdAt))
@@ -780,7 +780,7 @@ export class DatabaseStorage implements IStorage {
           eq(chatMessages.userId, clientId),
           sql`${chatMessages.metadata}->>'fromCoach' = 'true'`,
           sql`${chatMessages.createdAt} > ${latestUnviewedMessageTime}`,
-          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'chatType' != 'group')`
+          ne(chatMessages.chatType, 'group') // Use the chatType column directly
         )
       )
       .limit(1);
@@ -798,8 +798,8 @@ export class DatabaseStorage implements IStorage {
         and(
           ne(chatMessages.userId, trainerId), // Not from the trainer
           eq(chatMessages.isAI, false),
-          sql`${chatMessages.metadata}->>'chatType' = 'group'`,
-          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`
+          eq(chatMessages.chatType, 'group'), // Use the chatType column directly
+          sql`(${chatMessages.metadata} IS NULL OR LENGTH(${chatMessages.metadata}) = 0 OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`
         )
       );
 
