@@ -858,8 +858,19 @@ export default function TrainerDashboard() {
                       // Determine profile image and display name
                       let profileImage = "/john-profile.png";
                       let displayName = `${activity.user?.firstName || 'Unknown'} ${activity.user?.lastName || 'User'}`;
+                      let senderName = "";
                       
-                      if (isCoachMessage) {
+                      if (isGroupChatMessage) {
+                        // For group chat messages, show group icon and "Group Chat" name
+                        profileImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSIjNkY3Rjg5Ii8+CjxwYXRoIGQ9Ik0xOC41IDE0QzIwLjE1NjkgMTQgMjEuNSAxMi42NTY5IDIxLjUgMTFDMjEuNSA5LjM0MzE1IDIwLjE1NjkgOCAxOC41IDhDMTYuODQzMSA4IDE1LjUgOS4zNDMxNSAxNS41IDExQzE1LjUgMTIuNjU2OSAxNi44NDMxIDE0IDE4LjUgMTRaIiBmaWxsPSIjNkY3Rjg5Ii8+CjxwYXRoIGQ9Ik01LjUgMTRDNy4xNTY4NSAxNCA4LjUgMTIuNjU2OSA4LjUgMTFDOC41IDkuMzQzMTUgNy4xNTY4NSA4IDUuNSA4QzMuODQzMTUgOCAyLjUgOS4zNDMxNSAyLjUgMTFDMi41IDEyLjY1NjkgMy44NDMxNSAxNCA1LjUgMTRaIiBmaWxsPSIjNkY3Rjg5Ii8+CjxwYXRoIGQ9Ik0xMiAxNkM5IDMuNyAxNkMzLjcgMTggMy43IDE4QzEuNjUgMTggMCAxOS42NSAwIDIyVjIySDI0VjIyQzI0IDE5LjY1IDIyLjM1IDE4IDIwIDE4QzIwIDE4IDEzLjEgMTYgMTIgMTZaIiBmaWxsPSIjNkY3Rjg5Ii8+Cjwvc3ZnPgo=";
+                        displayName = "Group Chat";
+                        // Get sender name based on user ID
+                        if (isCoachMessage) {
+                          senderName = "Chassidy Escobedo";
+                        } else {
+                          senderName = `${activity.user?.firstName || 'Unknown'} ${activity.user?.lastName || 'User'}`;
+                        }
+                      } else if (isCoachMessage) {
                         profileImage = "/attached_assets/CE Bio Image_1749399911915.jpeg";
                         displayName = "Chassidy Escobedo";
                       } else if (activity.user?.profileImageUrl) {
@@ -902,7 +913,7 @@ export default function TrainerDashboard() {
                             <p className="text-gray-300 text-xs sm:text-sm break-words overflow-hidden">
                               {activity.type === 'message' && (
                                 <span className="font-medium">
-                                  {isGroupChatMessage ? "Group: " : ((activity as any).isAI ? "Coach: " : "Client: ")}
+                                  {isGroupChatMessage ? `${senderName}: ` : ((activity as any).isAI ? "Coach: " : "Client: ")}
                                 </span>
                               )}
                               <span className="break-all">
