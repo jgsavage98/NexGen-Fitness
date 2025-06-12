@@ -88,6 +88,7 @@ export interface IStorage {
   getUnreadMessagesCount(userId: string): Promise<number>;
   getGroupChatUnreadCount(userId: string): Promise<number>;
   markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void>;
+  markGroupChatAsViewed(userId: string): Promise<void>;
   
   // Trainer chat operations
   getClientChatMessages(clientId: string, trainerId: string, limit?: number): Promise<ChatMessage[]>;
@@ -641,8 +642,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGroupChatUnreadCount(userId: string): Promise<number> {
-    // Count unread group chat messages from other participants (not from this user)
-    const groupResult = await db.select({ count: sql<number>`count(*)` })
+    // Get all group chat messages from other participants
+    const groupMessages = await db
+      .select()
       .from(chatMessages)
       .where(
         and(
@@ -651,8 +653,20 @@ export class DatabaseStorage implements IStorage {
           eq(chatMessages.isAI, false)
         )
       );
-    
-    return Number(groupResult[0]?.count) || 0;
+
+    // Count messages that haven't been viewed by this user
+    let unreadCount = 0;
+    for (const message of groupMessages) {
+      const metadata = (message.metadata as any) || {};
+      const viewedBy = metadata.viewedBy || [];
+      
+      if (!viewedBy.includes(userId)) {
+        unreadCount++;
+      }
+    }
+
+    console.log(`Group chat unread count for user ${userId}:`, unreadCount);
+    return unreadCount;
   }
 
   async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
@@ -682,6 +696,42 @@ export class DatabaseStorage implements IStorage {
           )
         );
     }
+  }
+
+  async markGroupChatAsViewed(userId: string): Promise<void> {
+    // Mark all group chat messages from OTHER users as viewed by this user
+    // We update the metadata to indicate this user has viewed the messages
+    const groupMessages = await db
+      .select()
+      .from(chatMessages)
+      .where(
+        and(
+          ne(chatMessages.userId, userId), // Not from this user
+          eq(chatMessages.chatType, 'group'),
+          eq(chatMessages.isAI, false)
+        )
+      );
+
+    for (const message of groupMessages) {
+      const currentMetadata = (message.metadata as any) || {};
+      const viewedBy = currentMetadata.viewedBy || [];
+      
+      if (!viewedBy.includes(userId)) {
+        viewedBy.push(userId);
+        
+        await db
+          .update(chatMessages)
+          .set({ 
+            metadata: {
+              ...currentMetadata,
+              viewedBy
+            }
+          })
+          .where(eq(chatMessages.id, message.id));
+      }
+    }
+    
+    console.log(`Marked group chat messages as viewed by user ${userId}`);
   }
 
   // Progress operations

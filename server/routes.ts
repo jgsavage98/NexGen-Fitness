@@ -974,6 +974,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark group chat as viewed
+  app.post('/api/chat/mark-group-viewed', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.markGroupChatAsViewed(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking group chat as viewed:", error);
+      res.status(500).json({ message: "Failed to mark group chat as viewed" });
+    }
+  });
+
   // Trainer chat routes - moved to proper location with authentication
 
   app.get('/api/trainer/pending-chat-approvals', isAuthenticated, async (req: any, res) => {
