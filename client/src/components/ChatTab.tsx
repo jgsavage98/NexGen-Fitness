@@ -146,10 +146,23 @@ export default function ChatTab() {
 
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      return date.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } else {
+      return date.toLocaleString([], { 
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    }
   };
 
   return (
