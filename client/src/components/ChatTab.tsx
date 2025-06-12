@@ -16,6 +16,16 @@ export default function ChatTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Get total unread count
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ['/api/chat/unread-count'],
+    retry: false,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
+  const totalUnreadCount = Number(unreadData?.count) || 0;
+
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/messages", chatType],
     queryFn: async () => {

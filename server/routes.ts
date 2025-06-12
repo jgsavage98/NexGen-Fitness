@@ -940,6 +940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const count = await storage.getUnreadMessagesCount(userId);
+      console.log(`Client ${userId} unread count:`, count);
       res.json({ count: Number(count) });
     } catch (error) {
       console.error("Error fetching unread messages count:", error);

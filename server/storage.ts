@@ -615,19 +615,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnreadMessagesCount(userId: string): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` })
+    // Count individual chat messages (AI responses and coach messages to this user)
+    const individualResult = await db.select({ count: sql<number>`count(*)` })
       .from(chatMessages)
       .where(
         and(
           eq(chatMessages.userId, userId),
           eq(chatMessages.isRead, false),
           eq(chatMessages.status, 'approved'),
+          eq(chatMessages.chatType, 'individual'),
           // Count approved AI responses OR messages from coach (not user's own messages)
           eq(chatMessages.isAI, true)
         )
       );
+
+    // Count unread group chat messages from other participants (not from this user)
+    const groupResult = await db.select({ count: sql<number>`count(*)` })
+      .from(chatMessages)
+      .where(
+        and(
+          ne(chatMessages.userId, userId), // Not from this user
+          eq(chatMessages.chatType, 'group'),
+          eq(chatMessages.isAI, false),
+          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}::text = '""' OR ${chatMessages.metadata}->>'clientViewed_${userId}' != 'true')`
+        )
+      );
     
-    return Number(result[0]?.count) || 0;
+    const individualCount = Number(individualResult[0]?.count) || 0;
+    const groupCount = Number(groupResult[0]?.count) || 0;
+    
+    return individualCount + groupCount;
   }
 
   async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
