@@ -768,6 +768,7 @@ export default function TrainerDashboard() {
                       onChange={(e) => setActivityClientFilter(e.target.value)}
                     >
                       <option value="all">All Clients</option>
+                      <option value="group">Group</option>
                       {clients.filter(c => c.onboardingCompleted).map((client) => (
                         <option key={client.id} value={client.id}>
                           {client.firstName} {client.lastName}
@@ -832,7 +833,15 @@ export default function TrainerDashboard() {
 
                     // Apply client filter
                     if (activityClientFilter !== "all") {
-                      combinedActivities = combinedActivities.filter(activity => activity.userId === activityClientFilter);
+                      if (activityClientFilter === "group") {
+                        // Filter for group chat messages only
+                        combinedActivities = combinedActivities.filter(activity => 
+                          activity.type === 'message' && (activity as any).chatType === 'group'
+                        );
+                      } else {
+                        // Filter for specific client
+                        combinedActivities = combinedActivities.filter(activity => activity.userId === activityClientFilter);
+                      }
                     }
 
                     // Apply activity type filter
