@@ -961,6 +961,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get individual chat unread count for clients (coach chat only)
+  app.get('/api/chat/individual-unread-count', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const count = await storage.getIndividualChatUnreadCount(userId);
+      console.log(`Client ${userId} individual chat unread count:`, count);
+      res.json({ count: Number(count) });
+    } catch (error) {
+      console.error("Error fetching individual chat unread count:", error);
+      res.status(500).json({ message: "Failed to fetch individual chat unread count" });
+    }
+  });
+
   // Mark messages as read
   app.post('/api/chat/mark-read', isAuthenticated, async (req: any, res) => {
     try {

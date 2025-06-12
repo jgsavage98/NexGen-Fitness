@@ -16,15 +16,24 @@ export default function ChatTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Get total unread count
-  const { data: unreadData } = useQuery<{ count: number }>({
-    queryKey: ['/api/chat/unread-count'],
+  // Get individual chat unread count (coach chat only)
+  const { data: individualUnreadData } = useQuery<{ count: number }>({
+    queryKey: ['/api/chat/individual-unread-count'],
     retry: false,
     refetchInterval: 3000,
     refetchIntervalInBackground: true,
   });
 
-  const totalUnreadCount = Number(unreadData?.count) || 0;
+  // Get group chat unread count
+  const { data: groupUnreadData } = useQuery<{ count: number }>({
+    queryKey: ['/api/chat/group-unread-count'],
+    retry: false,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
+  const individualUnreadCount = Number(individualUnreadData?.count) || 0;
+  const groupUnreadCount = Number(groupUnreadData?.count) || 0;
 
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/messages", chatType],
@@ -151,11 +160,11 @@ export default function ChatTab() {
           <TabsList className="grid w-full grid-cols-2 bg-dark">
             <TabsTrigger value="individual" className="flex items-center space-x-2 data-[state=active]:bg-primary-500">
               <MessageCircle className="w-4 h-4" />
-              <span>Coach Chat</span>
+              <span>Coach Chat{individualUnreadCount > 0 ? ` (${individualUnreadCount})` : ''}</span>
             </TabsTrigger>
             <TabsTrigger value="group" className="flex items-center space-x-2 data-[state=active]:bg-blue-600">
               <Users className="w-4 h-4" />
-              <span>Group Chat</span>
+              <span>Group Chat{groupUnreadCount > 0 ? ` (${groupUnreadCount})` : ''}</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>

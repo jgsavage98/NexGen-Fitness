@@ -87,6 +87,7 @@ export interface IStorage {
   saveChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getUnreadMessagesCount(userId: string): Promise<number>;
   getGroupChatUnreadCount(userId: string): Promise<number>;
+  getIndividualChatUnreadCount(userId: string): Promise<number>;
   markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void>;
   markGroupChatAsViewed(userId: string): Promise<void>;
   
@@ -667,6 +668,26 @@ export class DatabaseStorage implements IStorage {
 
     console.log(`Group chat unread count for user ${userId}:`, unreadCount);
     return unreadCount;
+  }
+
+  async getIndividualChatUnreadCount(userId: string): Promise<number> {
+    // Count unread individual chat messages (coach messages to this client)
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(chatMessages)
+      .where(
+        and(
+          eq(chatMessages.userId, userId),
+          eq(chatMessages.chatType, 'individual'),
+          eq(chatMessages.isAI, true), // AI messages from coach
+          eq(chatMessages.isRead, false),
+          eq(chatMessages.status, 'approved')
+        )
+      );
+
+    const count = Number(result[0]?.count) || 0;
+    console.log(`Client ${userId} individual chat unread count:`, count);
+    return count;
   }
 
   async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
