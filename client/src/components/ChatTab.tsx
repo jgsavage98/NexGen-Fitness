@@ -157,21 +157,6 @@ export default function ChatTab() {
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Chat Type Selection */}
-      <div className="px-6 py-3 bg-surface border-b border-gray-700">
-        <Tabs value={chatType} onValueChange={(value) => setChatType(value as 'individual' | 'group')} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-dark">
-            <TabsTrigger value="individual" className="flex items-center space-x-2 data-[state=active]:bg-primary-500">
-              <MessageCircle className="w-4 h-4" />
-              <span>Coach Chat{individualUnreadCount > 0 ? ` (${individualUnreadCount})` : ''}</span>
-            </TabsTrigger>
-            <TabsTrigger value="group" className="flex items-center space-x-2 data-[state=active]:bg-blue-600">
-              <Users className="w-4 h-4" />
-              <span>Group Chat{groupUnreadCount > 0 ? ` (${groupUnreadCount})` : ''}</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
 
       {/* Chat Header */}
       <div className="px-6 py-4 bg-surface border-b border-gray-700">
@@ -358,6 +343,22 @@ export default function ChatTab() {
           
 
         </div>
+      </div>
+
+      {/* Chat Type Selection - Moved to Bottom */}
+      <div className="px-6 py-3 bg-surface border-t border-gray-700">
+        <Tabs value={chatType} onValueChange={(value) => setChatType(value as 'individual' | 'group')} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-dark">
+            <TabsTrigger value="individual" className="flex items-center space-x-2 data-[state=active]:bg-primary-500">
+              <MessageCircle className="w-4 h-4" />
+              <span>Coach Chat{individualUnreadCount > 0 ? ` (${individualUnreadCount})` : ''}</span>
+            </TabsTrigger>
+            <TabsTrigger value="group" className="flex items-center space-x-2 data-[state=active]:bg-blue-600">
+              <Users className="w-4 h-4" />
+              <span>Group Chat{groupUnreadCount > 0 ? ` (${groupUnreadCount})` : ''}</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
     </div>
   );
