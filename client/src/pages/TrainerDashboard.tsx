@@ -179,6 +179,13 @@ export default function TrainerDashboard() {
     refetchInterval: 3000, // 3 second polling for real-time updates
   });
 
+  // Fetch group chat unread count
+  const { data: groupChatUnread = { count: 0 } } = useQuery<{ count: number }>({
+    queryKey: ["/api/trainer/group-chat-unread"],
+    refetchInterval: 2000, // Refetch every 2 seconds to update counts
+    refetchIntervalInBackground: true,
+  });
+
   // Approve macro change mutation
   const approveMacroMutation = useMutation({
     mutationFn: async ({ changeId, notes }: { changeId: number; notes?: string }) => {
@@ -677,8 +684,8 @@ export default function TrainerDashboard() {
             </TabsTrigger>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
               <MessageSquare className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="hidden sm:inline">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0)})</span>
-              <span className="sm:hidden text-xs">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0)})</span>
+              <span className="hidden sm:inline">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0) + (groupChatUnread?.count || 0)})</span>
+              <span className="sm:hidden text-xs">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0) + (groupChatUnread?.count || 0)})</span>
             </TabsTrigger>
             <TabsTrigger value="exercises" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
               <Dumbbell className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
