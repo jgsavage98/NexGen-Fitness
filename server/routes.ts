@@ -1036,7 +1036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/chat/message', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { message, isVoice } = req.body;
+      const { message, isVoice, chatType = 'individual' } = req.body;
       
       if (!message) {
         return res.status(400).json({ message: "Message content is required" });
@@ -1070,6 +1070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         message,
         isAI: false,
+        chatType,
         metadata: isVoice ? { isVoice: true } : null,
       });
       
