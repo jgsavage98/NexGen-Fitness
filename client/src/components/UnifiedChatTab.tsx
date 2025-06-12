@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import GroupChatCard from "./GroupChatCard";
+
 
 interface Client {
   id: string;
@@ -51,9 +51,18 @@ export default function UnifiedChatTab() {
   // Calculate total unanswered messages across all clients
   const totalUnansweredCount = clients.reduce((total, client) => total + (client.unansweredCount || 0), 0);
 
-  // Query to fetch chat messages for selected client
+  // Query to fetch chat messages for selected client or group chat
   const { data: clientChatMessages = [], refetch: refetchClientChat } = useQuery({
-    queryKey: [`/api/trainer/client-chat/${selectedChatClient}`],
+    queryKey: selectedChatClient === "group-chat" ? ["/api/trainer/group-chat"] : [`/api/trainer/client-chat/${selectedChatClient}`],
+    queryFn: async () => {
+      if (!selectedChatClient) return [];
+      if (selectedChatClient === "group-chat") {
+        const response = await apiRequest("GET", "/api/trainer/group-chat");
+        return response.json();
+      }
+      const response = await apiRequest("GET", `/api/trainer/client-chat/${selectedChatClient}`);
+      return response.json();
+    },
     enabled: !!selectedChatClient,
     refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
     refetchIntervalInBackground: true, // Continue polling when tab is not focused
@@ -88,14 +97,22 @@ export default function UnifiedChatTab() {
     }
   }, [selectedChatClient, queryClient]);
 
-  // Send message to client mutation
+  // Send message to client or group chat mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ clientId, message }: { clientId: string; message: string }) => {
-      const response = await apiRequest("POST", "/api/trainer/send-message", {
-        clientId,
-        message,
-      });
-      return response.json();
+      if (clientId === "group-chat") {
+        const response = await apiRequest("POST", "/api/chat/message", {
+          message,
+          chatType: 'group'
+        });
+        return response.json();
+      } else {
+        const response = await apiRequest("POST", "/api/trainer/send-message", {
+          clientId,
+          message,
+        });
+        return response.json();
+      }
     },
     onSuccess: () => {
       setNewMessage("");
@@ -131,8 +148,7 @@ export default function UnifiedChatTab() {
         </div>
       </div>
 
-      {/* Group Chat Section */}
-      <GroupChatCard />
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
         {/* Client List Sidebar */}
@@ -143,6 +159,26 @@ export default function UnifiedChatTab() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="max-h-[500px] overflow-y-auto">
+                {/* Group Chat Option */}
+                <button
+                  onClick={() => setSelectedChatClient("group-chat")}
+                  className={`w-full text-left p-3 border-b border-gray-700 hover:bg-gray-800 transition-colors ${
+                    selectedChatClient === "group-chat" ? 'bg-gray-800 border-l-4 border-l-primary-500' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-medium text-sm">Group Chat</h4>
+                        <p className="text-gray-400 text-xs">All Clients</p>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
                 {clients.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
                     <p>No clients found</p>
