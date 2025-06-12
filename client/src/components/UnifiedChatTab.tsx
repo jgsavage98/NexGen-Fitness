@@ -80,6 +80,13 @@ export default function UnifiedChatTab() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Helper function to get user name for group chat messages
+  const getUserName = (userId: string) => {
+    if (userId === "coach_chassidy") return "Coach Chassidy";
+    const client = clients.find(c => c.id === userId);
+    return client ? `${client.firstName} ${client.lastName}` : 'Unknown User';
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [clientChatMessages]);
@@ -251,30 +258,41 @@ export default function UnifiedChatTab() {
               <CardHeader className="flex-shrink-0">
                 <CardTitle className="text-white flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    {(() => {
-                      const client = clients.find(c => c.id === selectedChatClient);
-                      if (!client) return null;
-                      
-                      return client.profileImageUrl ? (
-                        <img 
-                          src={client.profileImageUrl} 
-                          alt={`${client.firstName} ${client.lastName}`}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">
-                            {client.firstName[0]}{client.lastName[0]}
-                          </span>
+                    {selectedChatClient === "group-chat" ? (
+                      <>
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                          <Users className="w-4 h-4 text-white" />
                         </div>
-                      );
-                    })()}
-                    <span>
-                      {(() => {
-                        const client = clients.find(c => c.id === selectedChatClient);
-                        return client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
-                      })()}
-                    </span>
+                        <span>Group Chat - All Clients</span>
+                      </>
+                    ) : (
+                      <>
+                        {(() => {
+                          const client = clients.find(c => c.id === selectedChatClient);
+                          if (!client) return null;
+                          
+                          return client.profileImageUrl ? (
+                            <img 
+                              src={client.profileImageUrl} 
+                              alt={`${client.firstName} ${client.lastName}`}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
+                              <span className="text-white font-semibold text-sm">
+                                {client.firstName[0]}{client.lastName[0]}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                        <span>
+                          {(() => {
+                            const client = clients.find(c => c.id === selectedChatClient);
+                            return client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
+                          })()}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -288,10 +306,13 @@ export default function UnifiedChatTab() {
                   ) : (
                     clientChatMessages.map((message: ChatMessage) => (
                       <div key={message.id} className={`flex ${
-                        message.metadata?.fromCoach || message.isAI ? 'justify-start' : 'justify-end'
+                        (selectedChatClient === "group-chat" && message.userId === "coach_chassidy") ||
+                        (selectedChatClient !== "group-chat" && (message.metadata?.fromCoach || message.isAI)) 
+                          ? 'justify-start' : 'justify-end'
                       }`}>
                         <div className={`max-w-[70%] rounded-lg p-3 ${
-                          message.metadata?.fromCoach 
+                          (selectedChatClient === "group-chat" && message.userId === "coach_chassidy") ||
+                          (selectedChatClient !== "group-chat" && message.metadata?.fromCoach)
                             ? 'bg-green-600 text-white' 
                             : message.isAI 
                               ? 'bg-blue-600 text-white' 
@@ -299,11 +320,13 @@ export default function UnifiedChatTab() {
                         }`}>
                           <div className="flex items-center space-x-2 mb-1">
                             <span className="text-xs font-medium">
-                              {message.metadata?.fromCoach 
-                                ? 'Coach Chassidy' 
-                                : message.isAI 
-                                  ? 'AI Coach' 
-                                  : clients.find(c => c.id === selectedChatClient)?.firstName || 'Client'}
+                              {selectedChatClient === "group-chat" 
+                                ? getUserName(message.userId)
+                                : message.metadata?.fromCoach 
+                                  ? 'Coach Chassidy' 
+                                  : message.isAI 
+                                    ? 'AI Coach' 
+                                    : clients.find(c => c.id === selectedChatClient)?.firstName || 'Client'}
                             </span>
                             <span className="text-xs opacity-70">
                               {new Date(message.createdAt).toLocaleString()}
