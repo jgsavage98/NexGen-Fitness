@@ -35,7 +35,7 @@ import {
   type UpdateUserProfile,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, sql, asc, lt, count, or, isNotNull } from "drizzle-orm";
+import { eq, ne, desc, and, gte, lte, sql, asc, lt, count, or, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -749,6 +749,7 @@ export class DatabaseStorage implements IStorage {
 
   async getUnansweredMessageCount(clientId: string, trainerId: string): Promise<number> {
     // Get the most recent message from the client that isn't from AI or coach and hasn't been viewed by trainer
+    // Exclude group chat messages from individual client unread counts
     const latestUnviewedClientMessage = await db
       .select()
       .from(chatMessages)
@@ -757,7 +758,8 @@ export class DatabaseStorage implements IStorage {
           eq(chatMessages.userId, clientId),
           eq(chatMessages.isAI, false),
           sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'fromCoach' != 'true')`,
-          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`
+          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`,
+          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'chatType' != 'group')`
         )
       )
       .orderBy(desc(chatMessages.createdAt))
@@ -777,13 +779,31 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(chatMessages.userId, clientId),
           sql`${chatMessages.metadata}->>'fromCoach' = 'true'`,
-          sql`${chatMessages.createdAt} > ${latestUnviewedMessageTime}`
+          sql`${chatMessages.createdAt} > ${latestUnviewedMessageTime}`,
+          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'chatType' != 'group')`
         )
       )
       .limit(1);
 
     // If no direct trainer response after latest unviewed client message, count as unanswered
     return trainerResponseAfter.length === 0 ? 1 : 0;
+  }
+
+  async getGroupChatUnreadCount(trainerId: string): Promise<number> {
+    // Get unread group chat messages (client messages that haven't been viewed by trainer)
+    const unreadMessages = await db
+      .select()
+      .from(chatMessages)
+      .where(
+        and(
+          ne(chatMessages.userId, trainerId), // Not from the trainer
+          eq(chatMessages.isAI, false),
+          sql`${chatMessages.metadata}->>'chatType' = 'group'`,
+          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`
+        )
+      );
+
+    return unreadMessages.length;
   }
 
   async getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]> {

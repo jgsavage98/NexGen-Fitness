@@ -2081,6 +2081,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get group chat unread count for trainers
+  app.get('/api/trainer/group-chat-unread', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user?.claims?.sub || req.user?.id;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Unauthorized - Trainer access required" });
+      }
+      
+      const unreadCount = await storage.getGroupChatUnreadCount(trainerId);
+      res.json({ count: unreadCount });
+    } catch (error) {
+      console.error("Error fetching group chat unread count:", error);
+      res.status(500).json({ message: "Failed to fetch group chat unread count" });
+    }
+  });
+
   // Generate AI draft response for trainer review
   app.post('/api/trainer/generate-draft-response', isAuthenticated, async (req: any, res) => {
     try {
