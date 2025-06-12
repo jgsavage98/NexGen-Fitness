@@ -22,7 +22,14 @@ export default function GroupChatCard() {
     refetchIntervalInBackground: true,
   });
 
-  const { data: clients = [] } = useQuery({
+  interface Client {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  }
+
+  const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/trainer/clients"],
   });
 
@@ -70,7 +77,7 @@ export default function GroupChatCard() {
   };
 
   const getUserName = (userId: string) => {
-    const client = clients.find((c: any) => c.id === userId);
+    const client = clients.find((c: Client) => c.id === userId);
     return client ? `${client.firstName} ${client.lastName}` : 'Unknown User';
   };
 

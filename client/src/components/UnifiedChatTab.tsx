@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import GroupChatCard from "./GroupChatCard";
 
 interface Client {
   id: string;
@@ -129,6 +130,9 @@ export default function UnifiedChatTab() {
           </Badge>
         </div>
       </div>
+
+      {/* Group Chat Section */}
+      <GroupChatCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
         {/* Client List Sidebar */}
