@@ -542,18 +542,63 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Chat operations
-  async getUserChatMessages(userId: string, limit: number = 50): Promise<ChatMessage[]> {
-    return await db
-      .select()
-      .from(chatMessages)
-      .where(
-        and(
-          eq(chatMessages.userId, userId),
-          eq(chatMessages.status, 'approved') // Only show approved messages to clients
+  async getUserChatMessages(userId: string, limit: number = 50, chatType: 'individual' | 'group' = 'individual'): Promise<ChatMessage[]> {
+    if (chatType === 'group') {
+      // For group chat, get messages from all clients under the same trainer
+      const user = await this.getUser(userId);
+      if (!user?.trainerId) {
+        return [];
+      }
+      
+      return await db
+        .select({
+          id: chatMessages.id,
+          userId: chatMessages.userId,
+          message: chatMessages.message,
+          isAI: chatMessages.isAI,
+          chatType: chatMessages.chatType,
+          metadata: chatMessages.metadata,
+          isRead: chatMessages.isRead,
+          status: chatMessages.status,
+          trainerId: chatMessages.trainerId,
+          trainerNotes: chatMessages.trainerNotes,
+          approvedAt: chatMessages.approvedAt,
+          originalAIResponse: chatMessages.originalAIResponse,
+          createdAt: chatMessages.createdAt,
+          user: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+            profileImageUrl: users.profileImageUrl,
+          }
+        })
+        .from(chatMessages)
+        .innerJoin(users, eq(chatMessages.userId, users.id))
+        .where(
+          and(
+            eq(users.trainerId, user.trainerId),
+            eq(chatMessages.chatType, 'group'),
+            eq(chatMessages.status, 'approved')
+          )
         )
-      )
-      .orderBy(desc(chatMessages.createdAt))
-      .limit(limit);
+        .orderBy(desc(chatMessages.createdAt))
+        .limit(limit);
+    } else {
+      // Individual chat - existing behavior
+      return await db
+        .select()
+        .from(chatMessages)
+        .where(
+          and(
+            eq(chatMessages.userId, userId),
+            eq(chatMessages.chatType, 'individual'),
+            eq(chatMessages.status, 'approved')
+          )
+        )
+        .orderBy(desc(chatMessages.createdAt))
+        .limit(limit);
+    }
   }
 
   async saveChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
@@ -654,11 +699,52 @@ export class DatabaseStorage implements IStorage {
     const messages = await db
       .select()
       .from(chatMessages)
-      .where(eq(chatMessages.userId, clientId))
+      .where(
+        and(
+          eq(chatMessages.userId, clientId),
+          eq(chatMessages.chatType, 'individual')
+        )
+      )
       .orderBy(chatMessages.createdAt)
       .limit(limit);
     
     return messages;
+  }
+
+  async getGroupChatMessages(trainerId: string, limit: number = 50): Promise<ChatMessage[]> {
+    return await db
+      .select({
+        id: chatMessages.id,
+        userId: chatMessages.userId,
+        message: chatMessages.message,
+        isAI: chatMessages.isAI,
+        chatType: chatMessages.chatType,
+        metadata: chatMessages.metadata,
+        isRead: chatMessages.isRead,
+        status: chatMessages.status,
+        trainerId: chatMessages.trainerId,
+        trainerNotes: chatMessages.trainerNotes,
+        approvedAt: chatMessages.approvedAt,
+        originalAIResponse: chatMessages.originalAIResponse,
+        createdAt: chatMessages.createdAt,
+        user: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
+      .from(chatMessages)
+      .innerJoin(users, eq(chatMessages.userId, users.id))
+      .where(
+        and(
+          eq(users.trainerId, trainerId),
+          eq(chatMessages.chatType, 'group')
+        )
+      )
+      .orderBy(chatMessages.createdAt)
+      .limit(limit);
   }
 
   async getUnansweredMessageCount(clientId: string, trainerId: string): Promise<number> {

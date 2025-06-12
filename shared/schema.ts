@@ -214,6 +214,7 @@ export const chatMessages = pgTable("chat_messages", {
   userId: varchar("user_id").notNull(),
   message: text("message").notNull(),
   isAI: boolean("is_ai").default(false),
+  chatType: varchar("chat_type").default("individual"), // individual, group
   metadata: jsonb("metadata"), // voice duration, confidence scores, etc.
   isRead: boolean("is_read").default(false),
   // Trainer approval workflow
