@@ -101,6 +101,11 @@ export default function UnifiedChatTab() {
   // Invalidate client list when a chat is opened to update unanswered counts
   useEffect(() => {
     if (selectedChatClient) {
+      // Mark group chat as viewed when group chat is selected
+      if (selectedChatClient === "group-chat") {
+        markGroupViewedMutation.mutate();
+      }
+      
       // Immediately invalidate to refresh the count after chat is opened
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
       
@@ -112,6 +117,21 @@ export default function UnifiedChatTab() {
   }, [selectedChatClient, queryClient]);
 
   // Send message to client or group chat mutation
+  // Mark group chat as viewed mutation
+  const markGroupViewedMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/chat/mark-group-viewed");
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate group chat unread count
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
+    },
+    onError: (error) => {
+      console.error("Error marking group chat as viewed:", error);
+    },
+  });
+
   const sendMessageMutation = useMutation({
     mutationFn: async ({ clientId, message }: { clientId: string; message: string }) => {
       if (clientId === "group-chat") {

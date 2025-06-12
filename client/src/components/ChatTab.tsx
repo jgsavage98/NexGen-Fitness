@@ -40,6 +40,22 @@ export default function ChatTab() {
     queryKey: ["/api/auth/user"],
   });
 
+  // Mark group chat as viewed mutation
+  const markGroupViewedMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/chat/mark-group-viewed");
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate unread count queries to update the UI
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/group-unread-count'] });
+    },
+    onError: (error) => {
+      console.error("Error marking group chat as viewed:", error);
+    },
+  });
+
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
       const response = await apiRequest("POST", "/api/chat/message", { 
@@ -86,6 +102,13 @@ export default function ChatTab() {
   useEffect(() => {
     markMessagesAsReadMutation.mutate();
   }, []);
+
+  // Mark group chat as viewed when switching to group chat
+  useEffect(() => {
+    if (chatType === 'group') {
+      markGroupViewedMutation.mutate();
+    }
+  }, [chatType]);
 
   const handleSendMessage = () => {
     if (newMessage.trim() && !sendMessageMutation.isPending) {
