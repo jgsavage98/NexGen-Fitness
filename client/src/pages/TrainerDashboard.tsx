@@ -888,11 +888,17 @@ export default function TrainerDashboard() {
 
                       return (
                         <div key={activity.id} className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 bg-gray-800 rounded-lg">
-                          <img
-                            src={profileImage}
-                            alt={displayName}
-                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
-                          />
+                          {isGroupChatMessage ? (
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                              <Users className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                            </div>
+                          ) : (
+                            <img
+                              src={profileImage}
+                              alt={displayName}
+                              className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
+                            />
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-1">
                               <span className="text-white font-medium truncate text-sm sm:text-base">
