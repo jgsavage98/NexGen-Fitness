@@ -814,23 +814,7 @@ export class DatabaseStorage implements IStorage {
     return trainerResponseAfter.length === 0 ? 1 : 0;
   }
 
-  async getGroupChatUnreadCount(trainerId: string): Promise<number> {
-    // Get unread group chat messages (client messages that haven't been viewed by trainer)
-    const unreadMessages = await db
-      .select()
-      .from(chatMessages)
-      .where(
-        and(
-          ne(chatMessages.userId, trainerId), // Not from the trainer
-          eq(chatMessages.isAI, false),
-          eq(chatMessages.chatType, 'group'), // Use the chatType column directly
-          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}::text = '""' OR ${chatMessages.metadata}->>'trainerViewed' != 'true')`
-        )
-      );
 
-    console.log(`Group chat unread count for trainer ${trainerId}:`, unreadMessages.length);
-    return unreadMessages.length;
-  }
 
   async getPendingChatApprovals(trainerId?: string): Promise<ChatMessage[]> {
     const whereClause = trainerId 

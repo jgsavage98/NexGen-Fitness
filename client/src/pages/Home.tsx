@@ -55,8 +55,18 @@ export default function Home() {
     refetchIntervalInBackground: true,
   });
 
+  // Get group chat unread count separately
+  const { data: groupUnreadData } = useQuery<{ count: number }>({
+    queryKey: ['/api/chat/group-unread-count'],
+    retry: false,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
   const isPendingApproval = macroTargets?.status === 'pending_trainer_approval' || false;
-  const unreadCount = Number(unreadData?.count) || 0;
+  const individualUnreadCount = Number(unreadData?.count) || 0;
+  const groupUnreadCount = Number(groupUnreadData?.count) || 0;
+  const totalUnreadCount = individualUnreadCount + groupUnreadCount;
 
   // Mark messages as read when chat tab is opened
   const markAsReadMutation = useMutation({
@@ -64,17 +74,19 @@ export default function Home() {
       await apiRequest('POST', '/api/chat/mark-read', {});
     },
     onSuccess: () => {
-      // Invalidate unread count to refresh the badge
+      // Invalidate both unread count queries to refresh the badge
       queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/group-unread-count'] });
       // Force immediate refetch to ensure badge updates
       queryClient.refetchQueries({ queryKey: ['/api/chat/unread-count'] });
+      queryClient.refetchQueries({ queryKey: ['/api/chat/group-unread-count'] });
     }
   });
 
   // Handle tab change and mark messages as read when opening chat
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
-    if (tab === 'chat' && unreadCount > 0) {
+    if (tab === 'chat' && totalUnreadCount > 0) {
       markAsReadMutation.mutate();
     }
   };
@@ -191,7 +203,7 @@ export default function Home() {
             activeTab={activeTab} 
             onTabChange={handleTabChange} 
             isPendingApproval={isPendingApproval}
-            unreadCount={unreadCount}
+            unreadCount={totalUnreadCount}
           />
         )}
       </div>
