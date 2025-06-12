@@ -112,21 +112,54 @@ export default function ChatTab() {
 
   return (
     <div className="h-screen flex flex-col">
+      {/* Chat Type Selection */}
+      <div className="px-6 py-3 bg-surface border-b border-gray-700">
+        <Tabs value={chatType} onValueChange={(value) => setChatType(value as 'individual' | 'group')} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-dark">
+            <TabsTrigger value="individual" className="flex items-center space-x-2 data-[state=active]:bg-primary-500">
+              <MessageCircle className="w-4 h-4" />
+              <span>Coach Chat</span>
+            </TabsTrigger>
+            <TabsTrigger value="group" className="flex items-center space-x-2 data-[state=active]:bg-blue-600">
+              <Users className="w-4 h-4" />
+              <span>Group Chat</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       {/* Chat Header */}
       <div className="px-6 py-4 bg-surface border-b border-gray-700">
         <div className="flex items-center space-x-3">
-          <img 
-            src="/chassidy-profile.jpeg" 
-            alt="Coach Chassidy"
-            className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
-          />
-          <div>
-            <div className="font-semibold text-white">Coach Chassidy</div>
-            <div className="text-sm text-success flex items-center">
-              <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-              Your Personal Coach • Available 24/7
-            </div>
-          </div>
+          {chatType === 'individual' ? (
+            <>
+              <img 
+                src="/chassidy-profile.jpeg" 
+                alt="Coach Chassidy"
+                className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
+              />
+              <div>
+                <div className="font-semibold text-white">Coach Chassidy</div>
+                <div className="text-sm text-success flex items-center">
+                  <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
+                  Your Personal Coach • Available 24/7
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="font-semibold text-white">Group Chat</div>
+                <div className="text-sm text-blue-400 flex items-center">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                  All Clients • Chat with everyone
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -150,76 +183,103 @@ export default function ChatTab() {
           </div>
         )}
 
-        {messages.map((message) => (
-          <div key={message.id} className="mb-4">
-            {message.isAI || message.metadata?.fromCoach ? (
-              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <img 
-                    src="/chassidy-profile.jpeg" 
-                    alt="Coach Chassidy"
-                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
-                  />
-                  <div className="text-sm flex-1">
-                    <p className="font-semibold text-primary-300 mb-1">Message from Coach Chassidy:</p>
-                    <p className="text-primary-100 mb-2">
-                      {message.message}
-                    </p>
-                    
-                    {/* PDF Report Thumbnail */}
-                    {message.metadata?.hasPdfReport && message.metadata?.pdfUrl && (
-                      <div className="mt-3 mb-2">
-                        <div 
-                          onClick={() => window.open(message.metadata?.pdfUrl, '_blank')}
-                          className="cursor-pointer bg-white/10 border border-primary-300/30 rounded-lg p-3 hover:bg-white/20 transition-colors group"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-primary-500/20 rounded-lg flex items-center justify-center border border-primary-300/30">
-                              <i className="fas fa-file-pdf text-primary-300 text-xl"></i>
+        {messages.map((message) => {
+          const isCoach = message.isAI || message.metadata?.fromCoach || message.userId === "coach_chassidy";
+          const isCurrentUser = message.userId === user?.id;
+          
+          return (
+            <div key={message.id} className="mb-4">
+              {isCoach ? (
+                <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <img 
+                      src="/chassidy-profile.jpeg" 
+                      alt="Coach Chassidy"
+                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
+                    />
+                    <div className="text-sm flex-1">
+                      <p className="font-semibold text-primary-300 mb-1">
+                        {chatType === 'group' ? 'Coach Chassidy:' : 'Message from Coach Chassidy:'}
+                      </p>
+                      <p className="text-primary-100 mb-2">
+                        {message.message}
+                      </p>
+                      
+                      {/* PDF Report Thumbnail */}
+                      {message.metadata?.hasPdfReport && message.metadata?.pdfUrl && (
+                        <div className="mt-3 mb-2">
+                          <div 
+                            onClick={() => window.open(message.metadata?.pdfUrl, '_blank')}
+                            className="cursor-pointer bg-white/10 border border-primary-300/30 rounded-lg p-3 hover:bg-white/20 transition-colors group"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-12 h-12 bg-primary-500/20 rounded-lg flex items-center justify-center border border-primary-300/30">
+                                <i className="fas fa-file-pdf text-primary-300 text-xl"></i>
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-primary-100 font-medium text-sm">
+                                  {message.metadata?.reportTitle || 'Progress Report'}
+                                </p>
+                                <p className="text-primary-300/70 text-xs">
+                                  Click to download PDF report
+                                </p>
+                              </div>
+                              <i className="fas fa-download text-primary-300/70 group-hover:text-primary-300 transition-colors"></i>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-primary-100 font-medium text-sm">
-                                {message.metadata?.reportTitle || 'Progress Report'}
-                              </p>
-                              <p className="text-primary-300/70 text-xs">
-                                Click to download PDF report
-                              </p>
-                            </div>
-                            <i className="fas fa-download text-primary-300/70 group-hover:text-primary-300 transition-colors"></i>
                           </div>
                         </div>
+                      )}
+                      
+                      <span className="text-xs text-primary-300">
+                        {formatTime(message.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                  <div className="flex items-start space-x-3 max-w-xs">
+                    {!isCurrentUser && chatType === 'group' && (
+                      <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-xs font-semibold">
+                          {message.metadata?.senderName ? message.metadata.senderName.charAt(0) : '?'}
+                        </span>
                       </div>
                     )}
                     
-                    <span className="text-xs text-primary-300">
-                      {formatTime(message.createdAt)}
-                    </span>
+                    <div className={`rounded-lg p-4 ${
+                      isCurrentUser 
+                        ? 'bg-primary-500 rounded-tr-none' 
+                        : 'bg-gray-700 rounded-tl-none'
+                    }`}>
+                      {!isCurrentUser && chatType === 'group' && (
+                        <p className="text-xs text-gray-300 mb-1 font-semibold">
+                          {message.metadata?.senderName || 'Unknown User'}
+                        </p>
+                      )}
+                      <p className="text-sm text-white">
+                        {message.message}
+                      </p>
+                      <span className="text-xs mt-2 block text-white/70">
+                        {formatTime(message.createdAt)}
+                      </span>
+                    </div>
+
+                    {isCurrentUser && (
+                      <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                        <img 
+                          src="/john-profile.png"
+                          alt="Your Profile"
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex justify-end">
-                <div className="flex items-start space-x-3">
-                  <div className="bg-primary-500 rounded-lg rounded-tr-none p-4 max-w-xs">
-                    <p className="text-sm text-white">
-                      {message.message}
-                    </p>
-                    <span className="text-xs mt-2 block text-white/70">
-                      {formatTime(message.createdAt)}
-                    </span>
-                  </div>
-                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                    <img 
-                      src="/john-profile.png"
-                      alt="Your Profile"
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
 
 
 
