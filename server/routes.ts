@@ -921,9 +921,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/chat/messages', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { limit } = req.query;
+      const { limit, chatType = 'individual' } = req.query;
       
-      const messages = await storage.getUserChatMessages(userId, limit ? parseInt(limit as string) : 50);
+      const messages = await storage.getUserChatMessages(
+        userId, 
+        limit ? parseInt(limit as string) : 50,
+        chatType as 'individual' | 'group'
+      );
       res.json(messages.reverse()); // Return in chronological order
     } catch (error) {
       console.error("Error fetching chat messages:", error);
@@ -2046,6 +2050,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching client chat messages:", error);
       res.status(500).json({ message: "Failed to fetch client chat messages" });
+    }
+  });
+
+  // Group chat endpoint for trainers
+  app.get('/api/trainer/group-chat', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user?.claims?.sub || req.user?.id;
+      const { limit = 50 } = req.query;
+      
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Unauthorized - Trainer access required" });
+      }
+
+      const messages = await storage.getGroupChatMessages(trainerId, parseInt(limit as string));
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching group chat messages:", error);
+      res.status(500).json({ message: "Failed to fetch group chat messages" });
     }
   });
 

@@ -2,19 +2,26 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatMessage } from "@/lib/types";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { MessageCircle, Users } from "lucide-react";
 
 export default function ChatTab() {
   const [newMessage, setNewMessage] = useState("");
+  const [chatType, setChatType] = useState<'individual' | 'group'>('individual');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { data: messages = [] } = useQuery<ChatMessage[]>({
-    queryKey: ["/api/chat/messages"],
+    queryKey: ["/api/chat/messages", chatType],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/chat/messages?chatType=${chatType}`);
+      return response.json();
+    },
     refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
     refetchIntervalInBackground: true, // Continue polling when tab is not focused
   });
@@ -25,11 +32,14 @@ export default function ChatTab() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
-      const response = await apiRequest("POST", "/api/chat/message", { message });
+      const response = await apiRequest("POST", "/api/chat/message", { 
+        message,
+        chatType 
+      });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", chatType] });
       queryClient.invalidateQueries({ queryKey: ["/api/chat/unread-count"] });
       setNewMessage("");
     },
