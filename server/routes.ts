@@ -22,7 +22,7 @@ import {
   progressEntries
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, not, sql } from "drizzle-orm";
+import { eq, desc, and, or, gte, lte, not, sql } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -1873,6 +1873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: chatMessages.message,
           isAI: chatMessages.isAI,
           createdAt: chatMessages.createdAt,
+          chatType: chatMessages.chatType,
           user: {
             id: users.id,
             firstName: users.firstName,
@@ -1882,8 +1883,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         })
         .from(chatMessages)
-        .innerJoin(users, eq(chatMessages.userId, users.id))
-        .where(eq(users.trainerId, 'coach_chassidy'))
+        .leftJoin(users, eq(chatMessages.userId, users.id))
+        .where(
+          or(
+            eq(users.trainerId, 'coach_chassidy'),
+            and(
+              eq(chatMessages.userId, 'coach_chassidy'),
+              eq(chatMessages.chatType, 'group')
+            )
+          )
+        )
         .orderBy(desc(chatMessages.createdAt))
         .limit(parseInt(limit as string));
       

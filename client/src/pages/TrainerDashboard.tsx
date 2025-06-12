@@ -799,7 +799,8 @@ export default function TrainerDashboard() {
                       content: chat.message,
                       timestamp: new Date(chat.createdAt),
                       createdAt: chat.createdAt,
-                      isAI: chat.isAI
+                      isAI: chat.isAI,
+                      chatType: chat.chatType
                     })) : [];
 
                     const uploadActivities = Array.isArray(recentUploads) ? recentUploads.map((upload) => ({
@@ -850,62 +851,78 @@ export default function TrainerDashboard() {
                       );
                     }
 
-                    return combinedActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 bg-gray-800 rounded-lg">
-                        <img
-                          src="/john-profile.png"
-                          alt={`${activity.user.firstName} ${activity.user.lastName}`}
-                          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-1">
-                            <span className="text-white font-medium truncate text-sm sm:text-base">
-                              {activity.user.firstName} {activity.user.lastName}
-                            </span>
-                            <div className="flex items-center space-x-2">
-                              {activity.type === 'upload' && (
-                                <Badge variant="outline" className="text-xs border-green-600 text-green-400">
-                                  Upload
-                                </Badge>
-                              )}
-                              {activity.type === 'message' && (
-                                <Badge variant="outline" className="text-xs border-blue-600 text-blue-400">
-                                  {activity.isAI ? "Coach" : "Message"}
-                                </Badge>
-                              )}
-                              {activity.type === 'weight' && (
-                                <Badge variant="outline" className="text-xs border-purple-600 text-purple-400">
-                                  Weight Log
-                                </Badge>
-                              )}
-                              <span className="text-gray-400 text-sm flex-shrink-0">
-                                {activity.timestamp.toLocaleDateString()}
+                    return combinedActivities.map((activity) => {
+                      const isGroupChatMessage = activity.type === 'message' && (activity as any).chatType === 'group';
+                      const isCoachMessage = activity.userId === 'coach_chassidy';
+                      
+                      // Determine profile image and display name
+                      let profileImage = "/john-profile.png";
+                      let displayName = `${activity.user?.firstName || 'Unknown'} ${activity.user?.lastName || 'User'}`;
+                      
+                      if (isCoachMessage) {
+                        profileImage = "/attached_assets/CE Bio Image_1749399911915.jpeg";
+                        displayName = "Chassidy Escobedo";
+                      } else if (activity.user?.profileImageUrl) {
+                        profileImage = activity.user.profileImageUrl;
+                      }
+
+                      return (
+                        <div key={activity.id} className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 bg-gray-800 rounded-lg">
+                          <img
+                            src={profileImage}
+                            alt={displayName}
+                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-1">
+                              <span className="text-white font-medium truncate text-sm sm:text-base">
+                                {displayName}
                               </span>
+                              <div className="flex items-center space-x-2">
+                                {activity.type === 'upload' && (
+                                  <Badge variant="outline" className="text-xs border-green-600 text-green-400">
+                                    Upload
+                                  </Badge>
+                                )}
+                                {activity.type === 'message' && (
+                                  <Badge variant="outline" className="text-xs border-blue-600 text-blue-400">
+                                    {isGroupChatMessage ? "Group" : (activity.isAI ? "Coach" : "Message")}
+                                  </Badge>
+                                )}
+                                {activity.type === 'weight' && (
+                                  <Badge variant="outline" className="text-xs border-purple-600 text-purple-400">
+                                    Weight Log
+                                  </Badge>
+                                )}
+                                <span className="text-gray-400 text-sm flex-shrink-0">
+                                  {activity.timestamp.toLocaleDateString()}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                          <p className="text-gray-300 text-xs sm:text-sm break-words overflow-hidden">
-                            {activity.type === 'message' && (
-                              <span className="font-medium">
-                                {(activity as any).isAI ? "Coach: " : "Client: "}
+                            <p className="text-gray-300 text-xs sm:text-sm break-words overflow-hidden">
+                              {activity.type === 'message' && (
+                                <span className="font-medium">
+                                  {isGroupChatMessage ? "Group: " : ((activity as any).isAI ? "Coach: " : "Client: ")}
+                                </span>
+                              )}
+                              <span className="break-all">
+                                {activity.content}
+                                {activity.type === 'upload' && (activity as any).calories && (
+                                  <span className="text-gray-400 ml-2">
+                                    ({Math.round((activity as any).calories)} cal)
+                                  </span>
+                                )}
+                                {activity.type === 'weight' && (activity as any).notes && (
+                                  <span className="text-gray-400 ml-2">
+                                    - {(activity as any).notes}
+                                  </span>
+                                )}
                               </span>
-                            )}
-                            <span className="break-all">
-                              {activity.content}
-                              {activity.type === 'upload' && (activity as any).calories && (
-                                <span className="text-gray-400 ml-2">
-                                  ({Math.round((activity as any).calories)} cal)
-                                </span>
-                              )}
-                              {activity.type === 'weight' && (activity as any).notes && (
-                                <span className="text-gray-400 ml-2">
-                                  - {(activity as any).notes}
-                                </span>
-                              )}
-                            </span>
-                          </p>
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ));
+                      );
+                    });
                   })()}
                 </div>
               </CardContent>
