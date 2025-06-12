@@ -319,6 +319,34 @@ export default function UnifiedChatTab() {
                               : 'bg-gray-700 text-gray-100'
                         }`}>
                           <div className="flex items-center space-x-2 mb-1">
+                            {selectedChatClient === "group-chat" && (
+                              <>
+                                {message.userId === "coach_chassidy" ? (
+                                  <img 
+                                    src="/attached_assets/CE Bio Image_1749399911915.jpeg" 
+                                    alt="Coach Chassidy"
+                                    className="w-5 h-5 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  (() => {
+                                    const client = clients.find(c => c.id === message.userId);
+                                    return client?.profileImageUrl ? (
+                                      <img 
+                                        src={client.profileImageUrl} 
+                                        alt={`${client.firstName} ${client.lastName}`}
+                                        className="w-5 h-5 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center">
+                                        <span className="text-white font-semibold text-xs">
+                                          {client ? `${client.firstName[0]}${client.lastName[0]}` : 'U'}
+                                        </span>
+                                      </div>
+                                    );
+                                  })()
+                                )}
+                              </>
+                            )}
                             <span className="text-xs font-medium">
                               {selectedChatClient === "group-chat" 
                                 ? getUserName(message.userId)
