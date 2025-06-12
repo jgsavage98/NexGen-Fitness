@@ -35,7 +35,7 @@ import {
   type UpdateUserProfile,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ne, desc, and, gte, lte, sql, asc, lt, count, or, isNotNull } from "drizzle-orm";
+import { eq, ne, desc, and, gte, lte, sql, asc, lt, count, or, isNotNull, not } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -630,19 +630,21 @@ export class DatabaseStorage implements IStorage {
       );
 
     // Count unread group chat messages from other participants (not from this user)
+    // Use a simple approach - count all group messages not from this user
     const groupResult = await db.select({ count: sql<number>`count(*)` })
       .from(chatMessages)
       .where(
         and(
           ne(chatMessages.userId, userId), // Not from this user
           eq(chatMessages.chatType, 'group'),
-          eq(chatMessages.isAI, false),
-          sql`(${chatMessages.metadata} IS NULL OR ${chatMessages.metadata}::text = '""' OR ${chatMessages.metadata}->>'clientViewed_${userId}' != 'true')`
+          eq(chatMessages.isAI, false)
         )
       );
     
     const individualCount = Number(individualResult[0]?.count) || 0;
     const groupCount = Number(groupResult[0]?.count) || 0;
+    
+    console.log(`Client ${userId} unread counts - Individual: ${individualCount}, Group: ${groupCount}, Total: ${individualCount + groupCount}`);
     
     return individualCount + groupCount;
   }
