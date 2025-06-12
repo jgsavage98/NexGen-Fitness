@@ -86,6 +86,7 @@ export interface IStorage {
   getUserChatMessages(userId: string, limit?: number): Promise<ChatMessage[]>;
   saveChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getUnreadMessagesCount(userId: string): Promise<number>;
+  getGroupChatUnreadCount(userId: string): Promise<number>;
   markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void>;
   
   // Trainer chat operations
@@ -630,7 +631,17 @@ export class DatabaseStorage implements IStorage {
       );
 
     // Count unread group chat messages from other participants (not from this user)
-    // Use a simple approach - count all group messages not from this user
+    const groupCount = await this.getGroupChatUnreadCount(userId);
+    
+    const individualCount = Number(individualResult[0]?.count) || 0;
+    
+    console.log(`Client ${userId} unread counts - Individual: ${individualCount}, Group: ${groupCount}, Total: ${individualCount + groupCount}`);
+    
+    return individualCount + groupCount;
+  }
+
+  async getGroupChatUnreadCount(userId: string): Promise<number> {
+    // Count unread group chat messages from other participants (not from this user)
     const groupResult = await db.select({ count: sql<number>`count(*)` })
       .from(chatMessages)
       .where(
@@ -641,12 +652,7 @@ export class DatabaseStorage implements IStorage {
         )
       );
     
-    const individualCount = Number(individualResult[0]?.count) || 0;
-    const groupCount = Number(groupResult[0]?.count) || 0;
-    
-    console.log(`Client ${userId} unread counts - Individual: ${individualCount}, Group: ${groupCount}, Total: ${individualCount + groupCount}`);
-    
-    return individualCount + groupCount;
+    return Number(groupResult[0]?.count) || 0;
   }
 
   async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
