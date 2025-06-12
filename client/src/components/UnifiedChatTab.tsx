@@ -48,6 +48,13 @@ export default function UnifiedChatTab() {
     refetchIntervalInBackground: true,
   });
 
+  // Fetch group chat unread count
+  const { data: groupChatUnread = { count: 0 } } = useQuery<{ count: number }>({
+    queryKey: ["/api/trainer/group-chat-unread"],
+    refetchInterval: 2000, // Refetch every 2 seconds to update counts
+    refetchIntervalInBackground: true,
+  });
+
   // Calculate total unanswered messages across all clients
   const totalUnansweredCount = clients.reduce((total, client) => total + (client.unansweredCount || 0), 0);
 
@@ -183,6 +190,11 @@ export default function UnifiedChatTab() {
                         <p className="text-gray-400 text-xs">All Clients</p>
                       </div>
                     </div>
+                    {groupChatUnread.count > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                        {groupChatUnread.count}
+                      </span>
+                    )}
                   </div>
                 </button>
 
