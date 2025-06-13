@@ -1321,7 +1321,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // For group chat, intelligently determine if AI should respond
       let aiResponse: any = null;
+      let moderationViolation = false;
       console.log(`Processing chat message - chatType: ${chatType}, userId: ${userId}`);
+      
       if (chatType === 'group') {
         console.log('Evaluating group chat message for AI response...');
         try {
@@ -1345,38 +1347,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Handle content violations with private messaging
           if ((moderationResult as any).isOffTopic || (moderationResult as any).needsModeration) {
             console.log('Content violation detected, sending private message...');
+            moderationViolation = true;
             
-            // Generate private warning message
-            const warningMessage = await generateModerationWarning(message, moderationResult);
+            try {
+              // Generate private warning message
+              const warningMessage = await generateModerationWarning(message, moderationResult);
             
-            // Save private message to violating user - store in user's individual chat
-            const privateMessage = await storage.saveChatMessage({
-              userId: userId, // Store under the user's ID so they receive it
-              message: warningMessage,
-              isAI: true,
-              chatType: 'individual',
-              metadata: {
-                isModeration: true,
-                originalMessage: message,
-                violationType: (moderationResult as any).isOffTopic ? 'off-topic' : 'inappropriate',
-                fromCoach: true,
-                senderName: 'Coach Chassidy'
-              }
-            });
-            
-            // Send private message via WebSocket to specific user
-            const wss = (global as any).wss;
-            if (wss) {
-              wss.clients.forEach((client: WebSocket) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify({
-                    type: 'private_moderation_message',
-                    message: privateMessage,
-                    targetUserId: userId,
-                    sender: 'coach_chassidy'
-                  }));
+              // Save private message to violating user - store in user's individual chat
+              const privateMessage = await storage.saveChatMessage({
+                userId: userId, // Store under the user's ID so they receive it
+                message: warningMessage,
+                isAI: true,
+                chatType: 'individual',
+                metadata: {
+                  isModeration: true,
+                  originalMessage: message,
+                  violationType: (moderationResult as any).isOffTopic ? 'off-topic' : 'inappropriate',
+                  fromCoach: true,
+                  senderName: 'Coach Chassidy'
                 }
               });
+              
+              // Send private message via WebSocket to specific user
+              const wss = (global as any).wss;
+              if (wss) {
+                wss.clients.forEach((client: WebSocket) => {
+                  if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                      type: 'private_moderation_message',
+                      message: privateMessage,
+                      targetUserId: userId,
+                      sender: 'coach_chassidy'
+                    }));
+                  }
+                });
+              }
+            } catch (warningError) {
+              console.error('Error sending moderation warning:', warningError);
             }
           }
           
@@ -1430,7 +1437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         userMessage: savedUserMessage,
         aiResponse,
-        privateMessage: (moderationResult as any).isOffTopic || (moderationResult as any).needsModeration ? 'sent' : null,
+        privateMessage: moderationViolation ? 'sent' : null,
         message: "Message sent successfully"
       });
     } catch (error) {
