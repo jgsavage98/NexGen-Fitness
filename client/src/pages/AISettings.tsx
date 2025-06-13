@@ -214,7 +214,7 @@ export default function AISettings() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: AISettings) => {
-      return await apiRequest('/api/trainer/ai-settings', 'PUT', newSettings);
+      return await apiRequest('PUT', '/api/trainer/ai-settings', newSettings);
     },
     onSuccess: () => {
       toast({
