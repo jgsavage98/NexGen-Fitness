@@ -747,7 +747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create macro change request for trainer approval
             const macroChange = await storage.createMacroChange({
               userId,
-              date: new Date(),
+              date: new Date().toISOString().split('T')[0],
               aiCalories: macroProposal.calories,
               aiProtein: macroProposal.protein,
               aiCarbs: macroProposal.carbs,
@@ -1862,9 +1862,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Notify client via WebSocket about new message and macro update
       console.log('Attempting to send WebSocket notification...');
-      console.log('Global WSS exists:', !!global.wss);
-      
       const globalScope = global as any;
+      console.log('Global WSS exists:', !!globalScope.wss);
+      
       if (globalScope.wss) {
         const wss = globalScope.wss;
         console.log('Number of connected clients:', wss.clients.size);
@@ -2426,7 +2426,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Only add if we don't already have an entry for that exact date
         const hasBaselineEntry = weightEntries.some(entry => {
-          const entryDate = new Date(entry.recordedAt);
+          if (!entry.recordedAt) return false;
+          const entryDate = new Date(entry.recordedAt.toString());
           return entryDate.toDateString() === baselineDate.toDateString();
         });
         
