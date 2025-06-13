@@ -10,6 +10,7 @@ import {
   macroTargets,
   chatMessages,
   progressEntries,
+  aiSettings,
   type User,
   type UpsertUser,
   type Trainer,
@@ -33,6 +34,8 @@ import {
   type ProgressEntry,
   type InsertProgressEntry,
   type UpdateUserProfile,
+  type AISettings,
+  type InsertAISettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ne, desc, and, gte, lte, sql, asc, lt, count, or, isNotNull, not } from "drizzle-orm";
@@ -102,6 +105,10 @@ export interface IStorage {
   // Progress operations
   getUserProgressEntries(userId: string): Promise<ProgressEntry[]>;
   createProgressEntry(entry: InsertProgressEntry): Promise<ProgressEntry>;
+  
+  // AI Settings operations
+  getAISettings(trainerId: string): Promise<any>;
+  saveAISettings(trainerId: string, settings: any): Promise<void>;
   
   // Client data operations for trainers
   getClientMacrosForMonth(clientId: string, startDate: Date, endDate: Date): Promise<DailyMacros[]>;
@@ -1061,6 +1068,34 @@ export class DatabaseStorage implements IStorage {
     }
     
     return results;
+  }
+
+  // AI Settings operations
+  async getAISettings(trainerId: string): Promise<any> {
+    const [settings] = await db
+      .select()
+      .from(aiSettings)
+      .where(eq(aiSettings.trainerId, trainerId));
+    
+    return settings?.settings || null;
+  }
+
+  async saveAISettings(trainerId: string, settings: any): Promise<void> {
+    await db
+      .insert(aiSettings)
+      .values({
+        id: `ai_settings_${trainerId}`,
+        trainerId,
+        settings,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: aiSettings.id,
+        set: {
+          settings,
+          updatedAt: new Date(),
+        },
+      });
   }
 }
 

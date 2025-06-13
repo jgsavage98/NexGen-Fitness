@@ -421,6 +421,18 @@ export const updateUserProfileSchema = z.object({
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
+// AI Settings storage table
+export const aiSettings = pgTable("ai_settings", {
+  id: varchar("id").primaryKey().notNull(),
+  trainerId: varchar("trainer_id").notNull().references(() => users.id),
+  settings: jsonb("settings").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type AISettings = typeof aiSettings.$inferSelect;
+export type InsertAISettings = typeof aiSettings.$inferInsert;
+
 
 export type Trainer = typeof trainers.$inferSelect;
 export type InsertTrainer = z.infer<typeof insertTrainerSchema>;
