@@ -30,7 +30,24 @@ import fs from "fs";
 
 // Intelligent filtering function to determine when AI should respond to group messages
 function shouldAIRespondToGroupMessage(message: string, chatHistory: any[]): boolean {
-  const lowerMessage = message.toLowerCase();
+  const lowerMessage = message.toLowerCase().trim();
+  
+  // First check for casual conversation - don't respond to greetings and social messages
+  const casualPatterns = [
+    // Greetings
+    /^(hi|hello|hey|good morning|good afternoon|good evening|morning|afternoon|evening)(\s+(everyone|all|team|guys|y'all))?[!.]*$/,
+    // Common social responses  
+    /^(thanks?|thank you|thx|ok|okay|cool|nice|great|awesome|lol|haha|hehe|wow)([!.]*)?$/,
+    // Agreement/acknowledgment
+    /^(yes|yeah|yep|yup|no|nope|sure|definitely|absolutely|exactly|right|correct)([!.]*)?$/,
+    // Short responses
+    /^(same|agreed|me too|totally|for sure)([!.]*)?$/
+  ];
+  
+  if (casualPatterns.some(pattern => pattern.test(lowerMessage))) {
+    console.log(`Casual conversation detected: "${message}" - AI will not respond`);
+    return false;
+  }
   
   // Always respond if directly addressed
   if (lowerMessage.includes('coach') || lowerMessage.includes('chassidy')) {
@@ -46,35 +63,35 @@ function shouldAIRespondToGroupMessage(message: string, chatHistory: any[]): boo
       lowerMessage.startsWith('why') ||
       lowerMessage.startsWith('can') ||
       lowerMessage.startsWith('should') ||
-      lowerMessage.startsWith('is')) {
+      lowerMessage.startsWith('is') ||
+      lowerMessage.startsWith('does') ||
+      lowerMessage.startsWith('do you') ||
+      lowerMessage.startsWith('any advice')) {
     return true;
   }
   
   // Respond to fitness/nutrition related topics
-  const fitnessKeywords = ['workout', 'exercise', 'protein', 'calories', 'weight', 'diet', 'nutrition', 'macro', 'gym', 'training', 'hungry', 'tired', 'energy', 'goal', 'progress'];
+  const fitnessKeywords = ['workout', 'exercise', 'protein', 'calories', 'weight', 'diet', 'nutrition', 'macro', 'gym', 'training', 'hungry', 'tired', 'energy', 'goal', 'progress', 'muscle', 'cardio', 'strength'];
   if (fitnessKeywords.some(keyword => lowerMessage.includes(keyword))) {
     return true;
   }
   
   // Respond if someone seems to need help or motivation
-  const helpKeywords = ['help', 'stuck', 'confused', 'struggling', 'difficult', 'hard', 'challenge', 'problem', 'issue'];
+  const helpKeywords = ['help', 'stuck', 'confused', 'struggling', 'difficult', 'hard', 'challenge', 'problem', 'issue', 'advice', 'tips', 'guidance'];
   if (helpKeywords.some(keyword => lowerMessage.includes(keyword))) {
     return true;
   }
   
-  // Check for long periods of inactivity (more than 30 minutes since last AI message)
-  const lastAIMessage = chatHistory.find(msg => msg.sender === 'Coach Chassidy');
-  if (lastAIMessage) {
-    const timeSinceLastAI = Date.now() - new Date(lastAIMessage.timestamp).getTime();
-    if (timeSinceLastAI > 30 * 60 * 1000) { // 30 minutes
-      return true;
+  // Only check for long inactivity if the message isn't casual conversation
+  // and has some substance (more than just a few words)
+  if (lowerMessage.split(' ').length > 3) {
+    const lastAIMessage = chatHistory.find(msg => msg.sender === 'Coach Chassidy');
+    if (lastAIMessage) {
+      const timeSinceLastAI = Date.now() - new Date(lastAIMessage.timestamp).getTime();
+      if (timeSinceLastAI > 2 * 60 * 60 * 1000) { // 2 hours instead of 30 minutes
+        return true;
+      }
     }
-  }
-  
-  // Don't respond to casual conversation between clients
-  const casualPhrases = ['hi', 'hello', 'hey', 'thanks', 'thank you', 'ok', 'okay', 'cool', 'nice', 'lol', 'haha'];
-  if (casualPhrases.includes(lowerMessage.trim())) {
-    return false;
   }
   
   // Default: don't respond to preserve natural client-to-client conversation
