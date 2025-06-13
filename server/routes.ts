@@ -1491,7 +1491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             setTimeout(async () => {
               try {
                 // Use the enhanced moderation result for personalized warning
-                const warningMessage = enhancedModerationResult.privateWarning;
+                const warningMessage = enhancedModerationResult.privateWarning || `Hi ${clientFirstName}, let's keep our group chat focused on fitness and nutrition topics. Thanks!`;
               
                 // Save private message to violating user - store in user's individual chat
                 const privateMessage = await storage.saveChatMessage({
@@ -1509,19 +1509,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 });
                 
-                // Also post a brief reminder to the group chat to stay on topic
-                const groupReminder = await storage.saveChatMessage({
-                  userId: 'coach_chassidy',
-                  message: "Let's keep our discussions focused on fitness and nutrition topics. Thanks everyone! 💪",
-                  isAI: true,
-                  chatType: 'group',
-                  status: 'approved',
-                  metadata: {
-                    isTopicReminder: true,
-                    triggeredByViolation: true,
-                    senderName: 'Coach Chassidy'
-                  }
-                });
+                // Also post a brief reminder to the group chat if needed
+                if (enhancedModerationResult.groupReminder) {
+                  const groupReminder = await storage.saveChatMessage({
+                    userId: 'coach_chassidy',
+                    message: enhancedModerationResult.groupReminder,
+                    isAI: true,
+                    chatType: 'group',
+                    status: 'approved',
+                    metadata: {
+                      isTopicReminder: true,
+                      triggeredByViolation: true,
+                      violationType: enhancedModerationResult.violationType,
+                      senderName: 'Coach Chassidy'
+                    }
+                  });
+                }
                 
                 // Send both private message and group reminder via WebSocket
                 const wss = (global as any).wss;
@@ -1537,11 +1540,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       }));
                       
                       // Send group reminder to all users
-                      client.send(JSON.stringify({
-                        type: 'new_group_message',
-                        message: groupReminder,
-                        sender: 'coach_chassidy'
-                      }));
+                      if (enhancedModerationResult.groupReminder) {
+                        client.send(JSON.stringify({
+                          type: 'new_group_message',
+                          message: enhancedModerationResult.groupReminder,
+                          sender: 'coach_chassidy'
+                        }));
+                      }
                       
                       // Send counter update for individual chat (to violating user)
                       client.send(JSON.stringify({
@@ -1551,11 +1556,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         groupCount: 0
                       }));
                       
-                      // Send counter update for group chat (to all users)
-                      client.send(JSON.stringify({
-                        type: 'group_counter_update',
-                        groupCount: 1 // New group message
-                      }));
+                      // Send counter update for group chat (to all users) only if group reminder was sent
+                      if (enhancedModerationResult.groupReminder) {
+                        client.send(JSON.stringify({
+                          type: 'group_counter_update',
+                          groupCount: 1 // New group message
+                        }));
+                      }
                     }
                   });
                 }
@@ -3193,7 +3200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/trainer/ai-settings', isAuthenticated, async (req: any, res) => {
+  app.put('/api/trainer/ai-settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
