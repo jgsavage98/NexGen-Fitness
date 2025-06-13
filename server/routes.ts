@@ -1114,15 +1114,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // For group chat, automatically generate AI response as Coach Chassidy
-      let aiResponse = null;
+      let aiResponse: any = null;
       if (chatType === 'group') {
         try {
           // Get recent group chat messages for context
-          const recentMessages = await storage.getGroupChatMessages(50);
+          const recentMessages = await storage.getGroupChatMessages(undefined, 50);
           
           // Build context for AI moderator
-          const chatHistory = recentMessages.slice(-10).map(msg => ({
-            sender: msg.userId === 'coach_chassidy' ? 'Coach Chassidy' : (msg.metadata?.senderName || 'Client'),
+          const chatHistory = recentMessages.slice(-10).map((msg: any) => ({
+            sender: msg.userId === 'coach_chassidy' ? 'Coach Chassidy' : ((msg.metadata as any)?.senderName || 'Client'),
             message: msg.message,
             timestamp: msg.createdAt
           }));
