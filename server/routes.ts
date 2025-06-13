@@ -1186,7 +1186,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { messageIds } = req.body;
+      console.log(`Marking messages as read for user ${userId}, messageIds:`, messageIds);
       await storage.markMessagesAsRead(userId, messageIds);
+      console.log(`Successfully marked messages as read for user ${userId}`);
       res.json({ success: true });
     } catch (error) {
       console.error("Error marking messages as read:", error);

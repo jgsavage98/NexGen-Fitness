@@ -133,28 +133,29 @@ export default function ChatTab() {
 
   // Mark messages as read when Chat tab opens and when switching between chat types
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (chatType === 'individual') {
-        markMessagesAsReadMutation.mutate();
-        // Immediately clear individual counters
-        queryClient.setQueryData(['/api/chat/individual-unread-count'], { count: 0 });
-        queryClient.setQueryData(['/api/chat/unread-count'], { count: 0 });
-      } else if (chatType === 'group') {
-        markGroupViewedMutation.mutate();
-        // Immediately clear group counters
-        queryClient.setQueryData(['/api/chat/group-unread-count'], { count: 0 });
-        queryClient.setQueryData(['/api/chat/unread-count'], (old: any) => {
-          const current = old || { count: 0 };
-          return { count: Math.max(0, current.count - groupUnreadCount) };
-        });
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [chatType, groupUnreadCount]);
+    console.log(`ChatTab: chatType changed to ${chatType}`);
+    
+    if (chatType === 'individual') {
+      console.log('ChatTab: Marking individual messages as read');
+      markMessagesAsReadMutation.mutate();
+      // Immediately clear individual counters
+      queryClient.setQueryData(['/api/chat/individual-unread-count'], { count: 0 });
+      queryClient.setQueryData(['/api/chat/unread-count'], { count: 0 });
+    } else if (chatType === 'group') {
+      console.log('ChatTab: Marking group chat as viewed');
+      markGroupViewedMutation.mutate();
+      // Immediately clear group counters
+      queryClient.setQueryData(['/api/chat/group-unread-count'], { count: 0 });
+      queryClient.setQueryData(['/api/chat/unread-count'], (old: any) => {
+        const current = old || { count: 0 };
+        return { count: Math.max(0, current.count - groupUnreadCount) };
+      });
+    }
+  }, [chatType]);
 
   // Initial load - mark individual messages as read by default and clear counters
   useEffect(() => {
+    console.log('ChatTab: Initial load - marking messages as read');
     markMessagesAsReadMutation.mutate();
     // Immediately clear counters on initial load
     queryClient.setQueryData(['/api/chat/individual-unread-count'], { count: 0 });
