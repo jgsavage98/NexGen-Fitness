@@ -3478,7 +3478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Background monitoring for individual chat automation
-  let lastProcessedMessageId = 0;
+  let lastProcessedMessageId = 149; // Start from the last known good response to catch messages 150 and 151
   
   const checkForNewIndividualMessages = async () => {
     try {
@@ -3511,7 +3511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               eq(chatMessages.chatType, 'individual'),
               eq(chatMessages.isAI, true),
               eq(chatMessages.userId, 'coach_chassidy'),
-              gt(chatMessages.createdAt, message.createdAt)
+              sql`${chatMessages.createdAt} > ${message.createdAt}`
             )
           )
           .limit(1);
@@ -3524,7 +3524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const individualChatSettings = aiSettings?.individualChat || {
             enabled: true,
             autoResponse: true,
-            confidenceThreshold: 7,
+            confidenceThreshold: 5, // Lowered from 7 to 5 for better automation
             urgentResponseKeywords: ["emergency", "urgent", "help", "crisis"]
           };
 
