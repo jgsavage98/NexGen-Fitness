@@ -29,12 +29,7 @@ import path from "path";
 import fs from "fs";
 
 // Utility function to generate random delay between 15-30 seconds
-function getRandomDelay(): number {
-  return Math.floor(Math.random() * (30000 - 15000 + 1)) + 15000; // 15-30 seconds in milliseconds
-}
-
-// Async utility to get configurable delay from AI settings
-async function getConfigurableDelay(settings?: any): Promise<number> {
+async function getRandomDelay(settings?: any): Promise<number> {
   try {
     // Get AI settings if not provided
     if (!settings) {
