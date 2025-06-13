@@ -1627,14 +1627,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (chatType === 'individual') {
         // Individual Chat Automation Logic
         try {
+          console.log(`Individual chat message received from user ${userId}: "${message}"`);
+          
           // Get AI settings for individual chat automation
           const aiSettings = await storage.getAISettings('coach_chassidy');
+          console.log('AI Settings retrieved:', aiSettings ? 'Found' : 'Not found');
+          
           const individualChatSettings = aiSettings?.individualChat || {
             enabled: true,
             autoResponse: true,
             confidenceThreshold: 7,
             urgentResponseKeywords: ["emergency", "urgent", "help", "crisis"]
           };
+          
+          console.log('Individual chat settings:', {
+            enabled: individualChatSettings.enabled,
+            autoResponse: individualChatSettings.autoResponse,
+            confidenceThreshold: individualChatSettings.confidenceThreshold
+          });
           
           if (individualChatSettings.enabled && individualChatSettings.autoResponse) {
             console.log('Processing individual chat for automated response...');
