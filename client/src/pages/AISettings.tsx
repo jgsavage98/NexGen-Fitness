@@ -778,7 +778,7 @@ export default function AISettings() {
                     <Input
                       id="quiet-start"
                       type="time"
-                      value={settings.groupChat.timingRules.quietHours.start}
+                      value={settings.groupChat.timingRules?.quietHours?.start || "22:00"}
                       onChange={(e) => 
                         setSettings(prev => ({
                           ...prev,
@@ -787,7 +787,7 @@ export default function AISettings() {
                             timingRules: {
                               ...prev.groupChat.timingRules,
                               quietHours: {
-                                ...prev.groupChat.timingRules.quietHours,
+                                ...prev.groupChat.timingRules?.quietHours,
                                 start: e.target.value
                               }
                             }
@@ -802,7 +802,7 @@ export default function AISettings() {
                     <Input
                       id="quiet-end"
                       type="time"
-                      value={settings.groupChat.timingRules.quietHours.end}
+                      value={settings.groupChat.timingRules?.quietHours?.end || "06:00"}
                       onChange={(e) => 
                         setSettings(prev => ({
                           ...prev,
@@ -811,7 +811,7 @@ export default function AISettings() {
                             timingRules: {
                               ...prev.groupChat.timingRules,
                               quietHours: {
-                                ...prev.groupChat.timingRules.quietHours,
+                                ...prev.groupChat.timingRules?.quietHours,
                                 end: e.target.value
                               }
                             }
@@ -825,7 +825,7 @@ export default function AISettings() {
                 <div className="space-y-2">
                   <Label htmlFor="weekend-behavior">Weekend Behavior</Label>
                   <Select
-                    value={settings.groupChat.timingRules.weekendBehavior}
+                    value={settings.groupChat.timingRules?.weekendBehavior || "normal"}
                     onValueChange={(value) => 
                       setSettings(prev => ({
                         ...prev,
