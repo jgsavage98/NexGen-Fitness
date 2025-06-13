@@ -3188,10 +3188,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
           responseStyle: 'supportive',
           maxResponseLength: 300,
+          responseDelay: {
+            enabled: true,
+            minSeconds: 5,
+            maxSeconds: 30,
+            humanLike: true
+          },
           timingRules: {
             quietHours: { start: "22:00", end: "06:00" },
             weekendBehavior: 'reduced'
           }
+        },
+        individualChat: {
+          enabled: true,
+          autoResponse: true,
+          autoSuggestResponses: true,
+          urgentResponseKeywords: ["emergency", "urgent", "help", "crisis"],
+          responseStyle: 'supportive',
+          confidenceThreshold: 7,
+          contentModeration: {
+            enabled: true,
+            profanityFilter: true,
+            rudenessDetection: true,
+            offTopicWarning: true,
+            customKeywords: ["spam", "promotion"],
+            fitnessStrictness: 7,
+            autoRedirect: true
+          },
+          responseDelay: {
+            enabled: true,
+            minSeconds: 30,
+            maxSeconds: 120,
+            humanLike: true,
+            quietHoursMultiplier: 3,
+            weekendMultiplier: 2
+          },
+          timingRules: {
+            quietHours: { start: "22:00", end: "06:00" },
+            weekendBehavior: 'extended_delay'
+          }
+        },
+        macroRecommendations: {
+          enabled: true,
+          aggressiveness: 5,
+          hungerThreshold: 4,
+          weightChangeThreshold: 2,
+          autoApprovalThreshold: 8,
+          customRules: ""
+        },
+        workoutGeneration: {
+          enabled: true,
+          difficulty: 'adaptive',
+          variety: 7,
+          injuryAwareness: true,
+          equipmentAdaptation: true,
+          progressionTracking: true
+        },
+        nutritionAnalysis: {
+          enabled: true,
+          strictness: 6,
+          customFoodDatabase: false,
+          alternativesuggestions: true,
+          portionWarnings: true
+        },
+        progressReports: {
+          enabled: true,
+          frequency: 'weekly',
+          autoGeneration: true,
+          includeAIInsights: true,
+          customMetrics: []
         }
       });
     } catch (error) {

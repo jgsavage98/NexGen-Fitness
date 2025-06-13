@@ -55,6 +55,15 @@ interface AISettings {
     urgentResponseKeywords: string[];
     responseStyle: 'supportive' | 'motivational' | 'professional' | 'friendly';
     confidenceThreshold: number; // 1-10
+    contentModeration: {
+      enabled: boolean;
+      profanityFilter: boolean;
+      rudenessDetection: boolean;
+      offTopicWarning: boolean;
+      customKeywords: string[];
+      fitnessStrictness: number; // 1-10 scale
+      autoRedirect: boolean;
+    };
     responseDelay: {
       enabled: boolean;
       minSeconds: number; // minimum delay in seconds
@@ -144,6 +153,15 @@ export default function AISettings() {
       urgentResponseKeywords: ["emergency", "urgent", "help", "crisis"],
       responseStyle: 'supportive',
       confidenceThreshold: 7,
+      contentModeration: {
+        enabled: true,
+        profanityFilter: true,
+        rudenessDetection: true,
+        offTopicWarning: true,
+        customKeywords: ["spam", "promotion"],
+        fitnessStrictness: 7,
+        autoRedirect: true
+      },
       responseDelay: {
         enabled: true,
         minSeconds: 30,
@@ -235,6 +253,16 @@ export default function AISettings() {
     setSettings(prev => ({
       ...prev,
       individualChat: { ...prev.individualChat, [key]: value }
+    }));
+  };
+
+  const updateIndividualChatModerationSetting = (key: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      individualChat: { 
+        ...prev.individualChat, 
+        contentModeration: { ...prev.individualChat.contentModeration, [key]: value }
+      }
     }));
   };
 
@@ -941,6 +969,107 @@ export default function AISettings() {
                 <p className="text-sm text-muted-foreground">
                   Messages containing these keywords will trigger immediate AI response suggestions
                 </p>
+              </div>
+
+              {/* Individual Chat Content Moderation Settings */}
+              <div className="space-y-4 border-t pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-medium">Content Moderation</Label>
+                    <p className="text-sm text-muted-foreground">Filter inappropriate content in individual chats</p>
+                  </div>
+                  <Switch
+                    checked={settings.individualChat.contentModeration.enabled}
+                    onCheckedChange={(checked) => updateIndividualChatModerationSetting('enabled', checked)}
+                  />
+                </div>
+
+                {settings.individualChat.contentModeration.enabled && (
+                  <div className="space-y-4 ml-4 border-l-2 border-gray-200 pl-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm font-medium">Profanity Filter</Label>
+                        <p className="text-xs text-muted-foreground">Detect and warn about profane language</p>
+                      </div>
+                      <Switch
+                        checked={settings.individualChat.contentModeration.profanityFilter}
+                        onCheckedChange={(checked) => updateIndividualChatModerationSetting('profanityFilter', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm font-medium">Rudeness Detection</Label>
+                        <p className="text-xs text-muted-foreground">Identify rude or mean messages</p>
+                      </div>
+                      <Switch
+                        checked={settings.individualChat.contentModeration.rudenessDetection}
+                        onCheckedChange={(checked) => updateIndividualChatModerationSetting('rudenessDetection', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm font-medium">Off-Topic Warning</Label>
+                        <p className="text-xs text-muted-foreground">Warn when discussions drift from fitness topics</p>
+                      </div>
+                      <Switch
+                        checked={settings.individualChat.contentModeration.offTopicWarning}
+                        onCheckedChange={(checked) => updateIndividualChatModerationSetting('offTopicWarning', checked)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="individual-fitness-strictness">Fitness Topic Strictness</Label>
+                      <div className="px-3">
+                        <Slider
+                          value={[settings.individualChat.contentModeration.fitnessStrictness]}
+                          onValueChange={([value]) => updateIndividualChatModerationSetting('fitnessStrictness', value)}
+                          max={10}
+                          min={1}
+                          step={1}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>Relaxed</span>
+                          <span>Balanced</span>
+                          <span>Strict</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        How strictly to enforce fitness and nutrition topics ({settings.individualChat.contentModeration.fitnessStrictness}/10)
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm font-medium">Auto-Redirect</Label>
+                        <p className="text-xs text-muted-foreground">Automatically guide conversations back to fitness topics</p>
+                      </div>
+                      <Switch
+                        checked={settings.individualChat.contentModeration.autoRedirect}
+                        onCheckedChange={(checked) => updateIndividualChatModerationSetting('autoRedirect', checked)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="individual-custom-keywords">Custom Keywords</Label>
+                      <Input
+                        id="individual-custom-keywords"
+                        placeholder="Enter keywords separated by commas (e.g., spam, promotion)"
+                        value={settings.individualChat.contentModeration.customKeywords.join(', ')}
+                        onChange={(e) => 
+                          updateIndividualChatModerationSetting('customKeywords', 
+                            e.target.value.split(',').map(k => k.trim()).filter(k => k.length > 0)
+                          )
+                        }
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Additional keywords to flag in individual messages
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Individual Chat Response Delay Settings */}
