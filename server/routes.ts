@@ -3402,5 +3402,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Background monitoring for individual chat automation
+  let lastProcessedMessageId = 0;
+  
+  const checkForNewIndividualMessages = async () => {
+    try {
+      // Get latest individual messages that might need automation
+      const recentMessages = await db.select()
+        .from(chatMessages)
+        .where(
+          sql`${chatMessages.chatType} = 'individual' 
+              AND ${chatMessages.isAI} = false 
+              AND ${chatMessages.id} > ${lastProcessedMessageId}
+              AND ${chatMessages.createdAt} > NOW() - INTERVAL '10 minutes'`
+        )
+        .orderBy(chatMessages.id);
+
+      for (const message of recentMessages) {
+        // Check if this message already has an AI response
+        const existingResponse = await db.select()
+          .from(chatMessages)
+          .where(
+            sql`${chatMessages.chatType} = 'individual' 
+                AND ${chatMessages.isAI} = true 
+                AND ${chatMessages.userId} = 'coach_chassidy'
+                AND ${chatMessages.createdAt} > ${message.createdAt}`
+          )
+          .limit(1);
+
+        if (existingResponse.length === 0) {
+          console.log(`Processing individual message automation for message ID ${message.id} from user ${message.userId}`);
+          
+          // Get AI settings for individual chat automation
+          const aiSettings = await storage.getAISettings('coach_chassidy');
+          const individualChatSettings = aiSettings?.individualChat || {
+            enabled: true,
+            autoResponse: true,
+            confidenceThreshold: 7,
+            urgentResponseKeywords: ["emergency", "urgent", "help", "crisis"]
+          };
+
+          if (individualChatSettings.enabled && individualChatSettings.autoResponse) {
+            // Get user info
+            const user = await storage.getUser(message.userId);
+            
+            // Check for urgent keywords that bypass delay
+            const hasUrgentKeyword = individualChatSettings.urgentResponseKeywords.some((keyword: string) => 
+              message.message.toLowerCase().includes(keyword.toLowerCase())
+            );
+            
+            // Get chat history for context
+            const chatHistory = await storage.getUserChatMessages(message.userId, 10);
+            
+            // Generate AI response as Coach Chassidy
+            const response = await aiCoach.getChatResponse(
+              message.message,
+              user,
+              chatHistory,
+              false // isGroupChat flag
+            );
+            
+            // Check if response meets confidence threshold
+            const meetsThreshold = response.confidence >= individualChatSettings.confidenceThreshold;
+            
+            if (meetsThreshold) {
+              // Calculate delay (urgent messages get immediate response)
+              const responseDelay = hasUrgentKeyword ? 0 : await getIndividualChatDelay(aiSettings);
+              console.log(`Individual chat automation response will be sent after ${responseDelay / 1000} seconds for user ${message.userId}`);
+              
+              setTimeout(async () => {
+                try {
+                  // Save AI response as Coach Chassidy
+                  const aiResponse = await storage.saveChatMessage({
+                    userId: 'coach_chassidy',
+                    message: response.message,
+                    isAI: true,
+                    chatType: 'individual',
+                    status: 'approved',
+                    metadata: {
+                      confidence: response.confidence,
+                      requiresHumanReview: response.requiresHumanReview,
+                      suggestedActions: response.suggestedActions,
+                      senderName: 'Coach Chassidy',
+                      isAutomated: true,
+                      targetUserId: message.userId,
+                      responseDelay: responseDelay,
+                      urgentResponse: hasUrgentKeyword
+                    }
+                  });
+                  
+                  console.log(`Automated individual chat response sent to user ${message.userId}`);
+                  
+                  // Broadcast to WebSocket clients
+                  if (wss) {
+                    wss.clients.forEach((client: WebSocket) => {
+                      if (client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({
+                          type: 'new_individual_message',
+                          message: aiResponse,
+                          sender: 'coach_chassidy',
+                          targetUserId: message.userId
+                        }));
+                      }
+                    });
+                  }
+                } catch (responseError) {
+                  console.error('Error in individual chat automation:', responseError);
+                }
+              }, responseDelay);
+            } else {
+              console.log(`Individual chat message did not meet confidence threshold (${response.confidence}/${individualChatSettings.confidenceThreshold})`);
+            }
+          }
+        }
+        
+        lastProcessedMessageId = Math.max(lastProcessedMessageId, message.id);
+      }
+    } catch (error) {
+      console.error('Error in individual message monitoring:', error);
+    }
+  };
+
+  // Check for new individual messages every 20 seconds
+  setInterval(checkForNewIndividualMessages, 20000);
+  
+  // Run initial check after 3 seconds
+  setTimeout(checkForNewIndividualMessages, 3000);
+
   return httpServer;
 }
