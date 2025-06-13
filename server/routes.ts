@@ -22,7 +22,7 @@ import {
   progressEntries
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, gte, lte, not, sql } from "drizzle-orm";
+import { eq, desc, and, or, gte, lte, not, sql, gt } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -3484,28 +3484,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log(`🔍 Background monitoring: Checking for new individual messages (last processed ID: ${lastProcessedMessageId})`);
       
+      // Get the timestamp from 10 minutes ago
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      
       // Get latest individual messages that might need automation
       const recentMessages = await db.select()
         .from(chatMessages)
         .where(
-          sql`${chatMessages.chatType} = 'individual' 
-              AND ${chatMessages.isAI} = false 
-              AND ${chatMessages.id} > ${lastProcessedMessageId}
-              AND ${chatMessages.createdAt} > NOW() - INTERVAL '10 minutes'`
+          and(
+            eq(chatMessages.chatType, 'individual'),
+            eq(chatMessages.isAI, false),
+            gt(chatMessages.id, lastProcessedMessageId),
+            gt(chatMessages.createdAt, tenMinutesAgo)
+          )
         )
         .orderBy(chatMessages.id);
         
       console.log(`🔍 Found ${recentMessages.length} new individual messages to process`);
 
       for (const message of recentMessages) {
-        // Check if this message already has an AI response
+        // Check if this message already has an AI response from coach_chassidy after this message
         const existingResponse = await db.select()
           .from(chatMessages)
           .where(
-            sql`${chatMessages.chatType} = 'individual' 
-                AND ${chatMessages.isAI} = true 
-                AND ${chatMessages.userId} = 'coach_chassidy'
-                AND ${chatMessages.createdAt} > ${message.createdAt}`
+            and(
+              eq(chatMessages.chatType, 'individual'),
+              eq(chatMessages.isAI, true),
+              eq(chatMessages.userId, 'coach_chassidy'),
+              gt(chatMessages.createdAt, message.createdAt)
+            )
           )
           .limit(1);
 
