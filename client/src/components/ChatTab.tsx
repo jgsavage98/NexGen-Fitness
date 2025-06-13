@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatMessage } from "@/lib/types";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { MessageCircle, Users } from "lucide-react";
 
 export default function ChatTab() {
@@ -34,6 +35,24 @@ export default function ChatTab() {
 
   const individualUnreadCount = Number(individualUnreadData?.count) || 0;
   const groupUnreadCount = Number(groupUnreadData?.count) || 0;
+
+  // WebSocket message handler for real-time updates
+  const handleWebSocketMessage = (data: any) => {
+    if (data.type === 'private_moderation_message' || data.type === 'new_group_message') {
+      // Refresh message lists when new messages arrive
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
+    }
+    
+    if (data.type === 'counter_update' || data.type === 'group_counter_update') {
+      // Refresh unread counts when counters update
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/individual-unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/group-unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
+    }
+  };
+
+  // Initialize WebSocket connection
+  useWebSocket(handleWebSocketMessage);
 
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/messages", chatType],

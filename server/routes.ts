@@ -1406,6 +1406,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       message: groupReminder,
                       sender: 'coach_chassidy'
                     }));
+                    
+                    // Send counter update for individual chat (to violating user)
+                    client.send(JSON.stringify({
+                      type: 'counter_update',
+                      targetUserId: userId,
+                      individualCount: 1, // New unread message
+                      groupCount: 0
+                    }));
+                    
+                    // Send counter update for group chat (to all users)
+                    client.send(JSON.stringify({
+                      type: 'group_counter_update',
+                      groupCount: 1 // New group message
+                    }));
                   }
                 });
               }
@@ -1448,6 +1462,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     type: 'new_group_message',
                     message: aiResponse,
                     sender: 'coach_chassidy'
+                  }));
+                  
+                  // Send counter update for group chat
+                  client.send(JSON.stringify({
+                    type: 'group_counter_update',
+                    groupCount: 1
                   }));
                 }
               });
