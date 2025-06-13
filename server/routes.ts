@@ -70,6 +70,92 @@ async function getConfigurableDelay(settings?: any): Promise<number> {
   }
 }
 
+// Enhanced delay calculation for individual chat with quiet hours and weekend multipliers
+async function getIndividualChatDelay(settings?: any): Promise<number> {
+  try {
+    // Get AI settings if not provided
+    if (!settings) {
+      settings = await storage.getAISettings('coach_chassidy');
+    }
+    
+    // Use settings from database if available, otherwise use defaults
+    const delayConfig = settings?.individualChat?.responseDelay || {
+      enabled: true,
+      minSeconds: 30,
+      maxSeconds: 120,
+      humanLike: true,
+      quietHoursMultiplier: 3,
+      weekendMultiplier: 2
+    };
+    
+    const timingRules = settings?.individualChat?.timingRules || {
+      quietHours: { start: "22:00", end: "06:00" },
+      weekendBehavior: 'extended_delay'
+    };
+    
+    if (!delayConfig.enabled) {
+      return 0; // No delay if disabled
+    }
+    
+    // Calculate base delay
+    const minMs = delayConfig.minSeconds * 1000;
+    const maxMs = delayConfig.maxSeconds * 1000;
+    
+    let baseDelay;
+    if (delayConfig.humanLike) {
+      // Generate random delay within the configured range
+      baseDelay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+    } else {
+      // Use fixed delay (average of min and max)
+      baseDelay = Math.floor((minMs + maxMs) / 2);
+    }
+    
+    // Check if we're in quiet hours or weekend and apply multipliers
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = currentHour * 60 + currentMinute;
+    
+    // Parse quiet hours
+    const quietStart = timingRules.quietHours.start.split(':');
+    const quietEnd = timingRules.quietHours.end.split(':');
+    const quietStartTime = parseInt(quietStart[0]) * 60 + parseInt(quietStart[1]);
+    const quietEndTime = parseInt(quietEnd[0]) * 60 + parseInt(quietEnd[1]);
+    
+    // Check if in quiet hours (handle overnight periods)
+    let isQuietHours = false;
+    if (quietStartTime > quietEndTime) {
+      // Overnight quiet hours (e.g., 22:00 to 06:00)
+      isQuietHours = currentTime >= quietStartTime || currentTime <= quietEndTime;
+    } else {
+      // Same day quiet hours
+      isQuietHours = currentTime >= quietStartTime && currentTime <= quietEndTime;
+    }
+    
+    // Check if weekend
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    
+    // Apply multipliers
+    let finalDelay = baseDelay;
+    
+    if (isQuietHours) {
+      finalDelay *= delayConfig.quietHoursMultiplier;
+    }
+    
+    if (isWeekend && timingRules.weekendBehavior === 'extended_delay') {
+      finalDelay *= delayConfig.weekendMultiplier;
+    }
+    
+    return Math.floor(finalDelay);
+    
+  } catch (error) {
+    console.error('Error getting individual chat delay settings, using defaults:', error);
+    // Fallback to 30-120 second range
+    return Math.floor(Math.random() * (120000 - 30000 + 1)) + 30000;
+  }
+}
+
 // AI-powered function to determine when Coach Chassidy should respond to group messages
 async function shouldAIRespondToGroupMessage(message: string, chatHistory: any[], settings?: any): Promise<boolean> {
   try {
@@ -1537,6 +1623,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
         } catch (error) {
           console.error("Error generating AI group chat response:", error);
+        }
+      } else if (chatType === 'individual') {
+        // Individual Chat Automation Logic
+        try {
+          // Get AI settings for individual chat automation
+          const aiSettings = await storage.getAISettings('coach_chassidy');
+          const individualChatSettings = aiSettings?.individualChat || {
+            enabled: true,
+            autoResponse: true,
+            confidenceThreshold: 7,
+            urgentResponseKeywords: ["emergency", "urgent", "help", "crisis"]
+          };
+          
+          if (individualChatSettings.enabled && individualChatSettings.autoResponse) {
+            console.log('Processing individual chat for automated response...');
+            
+            // Check for urgent keywords that bypass delay
+            const hasUrgentKeyword = individualChatSettings.urgentResponseKeywords.some(keyword => 
+              message.toLowerCase().includes(keyword.toLowerCase())
+            );
+            
+            // Get chat history for context
+            const chatHistory = await storage.getChatMessages(userId, 'individual', 10);
+            
+            // Generate AI response as Coach Chassidy
+            const response = await aiCoach.getChatResponse(
+              message,
+              user,
+              chatHistory,
+              false // isGroupChat flag
+            );
+            
+            // Check if response meets confidence threshold
+            const meetsThreshold = response.confidence >= individualChatSettings.confidenceThreshold;
+            
+            if (meetsThreshold) {
+              // Calculate delay (urgent messages get immediate response)
+              const responseDelay = hasUrgentKeyword ? 0 : await getIndividualChatDelay(aiSettings);
+              console.log(`Individual chat response will be sent after ${responseDelay / 1000} seconds${hasUrgentKeyword ? ' (urgent message - no delay)' : ''}`);
+              
+              setTimeout(async () => {
+                try {
+                  // Save AI response as Coach Chassidy
+                  const aiResponse = await storage.saveChatMessage({
+                    userId: 'coach_chassidy',
+                    message: response.message,
+                    isAI: true,
+                    chatType: 'individual',
+                    status: 'approved', // Auto-approve individual chat responses
+                    metadata: {
+                      confidence: response.confidence,
+                      requiresHumanReview: response.requiresHumanReview,
+                      suggestedActions: response.suggestedActions,
+                      senderName: 'Coach Chassidy',
+                      targetUserId: userId, // Track which user this response is for
+                      isAutomated: true,
+                      urgentResponse: hasUrgentKeyword
+                    }
+                  });
+                  
+                  // Broadcast AI response to individual chat
+                  const wss = (global as any).wss;
+                  if (wss) {
+                    wss.clients.forEach((client: WebSocket) => {
+                      if (client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({
+                          type: 'new_individual_message',
+                          message: aiResponse,
+                          sender: 'coach_chassidy',
+                          targetUserId: userId
+                        }));
+                        
+                        // Send counter update for individual chat
+                        client.send(JSON.stringify({
+                          type: 'counter_update',
+                          individualCount: 1,
+                          targetUserId: userId
+                        }));
+                      }
+                    });
+                  }
+                  
+                  console.log(`Automated individual chat response sent to user ${userId} with confidence ${response.confidence}/10`);
+                  
+                } catch (responseError) {
+                  console.error('Error generating delayed individual chat response:', responseError);
+                }
+              }, responseDelay);
+            } else {
+              console.log(`Individual chat response confidence (${response.confidence}/10) below threshold (${individualChatSettings.confidenceThreshold}/10) - not sending automated response`);
+            }
+          } else {
+            console.log('Individual chat automation disabled');
+          }
+          
+        } catch (error) {
+          console.error("Error generating AI individual chat response:", error);
         }
       }
       

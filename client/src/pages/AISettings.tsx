@@ -50,11 +50,23 @@ interface AISettings {
   };
   individualChat: {
     enabled: boolean;
+    autoResponse: boolean;
     autoSuggestResponses: boolean;
-    responseDelay: number; // seconds
     urgentResponseKeywords: string[];
     responseStyle: 'supportive' | 'motivational' | 'professional' | 'friendly';
     confidenceThreshold: number; // 1-10
+    responseDelay: {
+      enabled: boolean;
+      minSeconds: number; // minimum delay in seconds
+      maxSeconds: number; // maximum delay in seconds
+      humanLike: boolean; // whether to use random delays
+      quietHoursMultiplier: number; // multiply delay during quiet hours
+      weekendMultiplier: number; // multiply delay during weekends
+    };
+    timingRules: {
+      quietHours: { start: string; end: string };
+      weekendBehavior: 'normal' | 'reduced' | 'extended_delay';
+    };
   };
   macroRecommendations: {
     enabled: boolean;
@@ -127,11 +139,23 @@ export default function AISettings() {
     },
     individualChat: {
       enabled: true,
+      autoResponse: true,
       autoSuggestResponses: true,
-      responseDelay: 2,
       urgentResponseKeywords: ["emergency", "urgent", "help", "crisis"],
       responseStyle: 'supportive',
-      confidenceThreshold: 7
+      confidenceThreshold: 7,
+      responseDelay: {
+        enabled: true,
+        minSeconds: 30,
+        maxSeconds: 120,
+        humanLike: true,
+        quietHoursMultiplier: 3,
+        weekendMultiplier: 2
+      },
+      timingRules: {
+        quietHours: { start: "22:00", end: "06:00" },
+        weekendBehavior: 'extended_delay'
+      }
     },
     macroRecommendations: {
       enabled: true,
@@ -851,6 +875,17 @@ export default function AISettings() {
                 />
               </div>
 
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Fully Automated Responses</Label>
+                  <p className="text-sm text-muted-foreground">AI automatically responds to individual messages without trainer approval</p>
+                </div>
+                <Switch
+                  checked={settings.individualChat.autoResponse}
+                  onCheckedChange={(checked) => updateIndividualChatSetting('autoResponse', checked)}
+                />
+              </div>
+
               <div className="space-y-4">
                 <Label className="text-base font-medium">Response Confidence Threshold</Label>
                 <div className="px-3">
@@ -906,6 +941,248 @@ export default function AISettings() {
                 <p className="text-sm text-muted-foreground">
                   Messages containing these keywords will trigger immediate AI response suggestions
                 </p>
+              </div>
+
+              {/* Individual Chat Response Delay Settings */}
+              <div className="space-y-4 border-t pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-medium">Human-Like Response Delays</Label>
+                    <p className="text-sm text-muted-foreground">Add realistic delays to automated responses</p>
+                  </div>
+                  <Switch
+                    checked={settings.individualChat.responseDelay.enabled}
+                    onCheckedChange={(checked) => 
+                      setSettings(prev => ({
+                        ...prev,
+                        individualChat: {
+                          ...prev.individualChat,
+                          responseDelay: {
+                            ...prev.individualChat.responseDelay,
+                            enabled: checked
+                          }
+                        }
+                      }))
+                    }
+                  />
+                </div>
+
+                {settings.individualChat.responseDelay.enabled && (
+                  <div className="space-y-4 ml-4 border-l-2 border-gray-200 pl-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="individual-min-delay">Min Delay (seconds)</Label>
+                        <Input
+                          id="individual-min-delay"
+                          type="number"
+                          min="5"
+                          max="600"
+                          value={settings.individualChat.responseDelay.minSeconds}
+                          onChange={(e) => 
+                            setSettings(prev => ({
+                              ...prev,
+                              individualChat: {
+                                ...prev.individualChat,
+                                responseDelay: {
+                                  ...prev.individualChat.responseDelay,
+                                  minSeconds: parseInt(e.target.value) || 30
+                                }
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="individual-max-delay">Max Delay (seconds)</Label>
+                        <Input
+                          id="individual-max-delay"
+                          type="number"
+                          min="5"
+                          max="600"
+                          value={settings.individualChat.responseDelay.maxSeconds}
+                          onChange={(e) => 
+                            setSettings(prev => ({
+                              ...prev,
+                              individualChat: {
+                                ...prev.individualChat,
+                                responseDelay: {
+                                  ...prev.individualChat.responseDelay,
+                                  maxSeconds: parseInt(e.target.value) || 120
+                                }
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm font-medium">Random Variation</Label>
+                        <p className="text-xs text-muted-foreground">Use random delays within range</p>
+                      </div>
+                      <Switch
+                        checked={settings.individualChat.responseDelay.humanLike}
+                        onCheckedChange={(checked) => 
+                          setSettings(prev => ({
+                            ...prev,
+                            individualChat: {
+                              ...prev.individualChat,
+                              responseDelay: {
+                                ...prev.individualChat.responseDelay,
+                                humanLike: checked
+                              }
+                            }
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="quiet-hours-multiplier">Quiet Hours Multiplier</Label>
+                        <Input
+                          id="quiet-hours-multiplier"
+                          type="number"
+                          min="1"
+                          max="10"
+                          step="0.5"
+                          value={settings.individualChat.responseDelay.quietHoursMultiplier}
+                          onChange={(e) => 
+                            setSettings(prev => ({
+                              ...prev,
+                              individualChat: {
+                                ...prev.individualChat,
+                                responseDelay: {
+                                  ...prev.individualChat.responseDelay,
+                                  quietHoursMultiplier: parseFloat(e.target.value) || 3
+                                }
+                              }
+                            }))
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Multiply delay by {settings.individualChat.responseDelay.quietHoursMultiplier}x during quiet hours
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="weekend-multiplier">Weekend Multiplier</Label>
+                        <Input
+                          id="weekend-multiplier"
+                          type="number"
+                          min="1"
+                          max="10"
+                          step="0.5"
+                          value={settings.individualChat.responseDelay.weekendMultiplier}
+                          onChange={(e) => 
+                            setSettings(prev => ({
+                              ...prev,
+                              individualChat: {
+                                ...prev.individualChat,
+                                responseDelay: {
+                                  ...prev.individualChat.responseDelay,
+                                  weekendMultiplier: parseFloat(e.target.value) || 2
+                                }
+                              }
+                            }))
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Multiply delay by {settings.individualChat.responseDelay.weekendMultiplier}x on weekends
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="individual-quiet-start">Quiet Hours Start</Label>
+                        <Input
+                          id="individual-quiet-start"
+                          type="time"
+                          value={settings.individualChat.timingRules.quietHours.start}
+                          onChange={(e) => 
+                            setSettings(prev => ({
+                              ...prev,
+                              individualChat: {
+                                ...prev.individualChat,
+                                timingRules: {
+                                  ...prev.individualChat.timingRules,
+                                  quietHours: {
+                                    ...prev.individualChat.timingRules.quietHours,
+                                    start: e.target.value
+                                  }
+                                }
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="individual-quiet-end">Quiet Hours End</Label>
+                        <Input
+                          id="individual-quiet-end"
+                          type="time"
+                          value={settings.individualChat.timingRules.quietHours.end}
+                          onChange={(e) => 
+                            setSettings(prev => ({
+                              ...prev,
+                              individualChat: {
+                                ...prev.individualChat,
+                                timingRules: {
+                                  ...prev.individualChat.timingRules,
+                                  quietHours: {
+                                    ...prev.individualChat.timingRules.quietHours,
+                                    end: e.target.value
+                                  }
+                                }
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="individual-weekend-behavior">Weekend Behavior</Label>
+                      <Select
+                        value={settings.individualChat.timingRules.weekendBehavior}
+                        onValueChange={(value) => 
+                          setSettings(prev => ({
+                            ...prev,
+                            individualChat: {
+                              ...prev.individualChat,
+                              timingRules: {
+                                ...prev.individualChat.timingRules,
+                                weekendBehavior: value as 'normal' | 'reduced' | 'extended_delay'
+                              }
+                            }
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="normal">Normal Response Times</SelectItem>
+                          <SelectItem value="reduced">Reduced Activity</SelectItem>
+                          <SelectItem value="extended_delay">Extended Delays</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <p className="text-sm text-gray-600">
+                        <strong>Current Configuration:</strong> {
+                          settings.individualChat.responseDelay.enabled 
+                            ? `${settings.individualChat.responseDelay.minSeconds}-${settings.individualChat.responseDelay.maxSeconds} seconds base delay${
+                                settings.individualChat.responseDelay.humanLike ? ' with random variation' : ''
+                              }. Quiet hours (${settings.individualChat.timingRules.quietHours.start}-${settings.individualChat.timingRules.quietHours.end}) multiply by ${settings.individualChat.responseDelay.quietHoursMultiplier}x, weekends by ${settings.individualChat.responseDelay.weekendMultiplier}x.`
+                            : 'Instant responses enabled'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
