@@ -234,7 +234,67 @@ export default function AISettings() {
 
   useEffect(() => {
     if (currentSettings && typeof currentSettings === 'object') {
-      setSettings(prev => ({ ...prev, ...currentSettings }));
+      // Deep merge current settings with defaults to ensure all nested properties exist
+      setSettings(prev => {
+        const merged = { ...prev };
+        
+        // Merge groupChat settings
+        if (currentSettings.groupChat) {
+          merged.groupChat = {
+            ...prev.groupChat,
+            ...currentSettings.groupChat,
+            contentModeration: {
+              ...prev.groupChat.contentModeration,
+              ...(currentSettings.groupChat.contentModeration || {})
+            },
+            responseDelay: {
+              ...prev.groupChat.responseDelay,
+              ...(currentSettings.groupChat.responseDelay || {})
+            },
+            timingRules: {
+              ...prev.groupChat.timingRules,
+              ...(currentSettings.groupChat.timingRules || {}),
+              quietHours: {
+                ...prev.groupChat.timingRules.quietHours,
+                ...(currentSettings.groupChat.timingRules?.quietHours || {})
+              }
+            }
+          };
+        }
+        
+        // Merge individualChat settings
+        if (currentSettings.individualChat) {
+          merged.individualChat = {
+            ...prev.individualChat,
+            ...currentSettings.individualChat,
+            contentModeration: {
+              ...prev.individualChat.contentModeration,
+              ...(currentSettings.individualChat.contentModeration || {})
+            },
+            responseDelay: {
+              ...prev.individualChat.responseDelay,
+              ...(currentSettings.individualChat.responseDelay || {})
+            },
+            timingRules: {
+              ...prev.individualChat.timingRules,
+              ...(currentSettings.individualChat.timingRules || {}),
+              quietHours: {
+                ...prev.individualChat.timingRules.quietHours,
+                ...(currentSettings.individualChat.timingRules?.quietHours || {})
+              }
+            }
+          };
+        }
+        
+        // Merge other settings
+        Object.keys(currentSettings).forEach(key => {
+          if (key !== 'groupChat' && key !== 'individualChat' && currentSettings[key]) {
+            merged[key] = { ...prev[key], ...currentSettings[key] };
+          }
+        });
+        
+        return merged;
+      });
     }
   }, [currentSettings]);
 
