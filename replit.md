@@ -14,8 +14,11 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 ## Recent Changes (June 13, 2025)
 
 ### Content Moderation System Enhancements
+- **Comprehensive Content Filtering**: Enhanced moderation system detects multiple violation types (off-topic, profanity, rude/mean, offensive content)
+- **Individual Chat Content Moderation**: Added complete content moderation settings to individual chat AI configuration
 - **Personalized Private Messages**: AI now addresses clients by first name in violation warnings (e.g., "Hi John,")
 - **Group Chat Reminders**: Brief topic reminders posted to group when violations occur: "Let's keep our discussions focused on fitness and nutrition topics. Thanks everyone! 💪"
+- **Enhanced AI Settings Interface**: Added comprehensive content moderation controls for individual chats including profanity filter, rudeness detection, off-topic warnings, fitness strictness slider, auto-redirect, and custom keywords
 - **Real-Time Counter Management**: WebSocket broadcasting ensures all message counters update instantly across the application
 - **Counter Clearing on Tab Access**: Message counters now properly clear to 0 when users enter relevant message tabs
 - **Adjustable AI Response Delays**: Configurable delay system allowing trainers to customize AI response timing through settings interface
@@ -42,7 +45,12 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 - **Production Ready**: System successfully processes live user messages with automated responses
 
 ### Technical Implementation
-- Updated `generateModerationWarning()` function to accept client first name parameter
+- Enhanced `moderateContent()` function with comprehensive violation type detection (off-topic, profanity, rude, offensive)
+- Updated AI Settings interface with complete individual chat content moderation controls
+- Added profanity filter, rudeness detection, off-topic warnings, and fitness strictness slider to individual chat settings
+- Implemented custom keyword filtering and auto-redirect functionality
+- Updated default AI settings in server routes to include all content moderation fields
+- Enhanced `generateModerationWarning()` function to accept client first name parameter
 - Enhanced WebSocket broadcasting in `/api/chat/messages` endpoint
 - Added real-time counter updates for both individual and group chats
 - Implemented automatic counter clearing when switching between chat types
