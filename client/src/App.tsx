@@ -13,6 +13,7 @@ import ExerciseUpload from "@/pages/ExerciseUpload";
 import MeetYourCoach from "@/pages/MeetYourCoach";
 import CoachBio from "@/pages/CoachBio";
 import TrainerDashboard from "@/pages/TrainerDashboard";
+import AISettings from "@/pages/AISettings";
 import UserSwitcher from "@/components/UserSwitcher";
 
 function Router() {
@@ -45,6 +46,7 @@ function Router() {
         <>
           <Route path="/" component={TrainerDashboard} />
           <Route path="/trainer" component={TrainerDashboard} />
+          <Route path="/ai-settings" component={AISettings} />
           <Route path="/admin/exercises" component={ExerciseUpload} />
         </>
       ) : user?.onboardingCompleted ? (

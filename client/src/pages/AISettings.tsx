@@ -261,7 +261,18 @@ export default function AISettings() {
       ...prev,
       individualChat: { 
         ...prev.individualChat, 
-        contentModeration: { ...prev.individualChat.contentModeration, [key]: value }
+        contentModeration: { 
+          ...prev.individualChat.contentModeration || {
+            enabled: true,
+            profanityFilter: true,
+            rudenessDetection: true,
+            offTopicWarning: true,
+            customKeywords: [],
+            fitnessStrictness: 7,
+            autoRedirect: true
+          }, 
+          [key]: value 
+        }
       }
     }));
   };
@@ -979,12 +990,12 @@ export default function AISettings() {
                     <p className="text-sm text-muted-foreground">Filter inappropriate content in individual chats</p>
                   </div>
                   <Switch
-                    checked={settings.individualChat.contentModeration.enabled}
+                    checked={settings.individualChat.contentModeration?.enabled || false}
                     onCheckedChange={(checked) => updateIndividualChatModerationSetting('enabled', checked)}
                   />
                 </div>
 
-                {settings.individualChat.contentModeration.enabled && (
+                {settings.individualChat.contentModeration?.enabled && (
                   <div className="space-y-4 ml-4 border-l-2 border-gray-200 pl-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -992,7 +1003,7 @@ export default function AISettings() {
                         <p className="text-xs text-muted-foreground">Detect and warn about profane language</p>
                       </div>
                       <Switch
-                        checked={settings.individualChat.contentModeration.profanityFilter}
+                        checked={settings.individualChat.contentModeration?.profanityFilter || false}
                         onCheckedChange={(checked) => updateIndividualChatModerationSetting('profanityFilter', checked)}
                       />
                     </div>
@@ -1003,7 +1014,7 @@ export default function AISettings() {
                         <p className="text-xs text-muted-foreground">Identify rude or mean messages</p>
                       </div>
                       <Switch
-                        checked={settings.individualChat.contentModeration.rudenessDetection}
+                        checked={settings.individualChat.contentModeration?.rudenessDetection || false}
                         onCheckedChange={(checked) => updateIndividualChatModerationSetting('rudenessDetection', checked)}
                       />
                     </div>
@@ -1014,7 +1025,7 @@ export default function AISettings() {
                         <p className="text-xs text-muted-foreground">Warn when discussions drift from fitness topics</p>
                       </div>
                       <Switch
-                        checked={settings.individualChat.contentModeration.offTopicWarning}
+                        checked={settings.individualChat.contentModeration?.offTopicWarning || false}
                         onCheckedChange={(checked) => updateIndividualChatModerationSetting('offTopicWarning', checked)}
                       />
                     </div>
@@ -1023,7 +1034,7 @@ export default function AISettings() {
                       <Label htmlFor="individual-fitness-strictness">Fitness Topic Strictness</Label>
                       <div className="px-3">
                         <Slider
-                          value={[settings.individualChat.contentModeration.fitnessStrictness]}
+                          value={[settings.individualChat.contentModeration?.fitnessStrictness || 7]}
                           onValueChange={([value]) => updateIndividualChatModerationSetting('fitnessStrictness', value)}
                           max={10}
                           min={1}
@@ -1037,7 +1048,7 @@ export default function AISettings() {
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        How strictly to enforce fitness and nutrition topics ({settings.individualChat.contentModeration.fitnessStrictness}/10)
+                        How strictly to enforce fitness and nutrition topics ({settings.individualChat.contentModeration?.fitnessStrictness || 7}/10)
                       </p>
                     </div>
 
@@ -1047,7 +1058,7 @@ export default function AISettings() {
                         <p className="text-xs text-muted-foreground">Automatically guide conversations back to fitness topics</p>
                       </div>
                       <Switch
-                        checked={settings.individualChat.contentModeration.autoRedirect}
+                        checked={settings.individualChat.contentModeration?.autoRedirect || false}
                         onCheckedChange={(checked) => updateIndividualChatModerationSetting('autoRedirect', checked)}
                       />
                     </div>
@@ -1057,7 +1068,7 @@ export default function AISettings() {
                       <Input
                         id="individual-custom-keywords"
                         placeholder="Enter keywords separated by commas (e.g., spam, promotion)"
-                        value={settings.individualChat.contentModeration.customKeywords.join(', ')}
+                        value={settings.individualChat.contentModeration?.customKeywords?.join(', ') || ''}
                         onChange={(e) => 
                           updateIndividualChatModerationSetting('customKeywords', 
                             e.target.value.split(',').map(k => k.trim()).filter(k => k.length > 0)
