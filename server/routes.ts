@@ -1440,49 +1440,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           if ((moderationResult as any).shouldRespond) {
-            console.log('Generating AI response as Coach Chassidy...');
-            // Generate AI response as Coach Chassidy
-            const response = await aiCoach.getChatResponse(
-              message,
-              user,
-              chatHistory,
-              isPendingApproval,
-              true // isGroupChat flag
-            );
-          
-            // Save AI response as Coach Chassidy
-            aiResponse = await storage.saveChatMessage({
-              userId: 'coach_chassidy',
-              message: response.message,
-              isAI: true,
-              chatType: 'group',
-              metadata: {
-                confidence: response.confidence,
-                requiresHumanReview: response.requiresHumanReview,
-                suggestedActions: response.suggestedActions,
-                senderName: 'Coach Chassidy'
-              }
-            });
+            console.log('AI determined to respond, adding human-like delay before generating response...');
             
-            // Broadcast AI response to group chat
-            const wss = (global as any).wss;
-            if (wss) {
-              wss.clients.forEach((client: WebSocket) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify({
-                    type: 'new_group_message',
-                    message: aiResponse,
-                    sender: 'coach_chassidy'
-                  }));
-                  
-                  // Send counter update for group chat
-                  client.send(JSON.stringify({
-                    type: 'group_counter_update',
-                    groupCount: 1
-                  }));
+            // Add random delay to make AI responses more human-like
+            const responseDelay = getRandomDelay();
+            console.log(`Delaying AI response by ${responseDelay / 1000} seconds`);
+            
+            setTimeout(async () => {
+              try {
+                // Generate AI response as Coach Chassidy
+                const response = await aiCoach.getChatResponse(
+                  message,
+                  user,
+                  chatHistory,
+                  isPendingApproval,
+                  true // isGroupChat flag
+                );
+              
+                // Save AI response as Coach Chassidy
+                aiResponse = await storage.saveChatMessage({
+                  userId: 'coach_chassidy',
+                  message: response.message,
+                  isAI: true,
+                  chatType: 'group',
+                  metadata: {
+                    confidence: response.confidence,
+                    requiresHumanReview: response.requiresHumanReview,
+                    suggestedActions: response.suggestedActions,
+                    senderName: 'Coach Chassidy'
+                  }
+                });
+                
+                // Broadcast AI response to group chat
+                const wss = (global as any).wss;
+                if (wss) {
+                  wss.clients.forEach((client: WebSocket) => {
+                    if (client.readyState === WebSocket.OPEN) {
+                      client.send(JSON.stringify({
+                        type: 'new_group_message',
+                        message: aiResponse,
+                        sender: 'coach_chassidy'
+                      }));
+                      
+                      // Send counter update for group chat
+                      client.send(JSON.stringify({
+                        type: 'group_counter_update',
+                        groupCount: 1
+                      }));
+                    }
+                  });
                 }
-              });
-            }
+              } catch (responseError) {
+                console.error('Error generating delayed AI response:', responseError);
+              }
+            }, responseDelay);
           } else {
             console.log('AI determined not to respond to this group message');
           }
