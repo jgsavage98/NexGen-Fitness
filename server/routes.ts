@@ -1392,8 +1392,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Content violation detected, adding human-like delay before responding...');
             moderationViolation = true;
             
-            // Add random delay to make AI moderator more human-like
-            const moderationDelay = await getRandomDelay(aiSettings);
+            // Add configurable delay to make AI moderator more human-like
+            const moderationDelay = await getConfigurableDelay(aiSettings);
             console.log(`Delaying moderation response by ${moderationDelay / 1000} seconds`);
             
             setTimeout(async () => {
@@ -1479,8 +1479,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if ((moderationResult as any).shouldRespond) {
             console.log('AI determined to respond, adding human-like delay before generating response...');
             
-            // Add random delay to make AI responses more human-like
-            const responseDelay = await getRandomDelay(aiSettings);
+            // Add configurable delay to make AI responses more human-like
+            const responseDelay = await getConfigurableDelay(aiSettings);
             console.log(`Delaying AI response by ${responseDelay / 1000} seconds`);
             
             setTimeout(async () => {

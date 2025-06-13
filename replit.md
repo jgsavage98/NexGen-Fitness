@@ -18,9 +18,17 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 - **Group Chat Reminders**: Brief topic reminders posted to group when violations occur: "Let's keep our discussions focused on fitness and nutrition topics. Thanks everyone! 💪"
 - **Real-Time Counter Management**: WebSocket broadcasting ensures all message counters update instantly across the application
 - **Counter Clearing on Tab Access**: Message counters now properly clear to 0 when users enter relevant message tabs
-- **Human-Like AI Delays**: Random 15-30 second delays added to all AI moderator responses and group chat interactions
+- **Adjustable AI Response Delays**: Configurable delay system allowing trainers to customize AI response timing through settings interface
 - **Auto-Approval**: Moderation messages are automatically approved for immediate delivery
 - **WebSocket Integration**: Enhanced ChatTab component with real-time message and counter handling
+
+### AI Settings Enhancement - Response Delay Controls
+- **Configurable Delay Settings**: Added comprehensive delay configuration options in Coach Chassidy's AI Settings page
+- **Enable/Disable Toggle**: Trainers can completely enable or disable human-like response delays
+- **Customizable Time Ranges**: Min/max delay settings (5-120 seconds) for flexible timing control
+- **Random Variation Toggle**: Option to use random delays within range or fixed timing
+- **Real-Time Preview**: Settings page shows current delay configuration with descriptive text
+- **Database Integration**: All delay preferences stored in AI settings and applied dynamically
 
 ### Technical Implementation
 - Updated `generateModerationWarning()` function to accept client first name parameter
@@ -29,8 +37,9 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 - Implemented automatic counter clearing when switching between chat types
 - Enhanced ChatTab useEffect hooks to mark messages as read and clear counters immediately
 - Integrated WebSocket message handling with intelligent counter update filtering
-- Added `getRandomDelay()` utility function generating 15-30 second delays
+- Added `getConfigurableDelay()` utility function reading from AI settings database
 - Implemented setTimeout-based delays for moderation warnings and AI group responses
+- Enhanced AI Settings interface with response delay controls and visual feedback
 - Cache invalidation for immediate UI updates
 
 ## User Preferences
