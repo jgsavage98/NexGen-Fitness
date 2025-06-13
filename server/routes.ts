@@ -3478,7 +3478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Background monitoring for individual chat automation
-  let lastProcessedMessageId = 149; // Reset to catch messages 150 and 151 with new confidence threshold
+  let lastProcessedMessageId = 154; // Reset to catch John's latest message ID 156
   
   const checkForNewIndividualMessages = async () => {
     try {
