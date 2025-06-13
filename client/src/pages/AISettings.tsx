@@ -493,7 +493,7 @@ export default function AISettings() {
                     <Label htmlFor="profanity-filter">Profanity Filter</Label>
                     <Switch
                       id="profanity-filter"
-                      checked={settings.groupChat.contentModeration.profanityFilter}
+                      checked={settings.groupChat.contentModeration?.profanityFilter || false}
                       onCheckedChange={(checked) => 
                         setSettings(prev => ({
                           ...prev,
@@ -513,7 +513,7 @@ export default function AISettings() {
                     <Label htmlFor="rudeness-detection">Rudeness Detection</Label>
                     <Switch
                       id="rudeness-detection"
-                      checked={settings.groupChat.contentModeration.rudenessDetetion}
+                      checked={settings.groupChat.contentModeration?.rudenessDetetion || false}
                       onCheckedChange={(checked) => 
                         setSettings(prev => ({
                           ...prev,
@@ -533,7 +533,7 @@ export default function AISettings() {
                     <Label htmlFor="off-topic-warning">Off-Topic Detection</Label>
                     <Switch
                       id="off-topic-warning"
-                      checked={settings.groupChat.contentModeration.offTopicWarning}
+                      checked={settings.groupChat.contentModeration?.offTopicWarning || false}
                       onCheckedChange={(checked) => 
                         setSettings(prev => ({
                           ...prev,
@@ -553,7 +553,7 @@ export default function AISettings() {
                     <Label htmlFor="content-moderation-enabled">Enable Auto Moderation</Label>
                     <Switch
                       id="content-moderation-enabled"
-                      checked={settings.groupChat.contentModeration.enabled}
+                      checked={settings.groupChat.contentModeration?.enabled || false}
                       onCheckedChange={(checked) => 
                         setSettings(prev => ({
                           ...prev,
@@ -575,7 +575,7 @@ export default function AISettings() {
                   <Textarea
                     id="custom-keywords"
                     placeholder="Enter keywords separated by commas..."
-                    value={settings.groupChat.contentModeration.customKeywords.join(', ')}
+                    value={settings.groupChat.contentModeration?.customKeywords?.join(', ') || ''}
                     onChange={(e) => 
                       setSettings(prev => ({
                         ...prev,
@@ -635,7 +635,7 @@ export default function AISettings() {
                     <Label htmlFor="auto-redirect" className="text-xs">Auto-Redirect Off-Topic Conversations</Label>
                     <Switch
                       id="auto-redirect"
-                      checked={settings.groupChat.contentModeration.autoRedirect || false}
+                      checked={settings.groupChat.contentModeration?.autoRedirect || false}
                       onCheckedChange={(checked) => 
                         setSettings(prev => ({
                           ...prev,
