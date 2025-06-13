@@ -597,13 +597,41 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(chatMessages.createdAt))
         .limit(limit);
     } else {
-      // Individual chat - existing behavior
+      // Individual chat - include both user messages and Coach Chassidy responses
       return await db
-        .select()
+        .select({
+          id: chatMessages.id,
+          userId: chatMessages.userId,
+          message: chatMessages.message,
+          isAI: chatMessages.isAI,
+          chatType: chatMessages.chatType,
+          metadata: chatMessages.metadata,
+          isRead: chatMessages.isRead,
+          status: chatMessages.status,
+          trainerId: chatMessages.trainerId,
+          trainerNotes: chatMessages.trainerNotes,
+          approvedAt: chatMessages.approvedAt,
+          originalAIResponse: chatMessages.originalAIResponse,
+          createdAt: chatMessages.createdAt,
+          user: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+            profileImageUrl: users.profileImageUrl,
+          }
+        })
         .from(chatMessages)
+        .leftJoin(users, eq(chatMessages.userId, users.id))
         .where(
           and(
-            eq(chatMessages.userId, userId),
+            or(
+              eq(chatMessages.userId, userId), // User's own messages
+              and(
+                eq(chatMessages.userId, 'coach_chassidy'), // Coach Chassidy's messages
+                eq(sql`${chatMessages.metadata}->>'targetUserId'`, userId) // targeted to this user
+              )
+            ),
             eq(chatMessages.chatType, 'individual'),
             eq(chatMessages.status, 'approved')
           )
