@@ -1388,7 +1388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             moderationViolation = true;
             
             // Add random delay to make AI moderator more human-like
-            const moderationDelay = getRandomDelay();
+            const moderationDelay = await getRandomDelay(aiSettings);
             console.log(`Delaying moderation response by ${moderationDelay / 1000} seconds`);
             
             setTimeout(async () => {
@@ -1475,10 +1475,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('AI determined to respond, adding human-like delay before generating response...');
             
             // Add random delay to make AI responses more human-like
-            const responseDelay = getRandomDelay();
-            console.log(`Delaying AI response by ${responseDelay / 1000} seconds`);
-            
-            setTimeout(async () => {
+            getRandomDelay(aiSettings).then(responseDelay => {
+              console.log(`Delaying AI response by ${responseDelay / 1000} seconds`);
+              
+              setTimeout(async () => {
               try {
                 // Generate AI response as Coach Chassidy
                 const response = await aiCoach.getChatResponse(
@@ -1526,6 +1526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.error('Error generating delayed AI response:', responseError);
               }
             }, responseDelay);
+            });
           } else {
             console.log('AI determined not to respond to this group message');
           }
