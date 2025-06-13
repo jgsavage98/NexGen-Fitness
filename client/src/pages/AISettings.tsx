@@ -602,7 +602,7 @@ export default function AISettings() {
                     <div className="px-2">
                       <Slider
                         id="fitness-strictness"
-                        value={[settings.groupChat.contentModeration.fitnessStrictness || 7]}
+                        value={[settings.groupChat.contentModeration?.fitnessStrictness || 7]}
                         onValueChange={([value]) => 
                           setSettings(prev => ({
                             ...prev,
