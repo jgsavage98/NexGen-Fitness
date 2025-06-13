@@ -86,8 +86,9 @@ export interface IStorage {
   setMacroTargets(targets: InsertMacroTarget): Promise<MacroTarget>;
   
   // Chat operations
-  getUserChatMessages(userId: string, limit?: number): Promise<ChatMessage[]>;
+  getUserChatMessages(userId: string, limit?: number, chatType?: 'individual' | 'group'): Promise<ChatMessage[]>;
   saveChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  saveGroupChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getUnreadMessagesCount(userId: string): Promise<number>;
   getGroupChatUnreadCount(userId: string): Promise<number>;
   getIndividualChatUnreadCount(userId: string): Promise<number>;
@@ -1068,6 +1069,14 @@ export class DatabaseStorage implements IStorage {
     }
     
     return results;
+  }
+
+  async saveGroupChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const messageWithGroupType = {
+      ...message,
+      chatType: 'group' as const
+    };
+    return this.saveChatMessage(messageWithGroupType);
   }
 
   // AI Settings operations
