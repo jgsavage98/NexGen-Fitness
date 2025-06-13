@@ -100,18 +100,59 @@ Respond with JSON: {"shouldRespond": true/false, "reason": "brief explanation", 
     const result = JSON.parse(response.choices[0].message.content || '{"shouldRespond": false, "reason": "Failed to parse", "isOffTopic": false, "topicRelevance": 5, "needsModeration": false}');
     console.log(`AI decision for "${message}": ${result.shouldRespond} - ${result.reason} | Off-topic: ${result.isOffTopic} | Relevance: ${result.topicRelevance}/10`);
     
-    // Handle off-topic detection and auto-redirect
-    if (result.isOffTopic && settings?.groupChat?.contentModeration?.autoRedirect) {
-      // Could add auto-redirect logic here
-      console.log(`Off-topic message detected, auto-redirect enabled`);
-    }
+    // Store moderation result for later use
+    (result as any).originalMessage = message;
+    (result as any).senderId = chatHistory[chatHistory.length - 1]?.sender;
     
-    return result.shouldRespond === true;
+    return result;
   } catch (error) {
     console.error("Error in AI response decision:", error);
     // Fallback to conservative approach - only respond if directly mentioned
     const lowerMessage = message.toLowerCase();
     return lowerMessage.includes('coach') || lowerMessage.includes('chassidy');
+  }
+}
+
+async function generateModerationWarning(originalMessage: string, moderationResult: any): Promise<string> {
+  try {
+    const OpenAI = (await import('openai')).default;
+    const openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const warningPrompt = `You are Coach Chassidy, a professional fitness coach. A client just posted a message in the group chat that violates our community guidelines. Generate a private, helpful warning message that:
+
+1. Is friendly but firm
+2. Explains why their message was flagged
+3. Redirects them back to fitness and nutrition topics
+4. Provides a specific suggestion for a better topic
+
+Original message: "${originalMessage}"
+Violation type: ${moderationResult.isOffTopic ? 'Off-topic (not related to fitness/nutrition)' : 'Inappropriate content'}
+Relevance score: ${moderationResult.topicRelevance}/10
+
+Generate a private message (2-3 sentences) that maintains a supportive coaching tone while guiding them back on track.`;
+
+    const response = await openaiClient.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: "You are Coach Chassidy, a supportive but professional fitness coach who maintains group chat guidelines."
+        },
+        {
+          role: "user",
+          content: warningPrompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 200
+    });
+
+    return response.choices[0].message.content || "Hi! Let's keep our group chat focused on fitness and nutrition topics. What's one health goal you're working on this week?";
+  } catch (error) {
+    console.error("Error generating moderation warning:", error);
+    return "Hi! Let's keep our group chat focused on fitness and nutrition topics. What's one health goal you're working on this week?";
   }
 }
 
@@ -1298,10 +1339,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const aiSettings = await storage.getAISettings('coach_chassidy');
           
           // Use AI to determine if Coach Chassidy should respond based on message content and context
-          const shouldRespond = await shouldAIRespondToGroupMessage(message, chatHistory, aiSettings);
-          console.log(`AI should respond: ${shouldRespond}`);
+          const moderationResult = await shouldAIRespondToGroupMessage(message, chatHistory, aiSettings);
+          console.log(`AI moderation result:`, moderationResult);
           
-          if (shouldRespond) {
+          // Handle content violations with private messaging
+          if ((moderationResult as any).isOffTopic || (moderationResult as any).needsModeration) {
+            console.log('Content violation detected, sending private message...');
+            
+            // Generate private warning message
+            const warningMessage = await generateModerationWarning(message, moderationResult);
+            
+            // Save private message to violating user - store in user's individual chat
+            const privateMessage = await storage.saveChatMessage({
+              userId: userId, // Store under the user's ID so they receive it
+              message: warningMessage,
+              isAI: true,
+              chatType: 'individual',
+              metadata: {
+                isModeration: true,
+                originalMessage: message,
+                violationType: (moderationResult as any).isOffTopic ? 'off-topic' : 'inappropriate',
+                fromCoach: true,
+                senderName: 'Coach Chassidy'
+              }
+            });
+            
+            // Send private message via WebSocket to specific user
+            const wss = (global as any).wss;
+            if (wss) {
+              wss.clients.forEach((client: WebSocket) => {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: 'private_moderation_message',
+                    message: privateMessage,
+                    targetUserId: userId,
+                    sender: 'coach_chassidy'
+                  }));
+                }
+              });
+            }
+          }
+          
+          if ((moderationResult as any).shouldRespond) {
             console.log('Generating AI response as Coach Chassidy...');
             // Generate AI response as Coach Chassidy
             const response = await aiCoach.getChatResponse(
@@ -1351,6 +1430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         userMessage: savedUserMessage,
         aiResponse,
+        privateMessage: (moderationResult as any).isOffTopic || (moderationResult as any).needsModeration ? 'sent' : null,
         message: "Message sent successfully"
       });
     } catch (error) {
