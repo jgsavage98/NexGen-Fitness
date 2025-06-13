@@ -35,7 +35,7 @@ export default function GroupChatCard() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
-      const response = await apiRequest("POST", "/api/chat/message", { 
+      const response = await apiRequest("POST", "/api/chat/messages", { 
         message,
         chatType: 'group'
       });
