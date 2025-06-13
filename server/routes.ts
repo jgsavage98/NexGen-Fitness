@@ -3407,6 +3407,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   const checkForNewIndividualMessages = async () => {
     try {
+      console.log(`🔍 Background monitoring: Checking for new individual messages (last processed ID: ${lastProcessedMessageId})`);
+      
       // Get latest individual messages that might need automation
       const recentMessages = await db.select()
         .from(chatMessages)
@@ -3417,6 +3419,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               AND ${chatMessages.createdAt} > NOW() - INTERVAL '10 minutes'`
         )
         .orderBy(chatMessages.id);
+        
+      console.log(`🔍 Found ${recentMessages.length} new individual messages to process`);
 
       for (const message of recentMessages) {
         // Check if this message already has an AI response
