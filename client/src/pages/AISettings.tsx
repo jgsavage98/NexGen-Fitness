@@ -22,12 +22,18 @@ interface AISettings {
     topics: string[];
     autoTopicGeneration: boolean;
     topicFrequency: number; // hours
+    topicCategories?: string[];
+    topicStyle?: string;
+    customTopicPrompts?: string;
+    avoidTopicRepetition?: boolean;
     contentModeration: {
       enabled: boolean;
       profanityFilter: boolean;
       rudenessDetetion: boolean;
       offTopicWarning: boolean;
       customKeywords: string[];
+      fitnessStrictness?: number;
+      autoRedirect?: boolean;
     };
     responseStyle: 'supportive' | 'motivational' | 'professional' | 'friendly';
     maxResponseLength: number;
@@ -87,12 +93,18 @@ export default function AISettings() {
       topics: ["Motivation Monday", "Workout Wednesday", "Nutrition Check-in"],
       autoTopicGeneration: true,
       topicFrequency: 24,
+      topicCategories: ['nutrition', 'workouts', 'motivation'],
+      topicStyle: 'engaging',
+      customTopicPrompts: '',
+      avoidTopicRepetition: true,
       contentModeration: {
         enabled: true,
         profanityFilter: true,
         rudenessDetetion: true,
         offTopicWarning: true,
-        customKeywords: ["spam", "promotion"]
+        customKeywords: ["spam", "promotion"],
+        fitnessStrictness: 7,
+        autoRedirect: false
       },
       responseStyle: 'supportive',
       maxResponseLength: 300,
@@ -349,7 +361,7 @@ export default function AISettings() {
                 </div>
                 
                 {settings.groupChat.autoTopicGeneration && (
-                  <div className="space-y-3 pl-4 border-l-2 border-muted">
+                  <div className="space-y-4 pl-4 border-l-2 border-muted">
                     <div className="space-y-2">
                       <Label htmlFor="topic-frequency">Topic Frequency (hours)</Label>
                       <Input
@@ -360,6 +372,76 @@ export default function AISettings() {
                         min="1"
                         max="168"
                       />
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Topic Direction & Focus</Label>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="topic-categories" className="text-xs">Primary Topic Categories</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {['Nutrition', 'Workouts', 'Motivation', 'Progress', 'Habits', 'Recovery'].map((category) => (
+                            <div key={category} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`category-${category.toLowerCase()}`}
+                                checked={settings.groupChat.topicCategories?.includes(category.toLowerCase()) || false}
+                                onChange={(e) => {
+                                  const categories = settings.groupChat.topicCategories || [];
+                                  const updatedCategories = e.target.checked
+                                    ? [...categories, category.toLowerCase()]
+                                    : categories.filter(c => c !== category.toLowerCase());
+                                  updateGroupChatSetting('topicCategories', updatedCategories);
+                                }}
+                                className="rounded border-gray-300"
+                              />
+                              <Label htmlFor={`category-${category.toLowerCase()}`} className="text-xs">{category}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="topic-style" className="text-xs">Topic Style</Label>
+                        <Select
+                          value={settings.groupChat.topicStyle || 'engaging'}
+                          onValueChange={(value) => updateGroupChatSetting('topicStyle', value)}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="engaging">Engaging Questions</SelectItem>
+                            <SelectItem value="educational">Educational Tips</SelectItem>
+                            <SelectItem value="challenges">Fun Challenges</SelectItem>
+                            <SelectItem value="discussions">Open Discussions</SelectItem>
+                            <SelectItem value="tips">Quick Tips & Facts</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="custom-topics" className="text-xs">Custom Topic Prompts</Label>
+                        <Textarea
+                          id="custom-topics"
+                          placeholder="Add specific topics you'd like the AI to generate discussions about..."
+                          value={settings.groupChat.customTopicPrompts || ''}
+                          onChange={(e) => updateGroupChatSetting('customTopicPrompts', e.target.value)}
+                          rows={3}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Examples: "Weekly meal prep strategies", "Home workout equipment alternatives", "Building healthy morning routines"
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="avoid-repetition" className="text-xs">Avoid Topic Repetition</Label>
+                        <Switch
+                          id="avoid-repetition"
+                          checked={settings.groupChat.avoidTopicRepetition !== false}
+                          onCheckedChange={(checked) => updateGroupChatSetting('avoidTopicRepetition', checked)}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -410,6 +492,46 @@ export default function AISettings() {
                       }
                     />
                   </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="off-topic-warning">Off-Topic Detection</Label>
+                    <Switch
+                      id="off-topic-warning"
+                      checked={settings.groupChat.contentModeration.offTopicWarning}
+                      onCheckedChange={(checked) => 
+                        setSettings(prev => ({
+                          ...prev,
+                          groupChat: {
+                            ...prev.groupChat,
+                            contentModeration: {
+                              ...prev.groupChat.contentModeration,
+                              offTopicWarning: checked
+                            }
+                          }
+                        }))
+                      }
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="content-moderation-enabled">Enable Auto Moderation</Label>
+                    <Switch
+                      id="content-moderation-enabled"
+                      checked={settings.groupChat.contentModeration.enabled}
+                      onCheckedChange={(checked) => 
+                        setSettings(prev => ({
+                          ...prev,
+                          groupChat: {
+                            ...prev.groupChat,
+                            contentModeration: {
+                              ...prev.groupChat.contentModeration,
+                              enabled: checked
+                            }
+                          }
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -431,6 +553,67 @@ export default function AISettings() {
                       }))
                     }
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Topics like politics, religion, personal relationships unrelated to fitness, sales/promotions, spam
+                  </p>
+                </div>
+
+                <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                  <Label className="text-sm font-medium">Off-Topic Detection Settings</Label>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="fitness-strictness" className="text-xs">Fitness/Nutrition Focus Level</Label>
+                    <div className="px-2">
+                      <Slider
+                        id="fitness-strictness"
+                        value={[settings.groupChat.contentModeration.fitnessStrictness || 7]}
+                        onValueChange={([value]) => 
+                          setSettings(prev => ({
+                            ...prev,
+                            groupChat: {
+                              ...prev.groupChat,
+                              contentModeration: {
+                                ...prev.groupChat.contentModeration,
+                                fitnessStrictness: value
+                              }
+                            }
+                          }))
+                        }
+                        max={10}
+                        min={1}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                        <span>Lenient</span>
+                        <span>Moderate</span>
+                        <span>Strict</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Higher levels will flag more conversations as off-topic from fitness and nutrition
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="auto-redirect" className="text-xs">Auto-Redirect Off-Topic Conversations</Label>
+                    <Switch
+                      id="auto-redirect"
+                      checked={settings.groupChat.contentModeration.autoRedirect || false}
+                      onCheckedChange={(checked) => 
+                        setSettings(prev => ({
+                          ...prev,
+                          groupChat: {
+                            ...prev.groupChat,
+                            contentModeration: {
+                              ...prev.groupChat.contentModeration,
+                              autoRedirect: checked
+                            }
+                          }
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
               </div>
 

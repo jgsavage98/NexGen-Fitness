@@ -29,7 +29,7 @@ import path from "path";
 import fs from "fs";
 
 // AI-powered function to determine when Coach Chassidy should respond to group messages
-async function shouldAIRespondToGroupMessage(message: string, chatHistory: any[]): Promise<boolean> {
+async function shouldAIRespondToGroupMessage(message: string, chatHistory: any[], settings?: any): Promise<boolean> {
   try {
     const openaiModule = await import('./openai');
     const openai = new (await import('openai')).default({
@@ -46,6 +46,10 @@ async function shouldAIRespondToGroupMessage(message: string, chatHistory: any[]
     const timeSinceLastAI = lastAIMessage ? 
       Math.floor((Date.now() - new Date(lastAIMessage.timestamp).getTime()) / (1000 * 60)) : // minutes
       999; // very long time if no previous message
+
+    // Use settings for moderation behavior
+    const fitnessStrictness = settings?.groupChat?.contentModeration?.fitnessStrictness || 7;
+    const responseFrequency = settings?.groupChat?.responseFrequency || 5;
     
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -55,6 +59,10 @@ async function shouldAIRespondToGroupMessage(message: string, chatHistory: any[]
           content: `You are Coach Chassidy, a fitness and nutrition trainer moderating a group chat with your clients. Your role is to determine whether you should respond to a client's message.
 
 PERSONALITY: You're supportive, knowledgeable, and professional but not intrusive. You let clients have natural conversations with each other and only jump in when your expertise would genuinely add value.
+
+SETTINGS:
+- Fitness/Nutrition Focus Level: ${fitnessStrictness}/10 (higher = stricter about staying on topic)
+- Response Frequency: ${responseFrequency}/10 (higher = more likely to respond)
 
 RESPOND WHEN:
 - Someone directly mentions you ("Coach", "Chassidy")
@@ -70,7 +78,11 @@ DON'T RESPOND TO:
 - Simple social chatter between clients
 - Agreement/acknowledgment responses ("Thanks!", "Awesome!", "Cool!")
 - Personal conversations between clients that don't need trainer input
-- Off-topic discussions unrelated to fitness/health
+- Off-topic discussions unrelated to fitness/health (be ${fitnessStrictness >= 7 ? 'strict' : fitnessStrictness >= 4 ? 'moderate' : 'lenient'} about this)
+
+MODERATION ALERTS:
+- Flag if conversation is getting off-topic from fitness/nutrition (strictness level: ${fitnessStrictness}/10)
+- Note if inappropriate content is detected
 
 Recent conversation:
 ${recentContext}
@@ -78,15 +90,21 @@ ${recentContext}
 Current message: "${message}"
 Time since your last message: ${timeSinceLastAI} minutes
 
-Respond with JSON: {"shouldRespond": true/false, "reason": "brief explanation"}`
+Respond with JSON: {"shouldRespond": true/false, "reason": "brief explanation", "isOffTopic": true/false, "topicRelevance": 1-10, "needsModeration": true/false}`
         }
       ],
       response_format: { type: "json_object" },
       temperature: 0.3,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{"shouldRespond": false, "reason": "Failed to parse"}');
-    console.log(`AI decision for "${message}": ${result.shouldRespond} - ${result.reason}`);
+    const result = JSON.parse(response.choices[0].message.content || '{"shouldRespond": false, "reason": "Failed to parse", "isOffTopic": false, "topicRelevance": 5, "needsModeration": false}');
+    console.log(`AI decision for "${message}": ${result.shouldRespond} - ${result.reason} | Off-topic: ${result.isOffTopic} | Relevance: ${result.topicRelevance}/10`);
+    
+    // Handle off-topic detection and auto-redirect
+    if (result.isOffTopic && settings?.groupChat?.contentModeration?.autoRedirect) {
+      // Could add auto-redirect logic here
+      console.log(`Off-topic message detected, auto-redirect enabled`);
+    }
     
     return result.shouldRespond === true;
   } catch (error) {
@@ -94,6 +112,60 @@ Respond with JSON: {"shouldRespond": true/false, "reason": "brief explanation"}`
     // Fallback to conservative approach - only respond if directly mentioned
     const lowerMessage = message.toLowerCase();
     return lowerMessage.includes('coach') || lowerMessage.includes('chassidy');
+  }
+}
+
+async function generateAutoTopic(settings?: any): Promise<string | null> {
+  try {
+    const openaiModule = await import('./openai');
+    const openai = new (await import('openai')).default({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const categories = settings?.groupChat?.topicCategories || ['nutrition', 'workouts', 'motivation'];
+    const style = settings?.groupChat?.topicStyle || 'engaging';
+    const customPrompts = settings?.groupChat?.customTopicPrompts || '';
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are Coach Chassidy, creating an engaging discussion topic for your fitness and nutrition group chat.
+
+TOPIC REQUIREMENTS:
+- Focus on these categories: ${categories.join(', ')}
+- Style: ${style}
+- Keep it relevant to fitness, nutrition, health, and wellness
+- Make it engaging and encourage client participation
+- Keep it positive and motivational
+
+${customPrompts ? `CUSTOM FOCUS AREAS: ${customPrompts}` : ''}
+
+TOPIC STYLES:
+- engaging: Ask questions that encourage sharing and discussion
+- educational: Share tips with questions to engage
+- challenges: Propose fun fitness/nutrition challenges
+- discussions: Open-ended questions about experiences
+- tips: Quick tips with follow-up questions
+
+Generate a single topic post that Coach Chassidy would make. Keep it conversational, supportive, and focused on the chosen categories. Include an engaging question or call-to-action.
+
+Example formats:
+- "Good morning, team! 💪 Who's trying a new recipe this week? Share what you're excited to cook!"
+- "Wednesday Workout Check-in: What's your favorite way to stay active when you're short on time?"
+- "Nutrition tip: Did you know that eating protein with every meal helps keep you fuller longer? What's your go-to protein source?"
+
+Respond with just the topic post, ready to be sent to the group.`
+        }
+      ],
+      temperature: 0.7,
+    });
+
+    return response.choices[0].message.content?.trim() || null;
+  } catch (error) {
+    console.error("Error generating auto topic:", error);
+    return null;
   }
 }
 
