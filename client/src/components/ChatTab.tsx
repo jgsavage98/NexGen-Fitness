@@ -44,10 +44,14 @@ export default function ChatTab() {
     }
     
     if (data.type === 'counter_update' || data.type === 'group_counter_update') {
-      // Refresh unread counts when counters update
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/individual-unread-count'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/group-unread-count'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
+      // Only update counters if user is not currently viewing the relevant chat type
+      if (data.type === 'counter_update' && chatType !== 'individual') {
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/individual-unread-count'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
+      }
+      if (data.type === 'group_counter_update' && chatType !== 'group') {
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/group-unread-count'] });
+      }
     }
   };
 
@@ -115,6 +119,7 @@ export default function ChatTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/chat/unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/individual-unread-count"] });
     },
   });
 
@@ -126,17 +131,35 @@ export default function ChatTab() {
     scrollToBottom();
   }, [messages]);
 
-  // Mark messages as read when Chat tab opens
+  // Mark messages as read when Chat tab opens and when switching between chat types
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (chatType === 'individual') {
+        markMessagesAsReadMutation.mutate();
+        // Immediately clear individual counters
+        queryClient.setQueryData(['/api/chat/individual-unread-count'], { count: 0 });
+        queryClient.setQueryData(['/api/chat/unread-count'], { count: 0 });
+      } else if (chatType === 'group') {
+        markGroupViewedMutation.mutate();
+        // Immediately clear group counters
+        queryClient.setQueryData(['/api/chat/group-unread-count'], { count: 0 });
+        queryClient.setQueryData(['/api/chat/unread-count'], (old: any) => {
+          const current = old || { count: 0 };
+          return { count: Math.max(0, current.count - groupUnreadCount) };
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [chatType, groupUnreadCount]);
+
+  // Initial load - mark individual messages as read by default and clear counters
   useEffect(() => {
     markMessagesAsReadMutation.mutate();
+    // Immediately clear counters on initial load
+    queryClient.setQueryData(['/api/chat/individual-unread-count'], { count: 0 });
+    queryClient.setQueryData(['/api/chat/unread-count'], { count: 0 });
   }, []);
-
-  // Mark group chat as viewed when switching to group chat
-  useEffect(() => {
-    if (chatType === 'group') {
-      markGroupViewedMutation.mutate();
-    }
-  }, [chatType]);
 
   const handleSendMessage = () => {
     if (newMessage.trim() && !sendMessageMutation.isPending) {
