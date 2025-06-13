@@ -28,74 +28,73 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// Intelligent filtering function to determine when AI should respond to group messages
-function shouldAIRespondToGroupMessage(message: string, chatHistory: any[]): boolean {
-  const lowerMessage = message.toLowerCase().trim();
-  
-  // First check for casual conversation - don't respond to greetings and social messages
-  const casualPatterns = [
-    // Greetings
-    /^(hi|hello|hey|good morning|good afternoon|good evening|morning|afternoon|evening)(\s+(everyone|all|team|guys|y'all))?[!.]*$/,
-    // Common social responses  
-    /^(thanks?|thank you|thx|ok|okay|cool|nice|great|awesome|lol|haha|hehe|wow)([!.]*)?$/,
-    // Agreement/acknowledgment
-    /^(yes|yeah|yep|yup|no|nope|sure|definitely|absolutely|exactly|right|correct)([!.]*)?$/,
-    // Short responses
-    /^(same|agreed|me too|totally|for sure)([!.]*)?$/
-  ];
-  
-  if (casualPatterns.some(pattern => pattern.test(lowerMessage))) {
-    console.log(`Casual conversation detected: "${message}" - AI will not respond`);
-    return false;
-  }
-  
-  // Always respond if directly addressed
-  if (lowerMessage.includes('coach') || lowerMessage.includes('chassidy')) {
-    return true;
-  }
-  
-  // Respond to questions
-  if (lowerMessage.includes('?') || 
-      lowerMessage.startsWith('how') || 
-      lowerMessage.startsWith('what') || 
-      lowerMessage.startsWith('when') || 
-      lowerMessage.startsWith('where') || 
-      lowerMessage.startsWith('why') ||
-      lowerMessage.startsWith('can') ||
-      lowerMessage.startsWith('should') ||
-      lowerMessage.startsWith('is') ||
-      lowerMessage.startsWith('does') ||
-      lowerMessage.startsWith('do you') ||
-      lowerMessage.startsWith('any advice')) {
-    return true;
-  }
-  
-  // Respond to fitness/nutrition related topics
-  const fitnessKeywords = ['workout', 'exercise', 'protein', 'calories', 'weight', 'diet', 'nutrition', 'macro', 'gym', 'training', 'hungry', 'tired', 'energy', 'goal', 'progress', 'muscle', 'cardio', 'strength'];
-  if (fitnessKeywords.some(keyword => lowerMessage.includes(keyword))) {
-    return true;
-  }
-  
-  // Respond if someone seems to need help or motivation
-  const helpKeywords = ['help', 'stuck', 'confused', 'struggling', 'difficult', 'hard', 'challenge', 'problem', 'issue', 'advice', 'tips', 'guidance'];
-  if (helpKeywords.some(keyword => lowerMessage.includes(keyword))) {
-    return true;
-  }
-  
-  // Only check for long inactivity if the message isn't casual conversation
-  // and has some substance (more than just a few words)
-  if (lowerMessage.split(' ').length > 3) {
+// AI-powered function to determine when Coach Chassidy should respond to group messages
+async function shouldAIRespondToGroupMessage(message: string, chatHistory: any[]): Promise<boolean> {
+  try {
+    const openaiModule = await import('./openai');
+    const openai = new (await import('openai')).default({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    
+    // Build recent conversation context
+    const recentContext = chatHistory.slice(-5).map(msg => 
+      `${msg.sender}: ${msg.message}`
+    ).join('\n');
+    
+    // Calculate time since last Coach Chassidy message
     const lastAIMessage = chatHistory.find(msg => msg.sender === 'Coach Chassidy');
-    if (lastAIMessage) {
-      const timeSinceLastAI = Date.now() - new Date(lastAIMessage.timestamp).getTime();
-      if (timeSinceLastAI > 2 * 60 * 60 * 1000) { // 2 hours instead of 30 minutes
-        return true;
-      }
-    }
+    const timeSinceLastAI = lastAIMessage ? 
+      Math.floor((Date.now() - new Date(lastAIMessage.timestamp).getTime()) / (1000 * 60)) : // minutes
+      999; // very long time if no previous message
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are Coach Chassidy, a fitness and nutrition trainer moderating a group chat with your clients. Your role is to determine whether you should respond to a client's message.
+
+PERSONALITY: You're supportive, knowledgeable, and professional but not intrusive. You let clients have natural conversations with each other and only jump in when your expertise would genuinely add value.
+
+RESPOND WHEN:
+- Someone directly mentions you ("Coach", "Chassidy")
+- Questions about fitness, nutrition, or health are asked
+- Someone shares struggles, challenges, or needs motivation
+- Someone asks for advice or guidance
+- There's misinformation that needs correction
+- Someone celebrates a milestone that deserves recognition
+- It's been a very long time (over 2 hours) since you last spoke AND the conversation warrants engagement
+
+DON'T RESPOND TO:
+- Casual greetings ("Good morning everyone!", "Hey team!")
+- Simple social chatter between clients
+- Agreement/acknowledgment responses ("Thanks!", "Awesome!", "Cool!")
+- Personal conversations between clients that don't need trainer input
+- Off-topic discussions unrelated to fitness/health
+
+Recent conversation:
+${recentContext}
+
+Current message: "${message}"
+Time since your last message: ${timeSinceLastAI} minutes
+
+Respond with JSON: {"shouldRespond": true/false, "reason": "brief explanation"}`
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{"shouldRespond": false, "reason": "Failed to parse"}');
+    console.log(`AI decision for "${message}": ${result.shouldRespond} - ${result.reason}`);
+    
+    return result.shouldRespond === true;
+  } catch (error) {
+    console.error("Error in AI response decision:", error);
+    // Fallback to conservative approach - only respond if directly mentioned
+    const lowerMessage = message.toLowerCase();
+    return lowerMessage.includes('coach') || lowerMessage.includes('chassidy');
   }
-  
-  // Default: don't respond to preserve natural client-to-client conversation
-  return false;
 }
 
 // Configure multer for exercise GIF uploads
@@ -1199,8 +1198,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             timestamp: msg.createdAt
           }));
 
-          // Determine if AI should respond based on message content and context
-          const shouldRespond = shouldAIRespondToGroupMessage(message, chatHistory);
+          // Use AI to determine if Coach Chassidy should respond based on message content and context
+          const shouldRespond = await shouldAIRespondToGroupMessage(message, chatHistory);
           console.log(`AI should respond: ${shouldRespond}`);
           
           if (shouldRespond) {
