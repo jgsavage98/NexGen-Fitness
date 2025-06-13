@@ -644,17 +644,17 @@ Current Macro Targets:
     if (userProfile.recentMacros && userProfile.recentMacros.length > 0) {
       context += `
 
-Recent Macro Uploads (Last 7 Days):`;
+Recent Nutrition Data (Last 7 Days):`;
       userProfile.recentMacros.slice(0, 5).forEach((macro: any, index: number) => {
         const date = new Date(macro.date).toLocaleDateString();
         context += `
 - ${date}: ${macro.calories || 0} cal, ${macro.protein || 0}g protein, ${macro.carbs || 0}g carbs, ${macro.fat || 0}g fat`;
       });
-      
-      if (userProfile.recentMacros.length === 0) {
-        context += `
-- No recent macro uploads found - encourage client to log their daily nutrition`;
-      }
+    } else {
+      context += `
+
+Recent Nutrition Data:
+- No recent macro uploads available - client hasn't logged nutrition data recently`;
     }
 
     // Add recent progress entries
