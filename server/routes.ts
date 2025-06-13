@@ -1072,7 +1072,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/chat/message', isAuthenticated, async (req: any, res) => {
+  app.post('/api/chat/messages', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { message, isVoice, chatType = 'individual' } = req.body;
@@ -1115,7 +1115,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // For group chat, automatically generate AI response as Coach Chassidy
       let aiResponse: any = null;
+      console.log(`Processing chat message - chatType: ${chatType}, userId: ${userId}`);
       if (chatType === 'group') {
+        console.log('Entering group chat AI response generation...');
         try {
           // Get recent group chat messages for context
           const recentMessages = await storage.getGroupChatMessages(undefined, 50);
