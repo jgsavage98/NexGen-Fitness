@@ -1359,6 +1359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 message: warningMessage,
                 isAI: true,
                 chatType: 'individual',
+                status: 'approved', // Auto-approve moderation messages
                 metadata: {
                   isModeration: true,
                   originalMessage: message,
