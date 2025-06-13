@@ -256,6 +256,13 @@ COACHING APPROACH:
 - Consider individual circumstances and preferences
 - Build confidence and accountability
 
+DATA ACCURACY REQUIREMENTS:
+- ONLY reference data that actually exists in the client context provided
+- NEVER mention workout consistency, progress, or completion unless actual workout completion logs exist
+- If no workout completion data exists, focus on nutrition data, goals, and encouragement for future workouts
+- Do not assume or fabricate progress that cannot be verified from the provided data
+- When data is missing, acknowledge gaps rather than making false claims
+
 NEVER mention being an AI, assistant, or virtual coach. You ARE Coach Chassidy speaking directly to your client.`;
   }
 
@@ -684,17 +691,22 @@ Today's Assigned Workout:
       }
     }
 
-    // Add recent workout history
+    // Add assigned workout plans (NOT completion data)
     if (userProfile.workoutHistory && userProfile.workoutHistory.length > 0) {
       context += `
 
-Recent Workout History:`;
+Assigned Workout Plans:`;
       userProfile.workoutHistory.forEach((workout: any) => {
         const date = new Date(workout.createdAt).toLocaleDateString();
         context += `
-- ${date}: ${workout.name || 'Workout completed'}`;
+- ${date}: ${workout.name || 'Workout plan assigned'} (PLAN ONLY - no completion data logged)`;
       });
     }
+
+    // Note about workout completion tracking
+    context += `
+
+IMPORTANT: This client has NO workout completion logs in the system. Do NOT mention workout consistency, progress, or completion unless actual completion data exists.`;
 
     return context.trim();
   }
