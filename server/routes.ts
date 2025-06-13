@@ -29,8 +29,40 @@ import path from "path";
 import fs from "fs";
 
 // Utility function to generate random delay between 15-30 seconds
-function getRandomDelay(): number {
-  return Math.floor(Math.random() * (30000 - 15000 + 1)) + 15000; // 15-30 seconds in milliseconds
+async function getRandomDelay(settings?: any): Promise<number> {
+  try {
+    // Get AI settings if not provided
+    if (!settings) {
+      settings = await storage.getAISettings('coach_chassidy');
+    }
+    
+    // Use settings from database if available, otherwise use defaults
+    const delayConfig = settings?.groupChat?.responseDelay || {
+      enabled: true,
+      minSeconds: 15,
+      maxSeconds: 30,
+      humanLike: true
+    };
+    
+    if (!delayConfig.enabled) {
+      return 0; // No delay if disabled
+    }
+    
+    const minMs = delayConfig.minSeconds * 1000;
+    const maxMs = delayConfig.maxSeconds * 1000;
+    
+    if (delayConfig.humanLike) {
+      // Generate random delay within the configured range
+      return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+    } else {
+      // Use fixed delay (average of min and max)
+      return Math.floor((minMs + maxMs) / 2);
+    }
+  } catch (error) {
+    console.error('Error getting delay settings, using defaults:', error);
+    // Fallback to original 15-30 second range
+    return Math.floor(Math.random() * (30000 - 15000 + 1)) + 15000;
+  }
 }
 
 // AI-powered function to determine when Coach Chassidy should respond to group messages

@@ -37,6 +37,12 @@ interface AISettings {
     };
     responseStyle: 'supportive' | 'motivational' | 'professional' | 'friendly';
     maxResponseLength: number;
+    responseDelay: {
+      enabled: boolean;
+      minSeconds: number; // minimum delay in seconds
+      maxSeconds: number; // maximum delay in seconds
+      humanLike: boolean; // whether to use random delays
+    };
     timingRules: {
       quietHours: { start: string; end: string };
       weekendBehavior: 'normal' | 'reduced' | 'weekend_only';
@@ -108,6 +114,12 @@ export default function AISettings() {
       },
       responseStyle: 'supportive',
       maxResponseLength: 300,
+      responseDelay: {
+        enabled: true,
+        minSeconds: 15,
+        maxSeconds: 30,
+        humanLike: true
+      },
       timingRules: {
         quietHours: { start: "22:00", end: "06:00" },
         weekendBehavior: 'reduced'
@@ -614,6 +626,120 @@ export default function AISettings() {
                       }
                     />
                   </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <Label className="text-base font-medium">Response Delays</Label>
+                <p className="text-sm text-muted-foreground">
+                  Control how human-like AI responses appear by adding realistic delays
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-medium">Enable Human-Like Delays</Label>
+                      <p className="text-xs text-muted-foreground">Add random delays to make AI responses feel more natural</p>
+                    </div>
+                    <Switch
+                      checked={settings.groupChat.responseDelay.enabled}
+                      onCheckedChange={(checked) => 
+                        setSettings(prev => ({
+                          ...prev,
+                          groupChat: {
+                            ...prev.groupChat,
+                            responseDelay: {
+                              ...prev.groupChat.responseDelay,
+                              enabled: checked
+                            }
+                          }
+                        }))
+                      }
+                    />
+                  </div>
+
+                  {settings.groupChat.responseDelay.enabled && (
+                    <div className="space-y-4 pl-4 border-l-2 border-muted">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="min-delay" className="text-xs">Minimum Delay (seconds)</Label>
+                          <Input
+                            id="min-delay"
+                            type="number"
+                            min="5"
+                            max="60"
+                            value={settings.groupChat.responseDelay.minSeconds}
+                            onChange={(e) => 
+                              setSettings(prev => ({
+                                ...prev,
+                                groupChat: {
+                                  ...prev.groupChat,
+                                  responseDelay: {
+                                    ...prev.groupChat.responseDelay,
+                                    minSeconds: parseInt(e.target.value) || 15
+                                  }
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="max-delay" className="text-xs">Maximum Delay (seconds)</Label>
+                          <Input
+                            id="max-delay"
+                            type="number"
+                            min="10"
+                            max="120"
+                            value={settings.groupChat.responseDelay.maxSeconds}
+                            onChange={(e) => 
+                              setSettings(prev => ({
+                                ...prev,
+                                groupChat: {
+                                  ...prev.groupChat,
+                                  responseDelay: {
+                                    ...prev.groupChat.responseDelay,
+                                    maxSeconds: parseInt(e.target.value) || 30
+                                  }
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-xs">Random Variation</Label>
+                          <p className="text-xs text-muted-foreground">Use random delays within the range for natural timing</p>
+                        </div>
+                        <Switch
+                          checked={settings.groupChat.responseDelay.humanLike}
+                          onCheckedChange={(checked) => 
+                            setSettings(prev => ({
+                              ...prev,
+                              groupChat: {
+                                ...prev.groupChat,
+                                responseDelay: {
+                                  ...prev.groupChat.responseDelay,
+                                  humanLike: checked
+                                }
+                              }
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          <strong>Current Setting:</strong> AI will wait {settings.groupChat.responseDelay.minSeconds}-{settings.groupChat.responseDelay.maxSeconds} seconds before responding
+                          {settings.groupChat.responseDelay.humanLike ? ' with random variation' : ' with fixed timing'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
