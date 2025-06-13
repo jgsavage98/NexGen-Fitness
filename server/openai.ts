@@ -614,32 +614,89 @@ Respond with JSON in this format:
     }
   }
 
-  private buildUserContext(userProfile: any, includePersonalData: boolean = false): string {
+  private buildUserContext(userProfile: any, includePersonalData: boolean = true): string {
     if (!userProfile) return "No user profile available";
 
-    if (!includePersonalData) {
-      // Privacy-focused version - only fitness-relevant data
-      return `
-User Profile:
+    let context = `
+Client Profile:
+- Name: ${userProfile.firstName || 'Client'} ${userProfile.lastName || ''}
 - Goal: ${userProfile.goal || 'general fitness'}
-- Activity Level: ${userProfile.activityLevel || 'moderate'}
-- Movement Restrictions: ${userProfile.injuries?.length ? 'has limitations' : 'none reported'}
-- Available Equipment: ${userProfile.equipment?.join(', ') || 'bodyweight only'}
-      `.trim();
-    }
-
-    // Full version (only if explicitly requested)
-    return `
-User Profile:
-- Goal: ${userProfile.goal || 'not specified'}
 - Age: ${userProfile.age || 'not specified'}
 - Gender: ${userProfile.gender || 'not specified'}
 - Height: ${userProfile.height || 'not specified'} cm
-- Weight: ${userProfile.weight || 'not specified'} kg
+- Current Weight: ${userProfile.weight || 'not specified'} kg
 - Activity Level: ${userProfile.activityLevel || 'not specified'}
-- Injuries: ${userProfile.injuries?.join(', ') || 'none reported'}
-- Available Equipment: ${userProfile.equipment?.join(', ') || 'not specified'}
-    `.trim();
+- Movement Restrictions: ${userProfile.injuries?.join(', ') || 'none reported'}
+- Available Equipment: ${userProfile.equipment?.join(', ') || 'bodyweight only'}`;
+
+    // Add macro targets if available
+    if (userProfile.macroTargets) {
+      context += `
+
+Current Macro Targets:
+- Daily Calories: ${userProfile.macroTargets.calories || 'not set'}
+- Protein: ${userProfile.macroTargets.protein || 'not set'}g
+- Carbohydrates: ${userProfile.macroTargets.carbs || 'not set'}g
+- Fat: ${userProfile.macroTargets.fat || 'not set'}g`;
+    }
+
+    // Add recent macro uploads (last 7 days)
+    if (userProfile.recentMacros && userProfile.recentMacros.length > 0) {
+      context += `
+
+Recent Macro Uploads (Last 7 Days):`;
+      userProfile.recentMacros.slice(0, 5).forEach((macro: any, index: number) => {
+        const date = new Date(macro.date).toLocaleDateString();
+        context += `
+- ${date}: ${macro.calories || 0} cal, ${macro.protein || 0}g protein, ${macro.carbs || 0}g carbs, ${macro.fat || 0}g fat`;
+      });
+      
+      if (userProfile.recentMacros.length === 0) {
+        context += `
+- No recent macro uploads found - encourage client to log their daily nutrition`;
+      }
+    }
+
+    // Add recent progress entries
+    if (userProfile.progressEntries && userProfile.progressEntries.length > 0) {
+      context += `
+
+Recent Progress Updates:`;
+      userProfile.progressEntries.forEach((entry: any) => {
+        const date = new Date(entry.date).toLocaleDateString();
+        context += `
+- ${date}: Weight ${entry.weight || 'not recorded'}kg`;
+        if (entry.notes) {
+          context += `, Notes: ${entry.notes}`;
+        }
+      });
+    }
+
+    // Add today's workout if available
+    if (userProfile.todaysWorkout) {
+      context += `
+
+Today's Assigned Workout:
+- Workout: ${userProfile.todaysWorkout.name || 'Unnamed workout'}`;
+      if (userProfile.todaysWorkout.description) {
+        context += `
+- Description: ${userProfile.todaysWorkout.description}`;
+      }
+    }
+
+    // Add recent workout history
+    if (userProfile.workoutHistory && userProfile.workoutHistory.length > 0) {
+      context += `
+
+Recent Workout History:`;
+      userProfile.workoutHistory.forEach((workout: any) => {
+        const date = new Date(workout.createdAt).toLocaleDateString();
+        context += `
+- ${date}: ${workout.name || 'Workout completed'}`;
+      });
+    }
+
+    return context.trim();
   }
 
   private buildWorkoutConstraints(

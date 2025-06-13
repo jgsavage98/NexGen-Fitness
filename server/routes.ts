@@ -3534,8 +3534,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
 
           if (individualChatSettings.enabled && individualChatSettings.autoResponse) {
-            // Get user info
+            // Get comprehensive user info
             const user = await storage.getUser(message.userId);
+            if (!user) {
+              console.log(`User not found for message ID ${message.id}`);
+              continue;
+            }
             
             // Check for urgent keywords that bypass delay
             const hasUrgentKeyword = individualChatSettings.urgentResponseKeywords.some((keyword: string) => 
@@ -3545,11 +3549,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Get chat history for context
             const chatHistory = await storage.getUserChatMessages(message.userId, 10);
             
-            // Generate AI response as Coach Chassidy
+            // Gather comprehensive client data for AI context
+            const [macroTargets, recentMacros, progressEntries, todaysWorkout] = await Promise.all([
+              storage.getUserMacroTargets(message.userId, new Date()),
+              storage.getRecentMacros(message.userId, 7), // Last 7 days of macro uploads
+              storage.getUserProgressEntries(message.userId),
+              storage.getTodaysWorkout(message.userId)
+            ]);
+            
+            // Build enhanced user profile with all client data
+            const enhancedUserProfile = {
+              ...user,
+              macroTargets,
+              recentMacros,
+              progressEntries: progressEntries.slice(-5), // Last 5 progress entries
+              todaysWorkout,
+              workoutHistory: await storage.getUserWorkouts(message.userId).then(w => w.slice(-3)) // Last 3 workouts
+            };
+            
+            // Generate AI response as Coach Chassidy with comprehensive context
             const response = await aiCoach.getChatResponse(
               message.message,
-              user,
+              enhancedUserProfile,
               chatHistory,
+              false, // isPendingApproval
               false // isGroupChat flag
             );
             
@@ -3558,7 +3581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (meetsThreshold) {
               // Calculate delay (urgent messages get immediate response)
-              const responseDelay = hasUrgentKeyword ? 0 : await getIndividualChatDelay(aiSettings, user.timezone);
+              const responseDelay = hasUrgentKeyword ? 0 : await getIndividualChatDelay(aiSettings, user.timezone ?? 'America/New_York');
               console.log(`Individual chat automation response will be sent after ${responseDelay / 1000} seconds for user ${message.userId}`);
               
               setTimeout(async () => {
