@@ -1294,8 +1294,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             timestamp: msg.createdAt
           }));
 
+          // Get AI settings for moderation
+          const aiSettings = await storage.getAISettings('coach_chassidy');
+          
           // Use AI to determine if Coach Chassidy should respond based on message content and context
-          const shouldRespond = await shouldAIRespondToGroupMessage(message, chatHistory);
+          const shouldRespond = await shouldAIRespondToGroupMessage(message, chatHistory, aiSettings);
           console.log(`AI should respond: ${shouldRespond}`);
           
           if (shouldRespond) {
@@ -1324,15 +1327,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
             
             // Broadcast AI response to group chat
-            wss.clients.forEach((client: WebSocket) => {
-              if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                  type: 'new_group_message',
-                  message: aiResponse,
-                  sender: 'coach_chassidy'
-                }));
-              }
-            });
+            const wss = (global as any).wss;
+            if (wss) {
+              wss.clients.forEach((client: WebSocket) => {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: 'new_group_message',
+                    message: aiResponse,
+                    sender: 'coach_chassidy'
+                  }));
+                }
+              });
+            }
           } else {
             console.log('AI determined not to respond to this group message');
           }
