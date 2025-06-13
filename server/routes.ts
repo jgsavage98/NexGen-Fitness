@@ -71,7 +71,7 @@ async function getConfigurableDelay(settings?: any): Promise<number> {
 }
 
 // Enhanced delay calculation for individual chat with quiet hours and weekend multipliers
-async function getIndividualChatDelay(settings?: any): Promise<number> {
+async function getIndividualChatDelay(settings?: any, userTimezone?: string): Promise<number> {
   try {
     // Get AI settings if not provided
     if (!settings) {
@@ -110,10 +110,13 @@ async function getIndividualChatDelay(settings?: any): Promise<number> {
       baseDelay = Math.floor((minMs + maxMs) / 2);
     }
     
-    // Check if we're in quiet hours or weekend and apply multipliers
+    // Use client's timezone for accurate quiet hours calculation
+    const clientTimezone = userTimezone || 'America/New_York'; // Default to Eastern Time
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    const clientTime = new Date(now.toLocaleString("en-US", {timeZone: clientTimezone}));
+    
+    const currentHour = clientTime.getHours();
+    const currentMinute = clientTime.getMinutes();
     const currentTime = currentHour * 60 + currentMinute;
     
     // Parse quiet hours
@@ -132,8 +135,8 @@ async function getIndividualChatDelay(settings?: any): Promise<number> {
       isQuietHours = currentTime >= quietStartTime && currentTime <= quietEndTime;
     }
     
-    // Check if weekend
-    const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+    // Check if weekend (using client's timezone)
+    const dayOfWeek = clientTime.getDay(); // 0 = Sunday, 6 = Saturday
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     
     // Apply multipliers
@@ -146,6 +149,8 @@ async function getIndividualChatDelay(settings?: any): Promise<number> {
     if (isWeekend && timingRules.weekendBehavior === 'extended_delay') {
       finalDelay *= delayConfig.weekendMultiplier;
     }
+    
+    console.log(`🕐 Delay calc - Client time: ${clientTime.toLocaleTimeString()}, Quiet hours: ${isQuietHours}, Weekend: ${isWeekend}, Final delay: ${Math.floor(finalDelay/1000)}s`);
     
     return Math.floor(finalDelay);
     
@@ -1680,7 +1685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (meetsThreshold) {
               // Calculate delay (urgent messages get immediate response)
-              const responseDelay = hasUrgentKeyword ? 0 : await getIndividualChatDelay(aiSettings);
+              const responseDelay = hasUrgentKeyword ? 0 : await getIndividualChatDelay(aiSettings, user?.timezone || undefined);
               console.log(`Individual chat response will be sent after ${responseDelay / 1000} seconds${hasUrgentKeyword ? ' (urgent message - no delay)' : ''}`);
               
               setTimeout(async () => {
@@ -3553,7 +3558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (meetsThreshold) {
               // Calculate delay (urgent messages get immediate response)
-              const responseDelay = hasUrgentKeyword ? 0 : await getIndividualChatDelay(aiSettings);
+              const responseDelay = hasUrgentKeyword ? 0 : await getIndividualChatDelay(aiSettings, user.timezone);
               console.log(`Individual chat automation response will be sent after ${responseDelay / 1000} seconds for user ${message.userId}`);
               
               setTimeout(async () => {
