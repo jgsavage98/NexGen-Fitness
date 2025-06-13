@@ -90,6 +90,7 @@ export interface IStorage {
   getIndividualChatUnreadCount(userId: string): Promise<number>;
   markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void>;
   markGroupChatAsViewed(userId: string): Promise<void>;
+  getGroupChatMessages(limit?: number): Promise<ChatMessage[]>;
   
   // Trainer chat operations
   getClientChatMessages(clientId: string, trainerId: string, limit?: number): Promise<ChatMessage[]>;
@@ -717,6 +718,16 @@ export class DatabaseStorage implements IStorage {
           )
         );
     }
+  }
+
+  async getGroupChatMessages(limit: number = 50): Promise<ChatMessage[]> {
+    // Get all group chat messages for AI context
+    return await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.chatType, 'group'))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(limit);
   }
 
   async markGroupChatAsViewed(userId: string): Promise<void> {

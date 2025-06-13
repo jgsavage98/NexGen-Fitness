@@ -333,15 +333,29 @@ ${recentMacros.slice(-7).map(day =>
   async getChatResponse(
     userMessage: string, 
     userProfile: any, 
-    conversationHistory: string[] = [],
-    isPendingApproval: boolean = false
+    conversationHistory: any[] = [],
+    isPendingApproval: boolean = false,
+    isGroupChat: boolean = false
   ): Promise<CoachResponse> {
     try {
       const context = this.buildUserContext(userProfile, isPendingApproval);
-      const history = conversationHistory.slice(-10).join('\n'); // Last 10 messages for context
+      
+      // Format conversation history based on chat type
+      let history = '';
+      if (isGroupChat && Array.isArray(conversationHistory)) {
+        history = conversationHistory.slice(-10).map(msg => 
+          `${msg.sender}: ${msg.message}`
+        ).join('\n');
+      } else if (Array.isArray(conversationHistory)) {
+        history = conversationHistory.slice(-10).join('\n');
+      }
 
       const approvalContext = isPendingApproval 
         ? "\n\nIMPORTANT: This client is currently awaiting trainer approval for their personalized macro plan. You are currently reviewing their onboarding information and MyFitnessPal baseline data to create their customized nutrition targets. Let them know you're working on their plan and will have it ready soon. Be encouraging about the process and remind them that this personalized approach ensures the best results."
+        : "";
+
+      const groupChatContext = isGroupChat
+        ? "\n\nYou are moderating a group chat with multiple clients. Provide supportive, encouraging responses that benefit the entire community. Address the specific message while keeping the conversation positive and motivational for all participants. Share general tips and encouragement that others can learn from."
         : "";
 
       const response = await openai.chat.completions.create({
@@ -349,7 +363,7 @@ ${recentMacros.slice(-7).map(day =>
         messages: [
           {
             role: "system",
-            content: this.getSystemPrompt() + `\n\nUser Context: ${context}${approvalContext}`,
+            content: this.getSystemPrompt() + `\n\nUser Context: ${context}${approvalContext}${groupChatContext}`,
           },
           {
             role: "user",

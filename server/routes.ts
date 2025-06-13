@@ -1113,8 +1113,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: isVoice ? { isVoice: true } : null,
       });
       
+      // For group chat, automatically generate AI response as Coach Chassidy
+      let aiResponse = null;
+      if (chatType === 'group') {
+        try {
+          // Get recent group chat messages for context
+          const recentMessages = await storage.getGroupChatMessages(50);
+          
+          // Build context for AI moderator
+          const chatHistory = recentMessages.slice(-10).map(msg => ({
+            sender: msg.userId === 'coach_chassidy' ? 'Coach Chassidy' : (msg.metadata?.senderName || 'Client'),
+            message: msg.message,
+            timestamp: msg.createdAt
+          }));
+          
+          // Generate AI response as Coach Chassidy
+          const response = await aiCoach.getChatResponse(
+            message,
+            user,
+            chatHistory,
+            isPendingApproval,
+            true // isGroupChat flag
+          );
+          
+          // Save AI response as Coach Chassidy
+          aiResponse = await storage.saveChatMessage({
+            userId: 'coach_chassidy',
+            message: response.message,
+            isAI: true,
+            chatType: 'group',
+            metadata: {
+              confidence: response.confidence,
+              requiresHumanReview: response.requiresHumanReview,
+              suggestedActions: response.suggestedActions,
+              senderName: 'Coach Chassidy'
+            }
+          });
+          
+          // Broadcast AI response to group chat
+          wss.clients.forEach((client: WebSocket) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({
+                type: 'new_group_message',
+                message: aiResponse,
+                sender: 'coach_chassidy'
+              }));
+            }
+          });
+          
+        } catch (error) {
+          console.error("Error generating AI group chat response:", error);
+        }
+      }
+      
       res.json({
         userMessage: savedUserMessage,
+        aiResponse,
         message: "Message sent successfully"
       });
     } catch (error) {
