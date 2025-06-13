@@ -1640,12 +1640,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Processing individual chat for automated response...');
             
             // Check for urgent keywords that bypass delay
-            const hasUrgentKeyword = individualChatSettings.urgentResponseKeywords.some(keyword => 
+            const hasUrgentKeyword = individualChatSettings.urgentResponseKeywords.some((keyword: string) => 
               message.toLowerCase().includes(keyword.toLowerCase())
             );
             
             // Get chat history for context
-            const chatHistory = await storage.getChatMessages(userId, 'individual', 10);
+            const chatHistory = await storage.getUserChatMessages(userId, 10);
             
             // Generate AI response as Coach Chassidy
             const response = await aiCoach.getChatResponse(
