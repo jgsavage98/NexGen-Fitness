@@ -28,6 +28,59 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+// Intelligent filtering function to determine when AI should respond to group messages
+function shouldAIRespondToGroupMessage(message: string, chatHistory: any[]): boolean {
+  const lowerMessage = message.toLowerCase();
+  
+  // Always respond if directly addressed
+  if (lowerMessage.includes('coach') || lowerMessage.includes('chassidy')) {
+    return true;
+  }
+  
+  // Respond to questions
+  if (lowerMessage.includes('?') || 
+      lowerMessage.startsWith('how') || 
+      lowerMessage.startsWith('what') || 
+      lowerMessage.startsWith('when') || 
+      lowerMessage.startsWith('where') || 
+      lowerMessage.startsWith('why') ||
+      lowerMessage.startsWith('can') ||
+      lowerMessage.startsWith('should') ||
+      lowerMessage.startsWith('is')) {
+    return true;
+  }
+  
+  // Respond to fitness/nutrition related topics
+  const fitnessKeywords = ['workout', 'exercise', 'protein', 'calories', 'weight', 'diet', 'nutrition', 'macro', 'gym', 'training', 'hungry', 'tired', 'energy', 'goal', 'progress'];
+  if (fitnessKeywords.some(keyword => lowerMessage.includes(keyword))) {
+    return true;
+  }
+  
+  // Respond if someone seems to need help or motivation
+  const helpKeywords = ['help', 'stuck', 'confused', 'struggling', 'difficult', 'hard', 'challenge', 'problem', 'issue'];
+  if (helpKeywords.some(keyword => lowerMessage.includes(keyword))) {
+    return true;
+  }
+  
+  // Check for long periods of inactivity (more than 30 minutes since last AI message)
+  const lastAIMessage = chatHistory.find(msg => msg.sender === 'Coach Chassidy');
+  if (lastAIMessage) {
+    const timeSinceLastAI = Date.now() - new Date(lastAIMessage.timestamp).getTime();
+    if (timeSinceLastAI > 30 * 60 * 1000) { // 30 minutes
+      return true;
+    }
+  }
+  
+  // Don't respond to casual conversation between clients
+  const casualPhrases = ['hi', 'hello', 'hey', 'thanks', 'thank you', 'ok', 'okay', 'cool', 'nice', 'lol', 'haha'];
+  if (casualPhrases.includes(lowerMessage.trim())) {
+    return false;
+  }
+  
+  // Default: don't respond to preserve natural client-to-client conversation
+  return false;
+}
+
 // Configure multer for exercise GIF uploads
 const exerciseStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -1113,11 +1166,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: isVoice ? { isVoice: true } : null,
       });
       
-      // For group chat, automatically generate AI response as Coach Chassidy
+      // For group chat, intelligently determine if AI should respond
       let aiResponse: any = null;
       console.log(`Processing chat message - chatType: ${chatType}, userId: ${userId}`);
       if (chatType === 'group') {
-        console.log('Entering group chat AI response generation...');
+        console.log('Evaluating group chat message for AI response...');
         try {
           // Get recent group chat messages for context
           const recentMessages = await storage.getGroupChatMessages(undefined, 50);
@@ -1128,40 +1181,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
             message: msg.message,
             timestamp: msg.createdAt
           }));
+
+          // Determine if AI should respond based on message content and context
+          const shouldRespond = shouldAIRespondToGroupMessage(message, chatHistory);
+          console.log(`AI should respond: ${shouldRespond}`);
           
-          // Generate AI response as Coach Chassidy
-          const response = await aiCoach.getChatResponse(
-            message,
-            user,
-            chatHistory,
-            isPendingApproval,
-            true // isGroupChat flag
-          );
+          if (shouldRespond) {
+            console.log('Generating AI response as Coach Chassidy...');
+            // Generate AI response as Coach Chassidy
+            const response = await aiCoach.getChatResponse(
+              message,
+              user,
+              chatHistory,
+              isPendingApproval,
+              true // isGroupChat flag
+            );
           
-          // Save AI response as Coach Chassidy
-          aiResponse = await storage.saveChatMessage({
-            userId: 'coach_chassidy',
-            message: response.message,
-            isAI: true,
-            chatType: 'group',
-            metadata: {
-              confidence: response.confidence,
-              requiresHumanReview: response.requiresHumanReview,
-              suggestedActions: response.suggestedActions,
-              senderName: 'Coach Chassidy'
-            }
-          });
-          
-          // Broadcast AI response to group chat
-          wss.clients.forEach((client: WebSocket) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({
-                type: 'new_group_message',
-                message: aiResponse,
-                sender: 'coach_chassidy'
-              }));
-            }
-          });
+            // Save AI response as Coach Chassidy
+            aiResponse = await storage.saveChatMessage({
+              userId: 'coach_chassidy',
+              message: response.message,
+              isAI: true,
+              chatType: 'group',
+              metadata: {
+                confidence: response.confidence,
+                requiresHumanReview: response.requiresHumanReview,
+                suggestedActions: response.suggestedActions,
+                senderName: 'Coach Chassidy'
+              }
+            });
+            
+            // Broadcast AI response to group chat
+            wss.clients.forEach((client: WebSocket) => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: 'new_group_message',
+                  message: aiResponse,
+                  sender: 'coach_chassidy'
+                }));
+              }
+            });
+          } else {
+            console.log('AI determined not to respond to this group message');
+          }
           
         } catch (error) {
           console.error("Error generating AI group chat response:", error);
