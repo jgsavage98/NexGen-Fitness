@@ -606,11 +606,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async saveChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
-    // If this is an AI message but doesn't have an explicit status, set it to pending approval
-    // If status is already set (e.g., by trainer), preserve it
+    // Auto-approve AI group chat messages for seamless interaction
+    // Individual AI messages still require approval
+    let status = message.status;
+    if (!status) {
+      if (message.isAI && message.chatType === 'group') {
+        status = 'approved'; // Auto-approve AI group chat messages
+      } else if (message.isAI) {
+        status = 'pending_approval'; // Individual AI messages need approval
+      } else {
+        status = 'approved'; // Regular user messages are approved
+      }
+    }
+    
     const messageWithStatus = {
       ...message,
-      status: message.status || (message.isAI ? 'pending_approval' : 'approved'),
+      status,
+      approvedAt: status === 'approved' ? new Date() : undefined,
       originalAIResponse: message.isAI ? message.message : undefined
     };
 
