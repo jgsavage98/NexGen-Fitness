@@ -17,6 +17,7 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 - **Personalized Private Messages**: AI now addresses clients by first name in violation warnings (e.g., "Hi John,")
 - **Group Chat Reminders**: Brief topic reminders posted to group when violations occur: "Let's keep our discussions focused on fitness and nutrition topics. Thanks everyone! 💪"
 - **Real-Time Counter Management**: WebSocket broadcasting ensures all message counters update instantly across the application
+- **Counter Clearing on Tab Access**: Message counters now properly clear to 0 when users enter relevant message tabs
 - **Auto-Approval**: Moderation messages are automatically approved for immediate delivery
 - **WebSocket Integration**: Enhanced ChatTab component with real-time message and counter handling
 
@@ -24,7 +25,9 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 - Updated `generateModerationWarning()` function to accept client first name parameter
 - Enhanced WebSocket broadcasting in `/api/chat/messages` endpoint
 - Added real-time counter updates for both individual and group chats
-- Integrated WebSocket message handling in ChatTab component
+- Implemented automatic counter clearing when switching between chat types
+- Enhanced ChatTab useEffect hooks to mark messages as read and clear counters immediately
+- Integrated WebSocket message handling with intelligent counter update filtering
 - Cache invalidation for immediate UI updates
 
 ## User Preferences

@@ -28,6 +28,11 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+// Utility function to generate random delay between 15-30 seconds
+function getRandomDelay(): number {
+  return Math.floor(Math.random() * (30000 - 15000 + 1)) + 15000; // 15-30 seconds in milliseconds
+}
+
 // AI-powered function to determine when Coach Chassidy should respond to group messages
 async function shouldAIRespondToGroupMessage(message: string, chatHistory: any[], settings?: any): Promise<boolean> {
   try {
@@ -1186,9 +1191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { messageIds } = req.body;
-      console.log(`Marking messages as read for user ${userId}, messageIds:`, messageIds);
       await storage.markMessagesAsRead(userId, messageIds);
-      console.log(`Successfully marked messages as read for user ${userId}`);
       res.json({ success: true });
     } catch (error) {
       console.error("Error marking messages as read:", error);
@@ -1349,85 +1352,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Handle content violations with private messaging
           if ((moderationResult as any).isOffTopic || (moderationResult as any).needsModeration) {
-            console.log('Content violation detected, sending private message...');
+            console.log('Content violation detected, adding human-like delay before responding...');
             moderationViolation = true;
             
-            try {
-              // Get client's first name for personalized message
-              const clientFirstName = user?.firstName || 'there';
-              
-              // Generate private warning message
-              const warningMessage = await generateModerationWarning(message, moderationResult, clientFirstName);
+            // Add random delay to make AI moderator more human-like
+            const moderationDelay = getRandomDelay();
+            console.log(`Delaying moderation response by ${moderationDelay / 1000} seconds`);
             
-              // Save private message to violating user - store in user's individual chat
-              const privateMessage = await storage.saveChatMessage({
-                userId: userId, // Store under the user's ID so they receive it
-                message: warningMessage,
-                isAI: true,
-                chatType: 'individual',
-                status: 'approved', // Auto-approve moderation messages
-                metadata: {
-                  isModeration: true,
-                  originalMessage: message,
-                  violationType: (moderationResult as any).isOffTopic ? 'off-topic' : 'inappropriate',
-                  fromCoach: true,
-                  senderName: 'Coach Chassidy'
-                }
-              });
+            setTimeout(async () => {
+              try {
+                // Get client's first name for personalized message
+                const clientFirstName = user?.firstName || 'there';
+                
+                // Generate private warning message
+                const warningMessage = await generateModerationWarning(message, moderationResult, clientFirstName);
               
-              // Also post a brief reminder to the group chat to stay on topic
-              const groupReminder = await storage.saveChatMessage({
-                userId: 'coach_chassidy',
-                message: "Let's keep our discussions focused on fitness and nutrition topics. Thanks everyone! 💪",
-                isAI: true,
-                chatType: 'group',
-                status: 'approved',
-                metadata: {
-                  isTopicReminder: true,
-                  triggeredByViolation: true,
-                  senderName: 'Coach Chassidy'
-                }
-              });
-              
-              // Send both private message and group reminder via WebSocket
-              const wss = (global as any).wss;
-              if (wss) {
-                wss.clients.forEach((client: WebSocket) => {
-                  if (client.readyState === WebSocket.OPEN) {
-                    // Send private message to violating user
-                    client.send(JSON.stringify({
-                      type: 'private_moderation_message',
-                      message: privateMessage,
-                      targetUserId: userId,
-                      sender: 'coach_chassidy'
-                    }));
-                    
-                    // Send group reminder to all users
-                    client.send(JSON.stringify({
-                      type: 'new_group_message',
-                      message: groupReminder,
-                      sender: 'coach_chassidy'
-                    }));
-                    
-                    // Send counter update for individual chat (to violating user)
-                    client.send(JSON.stringify({
-                      type: 'counter_update',
-                      targetUserId: userId,
-                      individualCount: 1, // New unread message
-                      groupCount: 0
-                    }));
-                    
-                    // Send counter update for group chat (to all users)
-                    client.send(JSON.stringify({
-                      type: 'group_counter_update',
-                      groupCount: 1 // New group message
-                    }));
+                // Save private message to violating user - store in user's individual chat
+                const privateMessage = await storage.saveChatMessage({
+                  userId: userId, // Store under the user's ID so they receive it
+                  message: warningMessage,
+                  isAI: true,
+                  chatType: 'individual',
+                  status: 'approved', // Auto-approve moderation messages
+                  metadata: {
+                    isModeration: true,
+                    originalMessage: message,
+                    violationType: (moderationResult as any).isOffTopic ? 'off-topic' : 'inappropriate',
+                    fromCoach: true,
+                    senderName: 'Coach Chassidy'
                   }
                 });
+                
+                // Also post a brief reminder to the group chat to stay on topic
+                const groupReminder = await storage.saveChatMessage({
+                  userId: 'coach_chassidy',
+                  message: "Let's keep our discussions focused on fitness and nutrition topics. Thanks everyone! 💪",
+                  isAI: true,
+                  chatType: 'group',
+                  status: 'approved',
+                  metadata: {
+                    isTopicReminder: true,
+                    triggeredByViolation: true,
+                    senderName: 'Coach Chassidy'
+                  }
+                });
+                
+                // Send both private message and group reminder via WebSocket
+                const wss = (global as any).wss;
+                if (wss) {
+                  wss.clients.forEach((client: WebSocket) => {
+                    if (client.readyState === WebSocket.OPEN) {
+                      // Send private message to violating user
+                      client.send(JSON.stringify({
+                        type: 'private_moderation_message',
+                        message: privateMessage,
+                        targetUserId: userId,
+                        sender: 'coach_chassidy'
+                      }));
+                      
+                      // Send group reminder to all users
+                      client.send(JSON.stringify({
+                        type: 'new_group_message',
+                        message: groupReminder,
+                        sender: 'coach_chassidy'
+                      }));
+                      
+                      // Send counter update for individual chat (to violating user)
+                      client.send(JSON.stringify({
+                        type: 'counter_update',
+                        targetUserId: userId,
+                        individualCount: 1, // New unread message
+                        groupCount: 0
+                      }));
+                      
+                      // Send counter update for group chat (to all users)
+                      client.send(JSON.stringify({
+                        type: 'group_counter_update',
+                        groupCount: 1 // New group message
+                      }));
+                    }
+                  });
+                }
+              } catch (warningError) {
+                console.error('Error sending moderation warning:', warningError);
               }
-            } catch (warningError) {
-              console.error('Error sending moderation warning:', warningError);
-            }
+            }, moderationDelay);
           }
           
           if ((moderationResult as any).shouldRespond) {

@@ -712,12 +712,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
-    console.log(`markMessagesAsRead called for user ${userId}, messageIds:`, messageIds);
-    
     if (messageIds && messageIds.length > 0) {
       // Mark specific messages as read - use a simple loop for now
       for (const messageId of messageIds) {
-        const result = await db
+        await db
           .update(chatMessages)
           .set({ isRead: true })
           .where(
@@ -726,11 +724,10 @@ export class DatabaseStorage implements IStorage {
               eq(chatMessages.id, messageId)
             )
           );
-        console.log(`Marked message ${messageId} as read for user ${userId}`);
       }
     } else {
       // Mark all unread approved messages as read (both coach messages and AI responses)
-      const result = await db
+      await db
         .update(chatMessages)
         .set({ isRead: true })
         .where(
@@ -740,7 +737,6 @@ export class DatabaseStorage implements IStorage {
             eq(chatMessages.status, 'approved')
           )
         );
-      console.log(`Marked all unread messages as read for user ${userId}, affected rows:`, result);
     }
   }
 
