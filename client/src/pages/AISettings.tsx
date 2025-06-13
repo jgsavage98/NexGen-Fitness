@@ -148,10 +148,7 @@ export default function AISettings() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: AISettings) => {
-      return await apiRequest('/api/trainer/ai-settings', {
-        method: 'PUT',
-        body: newSettings,
-      });
+      return await apiRequest('/api/trainer/ai-settings', 'PUT', newSettings);
     },
     onSuccess: () => {
       toast({
@@ -170,8 +167,8 @@ export default function AISettings() {
   });
 
   useEffect(() => {
-    if (currentSettings) {
-      setSettings(currentSettings);
+    if (currentSettings && typeof currentSettings === 'object') {
+      setSettings(prev => ({ ...prev, ...currentSettings }));
     }
   }, [currentSettings]);
 

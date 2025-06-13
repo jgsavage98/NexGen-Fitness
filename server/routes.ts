@@ -175,6 +175,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Settings routes
+  app.get('/api/trainer/ai-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      const settings = await storage.getAISettings(trainerId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching AI settings:", error);
+      res.status(500).json({ message: "Failed to fetch AI settings" });
+    }
+  });
+
+  app.put('/api/trainer/ai-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      const settings = req.body;
+      await storage.saveAISettings(trainerId, settings);
+      res.json({ message: "AI settings saved successfully" });
+    } catch (error) {
+      console.error("Error saving AI settings:", error);
+      res.status(500).json({ message: "Failed to save AI settings" });
+    }
+  });
+
   // Start user program - sets program start date to current timestamp
   app.post('/api/program/start', isAuthenticated, async (req: any, res) => {
     try {
