@@ -1177,6 +1177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Voice message endpoint
   app.post('/api/chat/voice', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -1341,7 +1342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .replace(/\b\w/g, l => l.toUpperCase());
           
           const primaryMuscles = req.body.primaryMuscles ? 
-            req.body.primaryMuscles.split(',').map(m => m.trim()) : 
+            req.body.primaryMuscles.split(',').map((m: string) => m.trim()) : 
             ['General'];
           
           const exerciseData = {
@@ -1401,7 +1402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const exercise = await storage.createExercise(validatedData);
           exercises.push(exercise);
         } catch (error) {
-          errors.push({ filename: file.filename, error: error.message });
+          errors.push({ filename: file.filename, error: (error as Error).message });
         }
       }
 
@@ -1863,8 +1864,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Attempting to send WebSocket notification...');
       console.log('Global WSS exists:', !!global.wss);
       
-      if ((global as any).wss) {
-        const wss = (global as any).wss;
+      const globalScope = global as any;
+      if (globalScope.wss) {
+        const wss = globalScope.wss;
         console.log('Number of connected clients:', wss.clients.size);
         
         const notificationData = {
