@@ -113,25 +113,26 @@ Respond with JSON: {"shouldRespond": true/false, "reason": "brief explanation", 
   }
 }
 
-async function generateModerationWarning(originalMessage: string, moderationResult: any): Promise<string> {
+async function generateModerationWarning(originalMessage: string, moderationResult: any, clientFirstName: string): Promise<string> {
   try {
     const OpenAI = (await import('openai')).default;
     const openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const warningPrompt = `You are Coach Chassidy, a professional fitness coach. A client just posted a message in the group chat that violates our community guidelines. Generate a private, helpful warning message that:
+    const warningPrompt = `You are Coach Chassidy, a professional fitness coach. A client named ${clientFirstName} just posted a message in the group chat that violates our community guidelines. Generate a private, helpful warning message that:
 
-1. Is friendly but firm
-2. Explains why their message was flagged
-3. Redirects them back to fitness and nutrition topics
-4. Provides a specific suggestion for a better topic
+1. Addresses them by their first name (${clientFirstName})
+2. Is friendly but firm
+3. Explains why their message was flagged
+4. Redirects them back to fitness and nutrition topics
+5. Provides a specific suggestion for a better topic
 
 Original message: "${originalMessage}"
 Violation type: ${moderationResult.isOffTopic ? 'Off-topic (not related to fitness/nutrition)' : 'Inappropriate content'}
 Relevance score: ${moderationResult.topicRelevance}/10
 
-Generate a private message (2-3 sentences) that maintains a supportive coaching tone while guiding them back on track.`;
+Generate a private message (2-3 sentences) that maintains a supportive coaching tone while guiding them back on track. Start with "Hi ${clientFirstName}," or "${clientFirstName}," to personalize it.`;
 
     const response = await openaiClient.chat.completions.create({
       model: "gpt-4",
@@ -1350,8 +1351,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             moderationViolation = true;
             
             try {
+              // Get client's first name for personalized message
+              const clientFirstName = user?.firstName || 'there';
+              
               // Generate private warning message
-              const warningMessage = await generateModerationWarning(message, moderationResult);
+              const warningMessage = await generateModerationWarning(message, moderationResult, clientFirstName);
             
               // Save private message to violating user - store in user's individual chat
               const privateMessage = await storage.saveChatMessage({
@@ -1369,15 +1373,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               });
               
-              // Send private message via WebSocket to specific user
+              // Also post a brief reminder to the group chat to stay on topic
+              const groupReminder = await storage.saveChatMessage({
+                userId: 'coach_chassidy',
+                message: "Let's keep our discussions focused on fitness and nutrition topics. Thanks everyone! 💪",
+                isAI: true,
+                chatType: 'group',
+                status: 'approved',
+                metadata: {
+                  isTopicReminder: true,
+                  triggeredByViolation: true,
+                  senderName: 'Coach Chassidy'
+                }
+              });
+              
+              // Send both private message and group reminder via WebSocket
               const wss = (global as any).wss;
               if (wss) {
                 wss.clients.forEach((client: WebSocket) => {
                   if (client.readyState === WebSocket.OPEN) {
+                    // Send private message to violating user
                     client.send(JSON.stringify({
                       type: 'private_moderation_message',
                       message: privateMessage,
                       targetUserId: userId,
+                      sender: 'coach_chassidy'
+                    }));
+                    
+                    // Send group reminder to all users
+                    client.send(JSON.stringify({
+                      type: 'new_group_message',
+                      message: groupReminder,
                       sender: 'coach_chassidy'
                     }));
                   }
