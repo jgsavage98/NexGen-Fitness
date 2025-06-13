@@ -1473,9 +1473,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const moderationResult = await shouldAIRespondToGroupMessage(message, chatHistory, aiSettings);
           console.log(`AI moderation result:`, moderationResult);
           
+          // Enhanced content moderation with comprehensive filtering
+          const { moderateContent } = await import('./openai');
+          const clientFirstName = user?.firstName || 'there';
+          
+          const enhancedModerationResult = await moderateContent(message, clientFirstName, aiSettings);
+          
           // Handle content violations with private messaging
-          if ((moderationResult as any).isOffTopic || (moderationResult as any).needsModeration) {
-            console.log('Content violation detected, adding human-like delay before responding...');
+          if (enhancedModerationResult.shouldWarn) {
+            console.log(`Content violation detected: ${enhancedModerationResult.violationType} (${enhancedModerationResult.severity} severity)`);
             moderationViolation = true;
             
             // Add configurable delay to make AI moderator more human-like
@@ -1484,11 +1490,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             setTimeout(async () => {
               try {
-                // Get client's first name for personalized message
-                const clientFirstName = user?.firstName || 'there';
-                
-                // Generate private warning message
-                const warningMessage = await generateModerationWarning(message, moderationResult, clientFirstName);
+                // Use the enhanced moderation result for personalized warning
+                const warningMessage = enhancedModerationResult.privateWarning;
               
                 // Save private message to violating user - store in user's individual chat
                 const privateMessage = await storage.saveChatMessage({

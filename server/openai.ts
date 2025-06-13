@@ -121,6 +121,16 @@ export interface CoachResponse {
   suggestedActions?: string[];
 }
 
+export interface ModerationResult {
+  violationType: 'none' | 'off-topic' | 'profanity' | 'rude' | 'offensive' | 'inappropriate';
+  severity: 'low' | 'medium' | 'high';
+  confidence: number;
+  reason: string;
+  shouldWarn: boolean;
+  privateWarning?: string;
+  groupReminder?: string;
+}
+
 export interface WorkoutRecommendation {
   exercises: Array<{
     name: string;
@@ -154,6 +164,78 @@ export interface MacroRecommendation {
   fat: number;
   reasoning: string;
   adjustments?: string[];
+}
+
+// Enhanced content moderation function
+export async function moderateContent(
+  message: string, 
+  clientFirstName: string,
+  settings?: any
+): Promise<ModerationResult> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are a content moderation specialist for a fitness and nutrition coaching platform. Analyze messages for violations and generate appropriate responses.
+
+MODERATION CRITERIA:
+1. OFF-TOPIC: Messages not related to fitness, nutrition, health, wellness, or coaching
+2. PROFANITY: Explicit language, swear words, vulgar content
+3. RUDE/MEAN: Hostile, aggressive, disrespectful, bullying behavior
+4. OFFENSIVE: Discriminatory, hateful, inappropriate sexual content
+5. INAPPROPRIATE: Spam, promotional content, personal attacks
+
+SEVERITY LEVELS:
+- LOW: Minor violations, gentle redirection needed
+- MEDIUM: Clear violations requiring firm warning
+- HIGH: Serious violations requiring immediate intervention
+
+RESPONSE GENERATION:
+- Private warnings should address the client by first name: "Hi ${clientFirstName},"
+- Group reminders should be brief and encouraging
+- Maintain Coach Chassidy's supportive but firm tone
+
+Return JSON format:
+{
+  "violationType": "none|off-topic|profanity|rude|offensive|inappropriate",
+  "severity": "low|medium|high",
+  "confidence": 0.0-1.0,
+  "reason": "specific explanation",
+  "shouldWarn": boolean,
+  "privateWarning": "personalized message to client",
+  "groupReminder": "brief group chat reminder"
+}`
+        },
+        {
+          role: "user",
+          content: `Analyze this message from client "${clientFirstName}": "${message}"`
+        }
+      ],
+      temperature: 0.3
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return {
+      violationType: result.violationType || 'none',
+      severity: result.severity || 'low',
+      confidence: result.confidence || 0.8,
+      reason: result.reason || '',
+      shouldWarn: result.shouldWarn || false,
+      privateWarning: result.privateWarning || '',
+      groupReminder: result.groupReminder || ''
+    };
+  } catch (error) {
+    console.error("Content moderation error:", error);
+    return {
+      violationType: 'none',
+      severity: 'low',
+      confidence: 0.5,
+      reason: 'Moderation service unavailable',
+      shouldWarn: false
+    };
+  }
 }
 
 export class AICoach {
