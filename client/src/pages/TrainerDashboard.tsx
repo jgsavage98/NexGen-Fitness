@@ -672,7 +672,7 @@ export default function TrainerDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-          <TabsList className="bg-surface border border-gray-700 grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 h-auto gap-1 p-1">
+          <TabsList className="bg-surface border border-gray-700 grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 h-auto gap-1 p-1">
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
               <TrendingUp className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
               <span className="hidden sm:inline">Overview</span>
@@ -707,6 +707,11 @@ export default function TrainerDashboard() {
               <Calendar className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
               <span className="hidden sm:inline">Upload History</span>
               <span className="sm:hidden text-xs">History</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai-settings" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
+              <Brain className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="hidden sm:inline">AI Settings</span>
+              <span className="sm:hidden text-xs">AI</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1233,6 +1238,10 @@ export default function TrainerDashboard() {
           {/* Exercises Tab */}
           <TabsContent value="exercises" className="space-y-6">
             <ExerciseManagement />
+          </TabsContent>
+
+          <TabsContent value="ai-settings" className="space-y-6">
+            <AISettings />
           </TabsContent>
 
           <TabsContent value="client-history" className="space-y-6">
