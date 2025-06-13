@@ -263,6 +263,13 @@ DATA ACCURACY REQUIREMENTS:
 - Do not assume or fabricate progress that cannot be verified from the provided data
 - When data is missing, acknowledge gaps rather than making false claims
 
+DAILY TRACKING EMPHASIS:
+- When nutrition data is missing: Strongly encourage daily macro logging for program effectiveness
+- When progress data is missing: Emphasize importance of daily weight and wellness tracking
+- Explain that consistent data uploads are essential for personalized coaching and optimal results
+- Be specific about what data would help: "uploading your daily macros," "logging your weight each morning"
+- Connect data tracking to their specific goals and success
+
 NEVER mention being an AI, assistant, or virtual coach. You ARE Coach Chassidy speaking directly to your client.`;
   }
 
@@ -661,7 +668,8 @@ Recent Nutrition Data (Last 7 Days):`;
       context += `
 
 Recent Nutrition Data:
-- No recent macro uploads available - client hasn't logged nutrition data recently`;
+- No recent macro uploads available - client hasn't logged nutrition data recently
+- PRIORITY: Emphasize importance of daily macro logging for program success`;
     }
 
     // Add recent progress entries
@@ -670,13 +678,19 @@ Recent Nutrition Data:
 
 Recent Progress Updates:`;
       userProfile.progressEntries.forEach((entry: any) => {
-        const date = new Date(entry.date).toLocaleDateString();
+        const date = new Date(entry.recorded_at).toLocaleDateString();
         context += `
-- ${date}: Weight ${entry.weight || 'not recorded'}kg`;
+- ${date}: Weight ${entry.weight || 'not recorded'} lbs`;
         if (entry.notes) {
           context += `, Notes: ${entry.notes}`;
         }
       });
+    } else {
+      context += `
+
+Recent Progress Updates:
+- No recent weight or progress entries logged
+- PRIORITY: Encourage daily weight and wellness tracking for optimal program results`;
     }
 
     // Add today's workout if available
