@@ -1588,13 +1588,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             setTimeout(async () => {
               try {
+                // Get AI settings for verbosity
+                const aiSettings = await storage.getAISettings('coach_chassidy');
+                const verbosity = aiSettings?.groupChat?.verbosity || 'verbose';
+                
                 // Generate AI response as Coach Chassidy
                 const response = await aiCoach.getChatResponse(
                   message,
                   user,
                   chatHistory,
                   isPendingApproval,
-                  true // isGroupChat flag
+                  true, // isGroupChat flag
+                  verbosity
                 );
               
                 // Save AI response as Coach Chassidy
@@ -1700,13 +1705,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               workoutHistory: await storage.getUserWorkouts(userId).then(w => w.slice(-3)) // Last 3 workouts
             };
             
+            // Get AI settings for verbosity
+            const aiSettings = await storage.getAISettings('coach_chassidy');
+            const verbosity = aiSettings?.individualChat?.verbosity || 'verbose';
+            
             // Generate AI response as Coach Chassidy with comprehensive context
             const response = await aiCoach.getChatResponse(
               message,
               enhancedUserProfile,
               chatHistory,
               false, // isPendingApproval
-              false // isGroupChat flag
+              false, // isGroupChat flag
+              verbosity
             );
             
             // Check if response meets confidence threshold
@@ -2720,11 +2730,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get recent chat messages for context
       const recentMessages = await storage.getClientChatMessages(clientId, trainerId, 10);
       
+      // Get AI settings for verbosity
+      const aiSettings = await storage.getAISettings(trainerId);
+      const verbosity = aiSettings?.individualChat?.verbosity || 'verbose';
+      
       // Generate AI response
       const aiResponse = await aiCoach.getChatResponse(
         `Generate a helpful response for ${client.firstName}. Context: ${context}`,
         client,
-        recentMessages.map((m: any) => m.message)
+        recentMessages.map((m: any) => m.message),
+        false, // isPendingApproval
+        false, // isGroupChat
+        verbosity
       );
 
       res.json({ message: aiResponse.message });

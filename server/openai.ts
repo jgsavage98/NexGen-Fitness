@@ -474,12 +474,16 @@ ${recentMacros.slice(-7).map(day =>
         ? "\n\nYou are moderating a group chat with multiple clients. Provide supportive, encouraging responses that benefit the entire community. Address the specific message while keeping the conversation positive and motivational for all participants. Share general tips and encouragement that others can learn from."
         : "";
 
+      const verbosityContext = verbosity === 'brief'
+        ? "\n\nRESPONSE LENGTH: Keep responses concise and to the point. Aim for 1-2 sentences maximum. Focus on the most essential information or action step. Be direct and efficient while maintaining your supportive tone."
+        : "\n\nRESPONSE LENGTH: Provide detailed, comprehensive responses with full explanations. Include educational context, reasoning behind recommendations, and thorough guidance. Use your full coaching expertise to give complete answers.";
+
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: this.getSystemPrompt() + `\n\nUser Context: ${context}${approvalContext}${groupChatContext}`,
+            content: this.getSystemPrompt() + `\n\nUser Context: ${context}${approvalContext}${groupChatContext}${verbosityContext}`,
           },
           {
             role: "user",
