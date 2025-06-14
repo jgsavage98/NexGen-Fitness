@@ -317,6 +317,10 @@ export default function AISettings() {
   }, [currentSettings]);
 
   const handleSave = () => {
+    console.log('handleSave clicked - current settings:', {
+      groupChatVerbosity: settings.groupChat?.verbosity,
+      individualChatVerbosity: settings.individualChat?.verbosity
+    });
     updateSettingsMutation.mutate(settings);
   };
 
