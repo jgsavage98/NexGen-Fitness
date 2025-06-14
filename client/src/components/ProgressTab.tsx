@@ -12,11 +12,14 @@ import { Scale, TrendingDown, TrendingUp, RefreshCw } from "lucide-react";
 export default function ProgressTab() {
   const [currentWeight, setCurrentWeight] = useState("");
   const [isSeeding, setIsSeeding] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
-  const { data: progressEntries = [], refetch: refetchProgress } = useQuery<ProgressEntry[]>({
+  const { data: progressEntries = [], refetch: refetchProgress, isLoading: progressLoading } = useQuery<ProgressEntry[]>({
     queryKey: ["/api/progress"],
     staleTime: 0, // Always refetch to ensure fresh data
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const { data: workoutLogs = [] } = useQuery<any[]>({
@@ -105,6 +108,31 @@ export default function ProgressTab() {
   const handleSeedData = (days: number) => {
     setIsSeeding(true);
     seedDataMutation.mutate(days);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Force invalidate all progress-related queries
+      await queryClient.invalidateQueries({ queryKey: ["/api/progress"] });
+      await refetchProgress();
+      
+      console.log('Refresh completed, new data:', progressEntries);
+      
+      toast({
+        title: "Progress Updated",
+        description: "Latest weight data has been refreshed.",
+      });
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast({
+        title: "Refresh Failed",
+        description: "Unable to update progress data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Calculate this week's stats
@@ -301,10 +329,15 @@ export default function ProgressTab() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => refetchProgress()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('Refresh button clicked!');
+                  handleRefresh();
+                }}
+                disabled={isRefreshing}
                 className="text-gray-400 hover:text-white hover:bg-gray-700"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </Button>
               {weightProgress && (
                 <div className="flex items-center text-sm">
@@ -325,9 +358,22 @@ export default function ProgressTab() {
             {/* Current Weight */}
             <div className="bg-dark rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-white mb-1">
-                {latestWeight ? `${latestWeight} lbs` : "—"}
+                {progressLoading ? (
+                  <div className="animate-pulse">Loading...</div>
+                ) : latestWeight ? (
+                  `${latestWeight} lbs`
+                ) : (
+                  "—"
+                )}
               </div>
-              <div className="text-sm text-gray-400">Current Weight</div>
+              <div className="text-sm text-gray-400">
+                Current Weight
+                {progressEntries.length > 0 && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {progressEntries.length} entries
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Change from Baseline */}
