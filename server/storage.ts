@@ -1125,7 +1125,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async saveAISettings(trainerId: string, settings: any): Promise<void> {
-    await db
+    console.log('Storage: Saving AI settings for trainer:', trainerId);
+    console.log('Storage: Settings to save:', {
+      groupChatVerbosity: settings.groupChat?.verbosity,
+      individualChatVerbosity: settings.individualChat?.verbosity,
+      settingsKeys: Object.keys(settings)
+    });
+    
+    const result = await db
       .insert(aiSettings)
       .values({
         id: `ai_settings_${trainerId}`,
@@ -1140,6 +1147,15 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         },
       });
+      
+    console.log('Storage: AI settings saved successfully');
+    
+    // Verify the save by reading back
+    const saved = await this.getAISettings(trainerId);
+    console.log('Storage: Verification - saved verbosity settings:', {
+      groupChatVerbosity: saved.groupChat?.verbosity,
+      individualChatVerbosity: saved.individualChat?.verbosity
+    });
   }
 }
 
