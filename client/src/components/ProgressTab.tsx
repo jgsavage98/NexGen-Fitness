@@ -153,6 +153,11 @@ export default function ProgressTab() {
     }
   });
 
+  // Get latest macro upload date
+  const latestMacroEntry = recentMacros.length > 0 ? 
+    recentMacros.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] : null;
+  const latestMacroDate = latestMacroEntry?.date;
+
   // Get monthly data for report calculations (last 30 days)
   const { data: monthlyMacros = [] } = useQuery({
     queryKey: ["/api/daily-macros/recent", 30],
@@ -201,15 +206,20 @@ export default function ProgressTab() {
   // Debug logging
   console.log('Progress entries received:', progressEntries);
   
-  // Get weight entries from progress data
-  const weightEntries = (progressEntries as ProgressEntry[]).filter((entry: ProgressEntry) => entry.weight !== null);
-  const latestWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : null;
+  // Get weight entries from progress data (sorted by recordedAt descending, so [0] is most recent)
+  const weightEntries = (progressEntries as ProgressEntry[])
+    .filter((entry: ProgressEntry) => entry.weight !== null)
+    .sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime());
+  
+  const latestWeight = weightEntries.length > 0 ? weightEntries[0].weight : null;
+  const latestWeightDate = weightEntries.length > 0 ? weightEntries[0].recordedAt : null;
   const baselineWeight = (user as any)?.weight || null; // Use profile weight as baseline
   const goalWeight = (user as any)?.goalWeight || null;
   
   console.log('Latest weight:', latestWeight, 'from', weightEntries.length, 'entries');
+  console.log('Latest weight date:', latestWeightDate);
   
-  // Calculate weight progress
+  // Calculate weight progress (entries are sorted newest first)
   const weightProgress = latestWeight && goalWeight && baselineWeight ? {
     current: latestWeight,
     goal: goalWeight,
@@ -217,7 +227,7 @@ export default function ProgressTab() {
     changeFromBaseline: latestWeight - baselineWeight,
     remaining: Math.abs(latestWeight - goalWeight),
     trend: weightEntries.length >= 2 ? 
-      weightEntries[weightEntries.length - 1].weight! - weightEntries[weightEntries.length - 2].weight! : 0
+      weightEntries[0].weight! - weightEntries[1].weight! : 0 // Most recent - previous
   } : null;
 
   // Calculate goal progress
@@ -368,9 +378,14 @@ export default function ProgressTab() {
               </div>
               <div className="text-sm text-gray-400">
                 Current Weight
+                {latestWeightDate && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Last logged: {new Date(latestWeightDate).toLocaleDateString()}
+                  </div>
+                )}
                 {progressEntries.length > 0 && (
                   <div className="text-xs text-gray-500 mt-1">
-                    {progressEntries.length} entries
+                    {progressEntries.length} entries total
                   </div>
                 )}
               </div>
@@ -469,6 +484,11 @@ export default function ProgressTab() {
               </div>
               <div className="text-sm text-gray-400">Macro Target</div>
               <div className="text-xs text-gray-500">average hit rate</div>
+              {latestMacroDate && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Last upload: {new Date(latestMacroDate).toLocaleDateString()}
+                </div>
+              )}
             </div>
           </div>
 
