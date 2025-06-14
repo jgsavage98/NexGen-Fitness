@@ -194,8 +194,8 @@ export default function ProfileSettings({ onBack }: ProfileSettingsProps) {
 
   const getCurrentProfileImage = () => {
     if (preview) return preview;
-    if (isCoach) return "/chassidy-profile.jpeg";
-    return "/john-profile.png";
+    if (isCoach) return "/attached_assets/CE Bio Image_1749399911915.jpeg";
+    return (user as any)?.profileImageUrl || "/john-profile.png";
   };
 
   return (

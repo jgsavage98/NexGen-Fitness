@@ -355,7 +355,7 @@ export default function UnifiedChatTab() {
                               <>
                                 {message.userId === "coach_chassidy" ? (
                                   <img 
-                                    src="/attached_assets/CE Bio Image_1749399911915.jpeg" 
+                                    src="/attached_assets/CE%20Bio%20Image_1749399911915.jpeg" 
                                     alt="Coach Chassidy"
                                     className="w-5 h-5 rounded-full object-cover"
                                   />

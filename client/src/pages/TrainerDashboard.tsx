@@ -620,7 +620,7 @@ export default function TrainerDashboard() {
                 className="flex-shrink-0 rounded-full hover:ring-2 hover:ring-white/20 transition-all"
               >
                 <img
-                  src="/chassidy-profile.jpeg"
+                  src="/attached_assets/CE Bio Image_1749399911915.jpeg"
                   alt="Coach Chassidy"
                   className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                 />

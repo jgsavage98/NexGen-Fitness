@@ -33,7 +33,7 @@ export default function CoachBio() {
         <div className="text-center mb-8">
           <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden bg-gradient-to-br from-primary-400 to-primary-600">
             <img 
-              src={trainer?.photoUrl || "/chassidy-profile.jpeg"} 
+              src={trainer?.photoUrl || "/attached_assets/CE Bio Image_1749399911915.jpeg"} 
               alt={trainer?.name || "Coach Chassidy"}
               className="w-full h-full object-cover"
               onError={(e) => {
