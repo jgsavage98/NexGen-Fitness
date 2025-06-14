@@ -475,7 +475,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const trainerId = req.user.claims.sub;
       const settings = req.body;
+      console.log('AI Settings Save Request:', {
+        trainerId,
+        settingsKeys: Object.keys(settings),
+        groupChatVerbosity: settings.groupChat?.verbosity,
+        individualChatVerbosity: settings.individualChat?.verbosity
+      });
       await storage.saveAISettings(trainerId, settings);
+      console.log('AI Settings saved successfully for trainer:', trainerId);
       res.json({ message: "AI settings saved successfully" });
     } catch (error) {
       console.error("Error saving AI settings:", error);

@@ -218,9 +218,14 @@ export default function AISettings() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: AISettings) => {
+      console.log('Saving AI Settings:', {
+        groupChatVerbosity: newSettings.groupChat?.verbosity,
+        individualChatVerbosity: newSettings.individualChat?.verbosity
+      });
       return await apiRequest('PUT', '/api/trainer/ai-settings', newSettings);
     },
     onSuccess: () => {
+      console.log('AI Settings save successful');
       toast({
         title: "Settings Updated",
         description: "AI behavior settings have been saved successfully.",
@@ -228,6 +233,7 @@ export default function AISettings() {
       queryClient.invalidateQueries({ queryKey: ['/api/trainer/ai-settings'] });
     },
     onError: (error: any) => {
+      console.error('AI Settings save error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update AI settings",
