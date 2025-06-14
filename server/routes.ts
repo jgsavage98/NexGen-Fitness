@@ -1672,11 +1672,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Get chat history for context
             const chatHistory = await storage.getUserChatMessages(userId, 10);
             
-            // Generate AI response as Coach Chassidy
+            // Gather comprehensive client data for AI context (same as background monitoring)
+            const [macroTargets, recentMacros, progressEntries, todaysWorkout] = await Promise.all([
+              storage.getUserMacroTargets(userId, new Date()),
+              storage.getRecentMacros(userId, 7), // Last 7 days of macro uploads
+              storage.getUserProgressEntries(userId),
+              storage.getTodaysWorkout(userId)
+            ]);
+            
+            // Build enhanced user profile with all client data
+            const enhancedUserProfile = {
+              ...user,
+              macroTargets,
+              recentMacros,
+              progressEntries: progressEntries.slice(-5), // Last 5 progress entries
+              todaysWorkout,
+              workoutHistory: await storage.getUserWorkouts(userId).then(w => w.slice(-3)) // Last 3 workouts
+            };
+            
+            // Generate AI response as Coach Chassidy with comprehensive context
             const response = await aiCoach.getChatResponse(
               message,
-              user,
+              enhancedUserProfile,
               chatHistory,
+              false, // isPendingApproval
               false // isGroupChat flag
             );
             
