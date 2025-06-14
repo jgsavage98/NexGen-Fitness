@@ -13,6 +13,13 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
+### Badge Reset System - FULLY OPERATIONAL (2:00 PM)
+- **Mark-as-Read Fixed**: Updated markMessagesAsRead to properly identify and mark Coach Chassidy's targeted messages as read
+- **Complete Badge Lifecycle**: Badge now properly appears with new messages, shows correct counts, and disappears when visiting Chat tab
+- **Database Integration**: All badge operations correctly update Coach Chassidy's message read status using metadata.targetUserId
+- **Real-Time Reset**: Badge count instantly resets from any number to 0 when Chat tab is accessed
+- **Production Ready**: Complete notification badge system working end-to-end with proper appearance, counting, and reset functionality
+
 ### Navigation Badge System - FULLY OPERATIONAL (1:55 PM)
 - **Total Badge Count Fixed**: Updated getUnreadMessagesCount to use corrected individual chat logic for proper navigation badge display
 - **Cross-Tab Badge Updates**: Chat navigation badge now appears correctly when navigating between tabs after Coach Chassidy responds
