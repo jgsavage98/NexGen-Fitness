@@ -251,9 +251,9 @@ export default function ChatTab() {
           </div>
         )}
 
-        {messages.map((message) => {
+        {messages.map((message: any) => {
           const isCoach = message.isAI || message.metadata?.fromCoach || message.userId === "coach_chassidy";
-          const isCurrentUser = message.userId === user?.id;
+          const isCurrentUser = message.userId === (user as any)?.id;
           
           return (
             <div key={message.id} className="mb-4">
@@ -346,7 +346,7 @@ export default function ChatTab() {
                     {isCurrentUser && (
                       <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
                         <img 
-                          src="/john-profile.png"
+                          src={(user as any)?.profileImageUrl || "/john-profile.png"}
                           alt="Your Profile"
                           className="w-8 h-8 rounded-full object-cover"
                         />
