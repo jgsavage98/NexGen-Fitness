@@ -2334,18 +2334,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clientsWithCount = await Promise.all(clients.map(async (client) => {
         // Count unanswered messages (client messages without trainer responses after them)
         const unansweredCount = await storage.getUnansweredMessageCount(client.id, trainerId);
-        
-        // Debug log for Jonah Hill's profile image
-        if (client.firstName === 'Jonah' || client.lastName === 'Hill') {
-          console.log('🔍 DEBUG: Jonah Hill client data:', {
-            id: client.id,
-            firstName: client.firstName,
-            lastName: client.lastName,
-            profileImageUrl: client.profileImageUrl,
-            email: client.email
-          });
-        }
-        
         return {
           ...client,
           unansweredCount
