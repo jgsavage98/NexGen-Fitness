@@ -412,36 +412,14 @@ export default function AISettings() {
             Control how the AI assistant behaves across all interactions with your clients
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={(e) => {
-              console.log('Button clicked, event:', e);
-              console.log('Mutation pending:', updateSettingsMutation.isPending);
-              try {
-                handleSave();
-              } catch (error) {
-                console.error('Error in handleSave:', error);
-              }
-            }}
-            disabled={updateSettingsMutation.isPending}
-            size="lg"
-            className="w-full sm:w-auto"
-          >
-            {updateSettingsMutation.isPending ? "Saving..." : "Save Changes"}
-          </Button>
-          <button 
-            onClick={() => {
-              console.log('TEST BUTTON CLICKED');
-              console.log('Current verbosity settings:', {
-                groupChat: settings.groupChat?.verbosity,
-                individualChat: settings.individualChat?.verbosity
-              });
-            }}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            Test Click
-          </button>
-        </div>
+        <Button 
+          onClick={handleSave}
+          disabled={updateSettingsMutation.isPending}
+          size="lg"
+          className="w-full sm:w-auto"
+        >
+          {updateSettingsMutation.isPending ? "Saving..." : "Save Changes"}
+        </Button>
       </div>
 
       <Tabs defaultValue="group-chat" className="space-y-6">

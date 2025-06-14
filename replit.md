@@ -13,7 +13,13 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
-### AI Message Verbosity Controls - FULLY OPERATIONAL (8:17 PM)
+### AI Message Verbosity Controls - FULLY OPERATIONAL (11:41 PM)
+- **Critical Database Retrieval Bug RESOLVED**: Fixed AI settings query targeting wrong record ID causing verbosity settings to appear unsaved
+- **Database Query Fix**: Updated getAISettings to query by specific record ID (`ai_settings_${trainerId}`) instead of trainerId, resolving duplicate record conflicts
+- **Verbosity Persistence Working**: Save and retrieval operations now properly handle verbosity settings with correct database record targeting
+- **Production Ready**: Complete verbosity control system fully operational with proper database persistence across all AI response pathways
+
+### AI Message Verbosity Controls - Backend Integration Complete (8:17 PM)
 - **Backend Verbosity Integration Complete**: Updated all getChatResponse calls in server routes to use verbosity settings from AI configuration
 - **Group Chat Verbosity Control**: Group chat AI responses now respect trainer-configured verbosity settings (brief vs verbose)
 - **Individual Chat Verbosity Control**: Individual chat automation uses verbosity settings for personalized response length
