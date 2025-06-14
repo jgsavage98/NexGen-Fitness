@@ -668,24 +668,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnreadMessagesCount(userId: string): Promise<number> {
-    // Count individual chat messages (AI responses and coach messages to this user)
-    const individualResult = await db.select({ count: sql<number>`count(*)` })
-      .from(chatMessages)
-      .where(
-        and(
-          eq(chatMessages.userId, userId),
-          eq(chatMessages.isRead, false),
-          eq(chatMessages.status, 'approved'),
-          eq(chatMessages.chatType, 'individual'),
-          // Count approved AI responses OR messages from coach (not user's own messages)
-          eq(chatMessages.isAI, true)
-        )
-      );
+    // Use the updated individual chat unread count logic
+    const individualCount = await this.getIndividualChatUnreadCount(userId);
 
     // Count unread group chat messages from other participants (not from this user)
     const groupCount = await this.getGroupChatUnreadCount(userId);
-    
-    const individualCount = Number(individualResult[0]?.count) || 0;
     
     console.log(`Client ${userId} unread counts - Individual: ${individualCount}, Group: ${groupCount}, Total: ${individualCount + groupCount}`);
     
