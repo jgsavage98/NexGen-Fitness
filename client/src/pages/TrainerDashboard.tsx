@@ -17,6 +17,7 @@ import UnifiedChatTab from "@/components/UnifiedChatTab";
 import ExerciseManagement from "@/components/ExerciseManagement";
 import AISettings from "@/pages/AISettings";
 import { calculateJourneyDay } from "@/lib/dateUtils";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 interface Client {
   id: string;
@@ -85,6 +86,21 @@ export default function TrainerDashboard() {
   const [activityTypeFilter, setActivityTypeFilter] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // WebSocket for real-time badge updates
+  const { isConnected } = useWebSocket((message) => {
+    if (message.type === 'counter_update' || message.type === 'group_counter_update') {
+      // Invalidate badge count queries when new messages arrive
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
+    }
+    
+    if (message.type === 'new_group_message' || message.type === 'new_individual_message') {
+      // Refresh recent activity when new messages are posted
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+    }
+  });
 
   // Force cache invalidation on component mount to get fresh data
   useEffect(() => {
