@@ -1417,6 +1417,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { message, isVoice, chatType = 'individual' } = req.body;
       
+      console.log(`📨 POST /api/chat/messages - User: ${userId}, ChatType: ${chatType}, Message: "${message}"`);
+      
       if (!message) {
         return res.status(400).json({ message: "Message content is required" });
       }
