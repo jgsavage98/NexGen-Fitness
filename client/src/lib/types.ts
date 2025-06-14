@@ -102,6 +102,14 @@ export interface ChatMessage {
     pdfUrl?: string;
     reportTitle?: string;
     pdfThumbnail?: boolean;
+    senderName?: string;
+  };
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profileImageUrl?: string;
   };
   createdAt: string;
 }

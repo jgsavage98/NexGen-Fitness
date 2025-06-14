@@ -308,11 +308,21 @@ export default function ChatTab() {
                 <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                   <div className="flex items-start space-x-3 max-w-xs">
                     {!isCurrentUser && chatType === 'group' && (
-                      <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-xs font-semibold">
-                          {message.metadata?.senderName ? message.metadata.senderName.charAt(0) : '?'}
-                        </span>
-                      </div>
+                      <>
+                        {message.user?.profileImageUrl ? (
+                          <img 
+                            src={message.user.profileImageUrl} 
+                            alt={`${message.user.firstName} ${message.user.lastName}`}
+                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs font-semibold">
+                              {message.user?.firstName ? message.user.firstName.charAt(0) : '?'}
+                            </span>
+                          </div>
+                        )}
+                      </>
                     )}
                     
                     <div className={`rounded-lg p-4 ${
@@ -322,7 +332,7 @@ export default function ChatTab() {
                     }`}>
                       {!isCurrentUser && chatType === 'group' && (
                         <p className="text-xs text-gray-300 mb-1 font-semibold">
-                          {message.metadata?.senderName || 'Unknown User'}
+                          {message.user ? `${message.user.firstName} ${message.user.lastName}` : 'Unknown User'}
                         </p>
                       )}
                       <p className="text-sm text-white">
