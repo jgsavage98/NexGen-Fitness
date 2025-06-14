@@ -212,7 +212,7 @@ export class DatabaseStorage implements IStorage {
       .from(dailyMacros)
       .where(and(
         eq(dailyMacros.userId, userId),
-        sql`${dailyMacros.date} >= (CURRENT_DATE - INTERVAL '${days} days')::date`
+        sql`${dailyMacros.date} >= (CURRENT_DATE - INTERVAL '${sql.raw(days.toString())} days')::date`
       ))
       .orderBy(desc(dailyMacros.date));
   }
