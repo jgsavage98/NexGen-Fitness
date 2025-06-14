@@ -13,6 +13,11 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
+### UI Text Overflow Fix - Button Text Corrected (3:20 PM)
+- **Dashboard Button Text Fixed**: Changed "Today's Upload Complete" to "Upload Complete" to prevent text overflow
+- **Button Layout Improved**: Text now fits properly within button boundaries without running off the edge
+- **User Experience Enhanced**: Clean, readable button text maintains functionality while improving visual presentation
+
 ### Group Chat Badge Notification System - FULLY OPERATIONAL (3:07 PM)
 - **Coach Chassidy Message Integration Fixed**: AI-generated group messages from Coach Chassidy now properly trigger badge notifications
 - **Badge Count Logic Corrected**: Fixed viewedBy metadata parsing to properly handle JSON array format from database

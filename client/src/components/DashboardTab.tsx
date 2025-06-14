@@ -274,7 +274,7 @@ export default function DashboardTab({ onTabChange }: DashboardTabProps) {
           <i className={`fas fa-camera text-xl ${(hasUploadedToday || isPendingApproval) ? "text-gray-400" : "text-white"}`}></i>
           <div>
             <div className={`font-semibold ${(hasUploadedToday || isPendingApproval) ? "text-gray-400" : "text-white"}`}>
-              {hasUploadedToday ? "Today's Upload Complete" : 
+              {hasUploadedToday ? "Upload Complete" : 
                isPendingApproval ? "Upload Disabled" : "Upload Screenshot"}
             </div>
             <div className={`text-xs leading-tight ${(hasUploadedToday || isPendingApproval) ? "text-gray-500" : "text-primary-100"}`}>
