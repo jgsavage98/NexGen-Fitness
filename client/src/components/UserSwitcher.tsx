@@ -184,6 +184,7 @@ export default function UserSwitcher() {
       }
     }
     
+    // For clients, no validation required - they complete info during onboarding
     const userData = {
       ...newUserData,
       isTrainer: accountType === 'trainer',
