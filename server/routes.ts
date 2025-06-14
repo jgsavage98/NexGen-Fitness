@@ -1684,6 +1684,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const meetsThreshold = response.confidence >= individualChatSettings.confidenceThreshold;
             
             if (meetsThreshold) {
+              // Update tracking immediately to prevent background system from processing this message
+              if (savedUserMessage.id > lastProcessedMessageId) {
+                lastProcessedMessageId = savedUserMessage.id;
+                console.log(`Updated lastProcessedMessageId to ${lastProcessedMessageId} immediately to prevent duplicate processing`);
+              }
+              
               // Calculate delay (urgent messages get immediate response)
               const responseDelay = hasUrgentKeyword ? 0 : await getIndividualChatDelay(aiSettings, user?.timezone || undefined);
               console.log(`Individual chat response will be sent after ${responseDelay / 1000} seconds${hasUrgentKeyword ? ' (urgent message - no delay)' : ''}`);
@@ -1731,12 +1737,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                   
                   console.log(`Automated individual chat response sent to user ${userId} with confidence ${response.confidence}/10`);
-                  
-                  // Update the tracking variable to prevent background monitoring from reprocessing this message
-                  if (savedUserMessage.id > lastProcessedMessageId) {
-                    lastProcessedMessageId = savedUserMessage.id;
-                    console.log(`Updated lastProcessedMessageId to ${lastProcessedMessageId} to prevent duplicate processing`);
-                  }
                   
                 } catch (responseError) {
                   console.error('Error generating delayed individual chat response:', responseError);
