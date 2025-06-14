@@ -47,7 +47,7 @@ export default function Home() {
     retry: false,
   });
 
-  // Get unread messages count for notification badge
+  // Get unread messages count for notification badge (already combines individual + group)
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ['/api/chat/unread-count'],
     retry: false,
@@ -55,18 +55,8 @@ export default function Home() {
     refetchIntervalInBackground: true,
   });
 
-  // Get group chat unread count separately
-  const { data: groupUnreadData } = useQuery<{ count: number }>({
-    queryKey: ['/api/chat/group-unread-count'],
-    retry: false,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
-  });
-
   const isPendingApproval = macroTargets?.status === 'pending_trainer_approval' || false;
-  const individualUnreadCount = Number(unreadData?.count) || 0;
-  const groupUnreadCount = Number(groupUnreadData?.count) || 0;
-  const totalUnreadCount = individualUnreadCount + groupUnreadCount;
+  const totalUnreadCount = Number(unreadData?.count) || 0;
 
   // Mark messages as read when chat tab is opened
   const markAsReadMutation = useMutation({
@@ -74,12 +64,10 @@ export default function Home() {
       await apiRequest('POST', '/api/chat/mark-read', {});
     },
     onSuccess: () => {
-      // Invalidate both unread count queries to refresh the badge
+      // Invalidate unread count query to refresh the badge
       queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/group-unread-count'] });
       // Force immediate refetch to ensure badge updates
       queryClient.refetchQueries({ queryKey: ['/api/chat/unread-count'] });
-      queryClient.refetchQueries({ queryKey: ['/api/chat/group-unread-count'] });
     }
   });
 

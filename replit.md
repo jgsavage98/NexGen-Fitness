@@ -13,6 +13,13 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
+### Navigation Badge Counter Duplication Fix - FULLY OPERATIONAL (11:58 PM)
+- **Critical Frontend Count Duplication RESOLVED**: Fixed navigation badge showing double unread count by removing duplicate addition in Home.tsx
+- **Backend Already Combined**: The /api/chat/unread-count endpoint already returns individual + group chat counts combined
+- **Removed Frontend Addition**: Eliminated totalUnreadCount = individualUnreadCount + groupUnreadCount causing the doubling
+- **Simplified Query Logic**: Now using single unread count endpoint instead of fetching and combining separate counts
+- **Production Ready**: Navigation badge now shows accurate single count for all unread messages
+
 ### Badge Counter Double Increment Fix - FULLY OPERATIONAL (11:51 PM)
 - **Critical WebSocket Broadcasting Bug RESOLVED**: Fixed badge counters incrementing twice for single messages due to multiple client.send() calls in same loop
 - **Separated Message and Counter Broadcasts**: Split WebSocket broadcasts into separate loops for messages and counter updates to prevent duplication
