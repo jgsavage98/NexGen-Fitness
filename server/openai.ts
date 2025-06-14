@@ -450,7 +450,8 @@ ${recentMacros.slice(-7).map(day =>
     userProfile: any, 
     conversationHistory: any[] = [],
     isPendingApproval: boolean = false,
-    isGroupChat: boolean = false
+    isGroupChat: boolean = false,
+    verbosity: 'brief' | 'verbose' = 'verbose'
   ): Promise<CoachResponse> {
     try {
       const context = this.buildUserContext(userProfile, isPendingApproval);

@@ -3240,6 +3240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
           responseStyle: 'supportive',
           maxResponseLength: 300,
+          verbosity: 'verbose',
           responseDelay: {
             enabled: true,
             minSeconds: 5,
@@ -3258,6 +3259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           urgentResponseKeywords: ["emergency", "urgent", "help", "crisis"],
           responseStyle: 'supportive',
           confidenceThreshold: 7,
+          verbosity: 'verbose',
           contentModeration: {
             enabled: true,
             profanityFilter: true,

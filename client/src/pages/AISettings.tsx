@@ -239,63 +239,71 @@ export default function AISettings() {
   useEffect(() => {
     if (currentSettings && typeof currentSettings === 'object') {
       // Deep merge current settings with defaults to ensure all nested properties exist
+      const typedSettings = currentSettings as Partial<AISettings>;
       setSettings(prev => {
         const merged = { ...prev };
         
         // Merge groupChat settings
-        if (currentSettings.groupChat) {
+        if (typedSettings.groupChat) {
           merged.groupChat = {
             ...prev.groupChat,
-            ...currentSettings.groupChat,
+            ...typedSettings.groupChat,
             contentModeration: {
               ...prev.groupChat.contentModeration,
-              ...(currentSettings.groupChat.contentModeration || {})
+              ...(typedSettings.groupChat.contentModeration || {})
             },
             responseDelay: {
               ...prev.groupChat.responseDelay,
-              ...(currentSettings.groupChat.responseDelay || {})
+              ...(typedSettings.groupChat.responseDelay || {})
             },
             timingRules: {
               ...prev.groupChat.timingRules,
-              ...(currentSettings.groupChat.timingRules || {}),
+              ...(typedSettings.groupChat.timingRules || {}),
               quietHours: {
                 ...prev.groupChat.timingRules.quietHours,
-                ...(currentSettings.groupChat.timingRules?.quietHours || {})
+                ...(typedSettings.groupChat.timingRules?.quietHours || {})
               }
             }
           };
         }
         
         // Merge individualChat settings
-        if (currentSettings.individualChat) {
+        if (typedSettings.individualChat) {
           merged.individualChat = {
             ...prev.individualChat,
-            ...currentSettings.individualChat,
+            ...typedSettings.individualChat,
             contentModeration: {
               ...prev.individualChat.contentModeration,
-              ...(currentSettings.individualChat.contentModeration || {})
+              ...(typedSettings.individualChat.contentModeration || {})
             },
             responseDelay: {
               ...prev.individualChat.responseDelay,
-              ...(currentSettings.individualChat.responseDelay || {})
+              ...(typedSettings.individualChat.responseDelay || {})
             },
             timingRules: {
               ...prev.individualChat.timingRules,
-              ...(currentSettings.individualChat.timingRules || {}),
+              ...(typedSettings.individualChat.timingRules || {}),
               quietHours: {
                 ...prev.individualChat.timingRules.quietHours,
-                ...(currentSettings.individualChat.timingRules?.quietHours || {})
+                ...(typedSettings.individualChat.timingRules?.quietHours || {})
               }
             }
           };
         }
         
         // Merge other settings
-        Object.keys(currentSettings).forEach(key => {
-          if (key !== 'groupChat' && key !== 'individualChat' && currentSettings[key]) {
-            merged[key] = { ...prev[key], ...currentSettings[key] };
-          }
-        });
+        if (typedSettings.macroRecommendations) {
+          merged.macroRecommendations = { ...prev.macroRecommendations, ...typedSettings.macroRecommendations };
+        }
+        if (typedSettings.workoutGeneration) {
+          merged.workoutGeneration = { ...prev.workoutGeneration, ...typedSettings.workoutGeneration };
+        }
+        if (typedSettings.nutritionAnalysis) {
+          merged.nutritionAnalysis = { ...prev.nutritionAnalysis, ...typedSettings.nutritionAnalysis };
+        }
+        if (typedSettings.progressReports) {
+          merged.progressReports = { ...prev.progressReports, ...typedSettings.progressReports };
+        }
         
         return merged;
       });
