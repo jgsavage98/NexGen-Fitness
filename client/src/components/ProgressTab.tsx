@@ -583,9 +583,9 @@ export default function ProgressTab() {
                   </svg>
                   
                   <div className="absolute bottom-2 left-4 text-xs text-gray-400">
-                    {weightEntries[0].weight} lbs → {latestWeight} lbs 
-                    ({weightProgress && weightProgress.changeFromBaseline !== 0 
-                      ? `${weightProgress.changeFromBaseline > 0 ? '+' : ''}${weightProgress.changeFromBaseline.toFixed(1)} lbs`
+                    {weightEntries.length >= 2 ? weightEntries[1].weight : weightEntries[0].weight} lbs → {latestWeight} lbs 
+                    ({weightProgress && weightProgress.trend !== 0 
+                      ? `${weightProgress.trend > 0 ? '+' : ''}${weightProgress.trend.toFixed(1)} lbs`
                       : 'No change'})
                   </div>
                 </>

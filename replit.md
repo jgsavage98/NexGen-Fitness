@@ -13,6 +13,14 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
+### Progress Tab Weight Display - FULLY FIXED (2:20 PM)
+- **Weight Calculation Issue RESOLVED**: Fixed critical bug where Progress tab showed stale weight data (178.9 lbs instead of current 180.8 lbs)
+- **Weight Sorting Logic Fixed**: Corrected weight entry sorting to properly identify most recent weight as first entry [0] after sorting by recordedAt descending
+- **Weight Trend Display Fixed**: Corrected weight progression display from showing incorrect "180.8 lbs → 180.8 lbs (+0.8 lbs)" to accurate "180.4 lbs → 180.8 lbs (+0.4 lbs)"
+- **Last Upload Dates Added**: Added "Last logged" date under Current Weight and "Last upload" date under Macro Target sections
+- **Enhanced Refresh Functionality**: Improved refresh button with proper cache invalidation, loading indicators, spinning animation, and debug logging
+- **Production Ready**: Progress tab now displays accurate real-time weight data with proper trend calculations and upload date tracking
+
 ### Badge Reset System - FULLY OPERATIONAL (2:00 PM)
 - **Mark-as-Read Fixed**: Updated markMessagesAsRead to properly identify and mark Coach Chassidy's targeted messages as read
 - **Complete Badge Lifecycle**: Badge now properly appears with new messages, shows correct counts, and disappears when visiting Chat tab
