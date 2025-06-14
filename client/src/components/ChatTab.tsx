@@ -72,6 +72,12 @@ export default function ChatTab() {
     queryKey: ["/api/auth/user"],
   });
 
+  // Fetch trainer profile data for coach images
+  const { data: trainerProfile } = useQuery({
+    queryKey: ["/api/auth/user"],
+    staleTime: 300000, // Cache for 5 minutes
+  });
+
   // Mark group chat as viewed mutation
   const markGroupViewedMutation = useMutation({
     mutationFn: async () => {
@@ -202,7 +208,7 @@ export default function ChatTab() {
           {chatType === 'individual' ? (
             <>
               <img 
-                src="/attached_assets/CE Bio Image_1749399911915.jpeg" 
+                src={trainerProfile?.profileImageUrl ? `/${trainerProfile.profileImageUrl}` : "/attached_assets/CE Bio Image_1749399911915.jpeg"}
                 alt="Coach Chassidy"
                 className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
               />

@@ -900,7 +900,7 @@ export default function TrainerDashboard() {
                       const isCoachMessage = activity.userId === 'coach_chassidy';
                       
                       // Determine profile image and display name
-                      let profileImage = activity.user?.profileImageUrl || "/john-profile.png";
+                      let profileImage = activity.user?.profileImageUrl ? `/${activity.user.profileImageUrl}` : null;
                       let displayName = `${activity.user?.firstName || 'Unknown'} ${activity.user?.lastName || 'User'}`;
                       let senderName = "";
                       
