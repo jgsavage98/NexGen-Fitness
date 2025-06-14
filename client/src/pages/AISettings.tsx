@@ -370,14 +370,14 @@ export default function AISettings() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Brain className="h-8 w-8" />
+    <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <Brain className="h-6 w-6 sm:h-8 sm:w-8" />
             AI Behavior Settings
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             Control how the AI assistant behaves across all interactions with your clients
           </p>
         </div>
@@ -385,36 +385,43 @@ export default function AISettings() {
           onClick={handleSave}
           disabled={updateSettingsMutation.isPending}
           size="lg"
+          className="w-full sm:w-auto"
         >
           {updateSettingsMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
       <Tabs defaultValue="group-chat" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="group-chat" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Group Chat
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
+          <TabsTrigger value="group-chat" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Group Chat</span>
+            <span className="sm:hidden">Group</span>
           </TabsTrigger>
-          <TabsTrigger value="individual-chat" className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Individual Chat
+          <TabsTrigger value="individual-chat" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Individual Chat</span>
+            <span className="sm:hidden">Individual</span>
           </TabsTrigger>
-          <TabsTrigger value="macros" className="flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Macro Recommendations
+          <TabsTrigger value="macros" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden lg:inline">Macro Recommendations</span>
+            <span className="lg:hidden">Macros</span>
           </TabsTrigger>
-          <TabsTrigger value="workouts" className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            Workout Generation
+          <TabsTrigger value="workouts" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden lg:inline">Workout Generation</span>
+            <span className="lg:hidden">Workouts</span>
           </TabsTrigger>
-          <TabsTrigger value="nutrition" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Nutrition Analysis
+          <TabsTrigger value="nutrition" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden lg:inline">Nutrition Analysis</span>
+            <span className="lg:hidden">Nutrition</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Progress Reports
+          <TabsTrigger value="reports" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden lg:inline">Progress Reports</span>
+            <span className="lg:hidden">Reports</span>
           </TabsTrigger>
         </TabsList>
 

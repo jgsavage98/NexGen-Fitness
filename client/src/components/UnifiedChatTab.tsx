@@ -184,15 +184,15 @@ export default function UnifiedChatTab() {
 
 
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+      <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6 min-h-[600px] lg:h-[600px]">
         {/* Client List Sidebar */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card className="bg-surface border-gray-700 h-full">
+        <div className="lg:col-span-1 space-y-4 order-2 lg:order-1">
+          <Card className="bg-surface border-gray-700 h-auto lg:h-full">
             <CardHeader>
               <CardTitle className="text-white text-sm">Clients (Most Unanswered First)</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="max-h-[500px] overflow-y-auto">
+              <div className="max-h-[300px] lg:max-h-[500px] overflow-y-auto">
                 {/* Group Chat Option */}
                 <button
                   onClick={() => setSelectedChatClient("group-chat")}
@@ -277,16 +277,16 @@ export default function UnifiedChatTab() {
         </div>
 
         {/* Chat Interface */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 order-1 lg:order-2">
           {!selectedChatClient ? (
-            <Card className="bg-surface border-gray-700 h-full flex items-center justify-center">
+            <Card className="bg-surface border-gray-700 h-auto lg:h-full flex items-center justify-center min-h-[300px]">
               <CardContent className="text-center">
                 <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-400">Select a client to start chatting</p>
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-surface border-gray-700 h-[600px] flex flex-col">
+            <Card className="bg-surface border-gray-700 h-auto lg:h-[600px] flex flex-col min-h-[400px] lg:min-h-0">
               <CardHeader className="flex-shrink-0">
                 <CardTitle className="text-white flex items-center justify-between">
                   <div className="flex items-center space-x-3">
