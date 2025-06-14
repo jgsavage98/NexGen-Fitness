@@ -7,15 +7,16 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ProgressEntry, MacroTarget, Meal } from "@/lib/types";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Scale, TrendingDown, TrendingUp } from "lucide-react";
+import { Scale, TrendingDown, TrendingUp, RefreshCw } from "lucide-react";
 
 export default function ProgressTab() {
   const [currentWeight, setCurrentWeight] = useState("");
   const [isSeeding, setIsSeeding] = useState(false);
   const { toast } = useToast();
 
-  const { data: progressEntries = [] } = useQuery<ProgressEntry[]>({
+  const { data: progressEntries = [], refetch: refetchProgress } = useQuery<ProgressEntry[]>({
     queryKey: ["/api/progress"],
+    staleTime: 0, // Always refetch to ensure fresh data
   });
 
   const { data: workoutLogs = [] } = useQuery<any[]>({
@@ -170,7 +171,7 @@ export default function ProgressTab() {
     : 0;
 
   // Get weight entries from progress data
-  const weightEntries = progressEntries.filter(entry => entry.weight !== null);
+  const weightEntries = (progressEntries as ProgressEntry[]).filter((entry: ProgressEntry) => entry.weight !== null);
   const latestWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : null;
   const baselineWeight = (user as any)?.weight || null; // Use profile weight as baseline
   const goalWeight = (user as any)?.goalWeight || null;
