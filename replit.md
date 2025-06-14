@@ -13,13 +13,15 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
-### Profile Photo Display System - FULLY OPERATIONAL (5:39 PM)
+### Profile Photo Display System - FULLY OPERATIONAL (6:30 PM)
 - **Client Dashboard Fixed**: Updated Home.tsx to display each user's actual profile photo instead of hardcoded John image
-- **Trainer Dashboard Fixed**: Updated activity feed in TrainerDashboard.tsx to show correct client profile photos
+- **Trainer Dashboard Activity Feed Fixed**: Updated to show correct client profile photos in activity timeline
+- **Macro Review Cards Fixed**: Updated MacroChangeCard component to display actual client photos instead of hardcoded John image
+- **Client Progress Section Fixed**: Updated client progress cards to show correct profile photos
 - **ClientUploadHistory Fixed**: Updated to display actual client profile photos instead of initials
 - **Dynamic Image Loading**: All profile photos now properly load from user's uploaded profileImageUrl field
-- **Cross-Platform Consistency**: Profile photos display correctly across all dashboard views and activity feeds
-- **Production Ready**: Complete profile photo system working end-to-end for all users
+- **Cross-Platform Consistency**: Profile photos display correctly across ALL dashboard views, activity feeds, macro reviews, and client lists
+- **Production Ready**: Complete profile photo system working end-to-end for all users with proper fallback handling
 
 ### Client User Creation & Macro Approval System - FULLY OPERATIONAL (5:19 PM)
 - **Null User Issue Resolved**: Removed crashed null user from database preventing system conflicts

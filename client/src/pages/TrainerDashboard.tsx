@@ -392,7 +392,7 @@ export default function TrainerDashboard() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
             <div className="flex items-center space-x-3">
               <img
-                src="/john-profile.png"
+                src={change.user.profileImageUrl || "/john-profile.png"}
                 alt={`${change.user.firstName} ${change.user.lastName}`}
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
               />
@@ -1029,7 +1029,7 @@ export default function TrainerDashboard() {
                       <CardHeader>
                         <div className="flex items-center space-x-3">
                           <img
-                            src="/john-profile.png"
+                            src={client.profileImageUrl || "/john-profile.png"}
                             alt={`${client.firstName} ${client.lastName}`}
                             className="w-10 h-10 rounded-full object-cover"
                           />
