@@ -436,7 +436,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           profileImageUrl: 'attached_assets/CE Bio Image_1749399911915.jpeg'
         });
       }
-      res.json(coachProfile);
+      
+      // Fix profile image URL format - remove leading slash if present
+      let profileImageUrl = coachProfile.profileImageUrl || 'attached_assets/CE Bio Image_1749399911915.jpeg';
+      if (profileImageUrl.startsWith('/')) {
+        profileImageUrl = profileImageUrl.substring(1);
+      }
+      
+      res.json({
+        ...coachProfile,
+        profileImageUrl
+      });
     } catch (error) {
       console.error("Error fetching coach profile:", error);
       // Return fallback profile data
