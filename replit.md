@@ -13,6 +13,12 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
+### Badge Counter Double Increment Fix - FULLY OPERATIONAL (11:51 PM)
+- **Critical WebSocket Broadcasting Bug RESOLVED**: Fixed badge counters incrementing twice for single messages due to multiple client.send() calls in same loop
+- **Separated Message and Counter Broadcasts**: Split WebSocket broadcasts into separate loops for messages and counter updates to prevent duplication
+- **All Chat Types Fixed**: Applied fix to group chat, individual chat, and moderation message WebSocket broadcasting
+- **Production Ready**: Badge notification system now shows accurate single increments for all message types
+
 ### AI Message Verbosity Controls - FULLY OPERATIONAL (11:41 PM)
 - **Critical Database Retrieval Bug RESOLVED**: Fixed AI settings query targeting wrong record ID causing verbosity settings to appear unsaved
 - **Database Query Fix**: Updated getAISettings to query by specific record ID (`ai_settings_${trainerId}`) instead of trainerId, resolving duplicate record conflicts
