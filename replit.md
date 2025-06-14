@@ -13,13 +13,18 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
-### Individual Chat Automation - FULLY OPERATIONAL (12:38 AM)
+### Individual Chat Automation - FULLY OPERATIONAL WITH ACCURATE DATA (12:46 AM)
+- **Data Visibility Issue RESOLVED**: Fixed critical field mapping bug where AI couldn't access uploaded nutrition data despite successful retrieval
+- **Accurate Data-Driven Responses**: AI now correctly displays specific nutrition data (e.g., "6/13: 2279 cal, 186g protein, 143g carbs, 107g fat")
+- **Complete Context Building**: Fixed buildUserContext function to properly map extractedCalories, extractedProtein, extractedCarbs, extractedFat fields
+- **Authentic Coaching**: Coach Chassidy now provides personalized recommendations based on actual client uploads, hunger/energy levels
+- **Production Ready**: Individual chat automation delivers accurate, data-driven coaching with Rachel Freiman persona and real-time delivery
+
+### Individual Chat Automation - System Infrastructure (12:38 AM)
 - **Authentication Issue Resolved**: Fixed critical Bearer token corruption preventing POST requests from authenticating properly
 - **SQL Query Fixed**: Resolved SQL syntax errors in getRecentMacros function that prevented AI from accessing nutrition data
 - **Complete Data Access**: AI now successfully retrieves macro targets, recent uploads, progress entries, and workout data
-- **Verified AI Responses**: Confirmed Coach Chassidy generates accurate, data-driven responses using Rachel Freiman persona
 - **Real-Time WebSocket Delivery**: Messages broadcast instantly with proper counter management and live UI updates
-- **Production Ready**: Individual chat automation now works end-to-end with authentic data and proper error handling
 
 ### Critical Duplicate Response Bug Fix - Complete Resolution (12:16 AM)
 - **Background Monitoring Disabled**: Completely disabled the background monitoring system that was causing duplicate AI responses
