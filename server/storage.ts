@@ -1116,11 +1116,24 @@ export class DatabaseStorage implements IStorage {
 
   // AI Settings operations
   async getAISettings(trainerId: string): Promise<any> {
-    const [settings] = await db
+    console.log('Storage: Getting AI settings for trainer:', trainerId);
+    // Query for the specific ID format used in saveAISettings
+    const results = await db
       .select()
       .from(aiSettings)
-      .where(eq(aiSettings.trainerId, trainerId));
+      .where(eq(aiSettings.id, `ai_settings_${trainerId}`));
     
+    console.log('Storage: Query results:', results.length, 'records found');
+    if (results.length > 0) {
+      console.log('Storage: Found record ID:', results[0].id);
+      console.log('Storage: Settings content keys:', Object.keys(results[0].settings || {}));
+      console.log('Storage: Verbosity settings:', {
+        groupChatVerbosity: results[0].settings?.groupChat?.verbosity,
+        individualChatVerbosity: results[0].settings?.individualChat?.verbosity
+      });
+    }
+    
+    const [settings] = results;
     return settings?.settings || null;
   }
 

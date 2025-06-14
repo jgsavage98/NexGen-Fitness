@@ -231,6 +231,11 @@ export default function AISettings() {
         description: "AI behavior settings have been saved successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/trainer/ai-settings'] });
+      // Force immediate refetch to update UI
+      setTimeout(() => {
+        console.log('Forcing settings refetch after save...');
+        queryClient.refetchQueries({ queryKey: ['/api/trainer/ai-settings'] });
+      }, 100);
     },
     onError: (error: any) => {
       console.error('AI Settings save error:', error);
@@ -244,6 +249,10 @@ export default function AISettings() {
 
   useEffect(() => {
     if (currentSettings && typeof currentSettings === 'object') {
+      console.log('Settings fetched from database:', {
+        groupChatVerbosity: (currentSettings as any).groupChat?.verbosity,
+        individualChatVerbosity: (currentSettings as any).individualChat?.verbosity
+      });
       // Deep merge current settings with defaults to ensure all nested properties exist
       const typedSettings = currentSettings as Partial<AISettings>;
       setSettings(prev => {
