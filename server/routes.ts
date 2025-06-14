@@ -422,6 +422,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Coach Chassidy profile endpoint
+  app.get('/api/coach/profile', async (req, res) => {
+    try {
+      // Return Coach Chassidy's profile data with her actual profile image
+      const coachProfile = await storage.getUser('coach_chassidy');
+      if (!coachProfile) {
+        // Return default Coach Chassidy data if not found in database
+        return res.json({
+          id: 'coach_chassidy',
+          firstName: 'Coach',
+          lastName: 'Chassidy',
+          profileImageUrl: 'attached_assets/CE Bio Image_1749399911915.jpeg'
+        });
+      }
+      res.json(coachProfile);
+    } catch (error) {
+      console.error("Error fetching coach profile:", error);
+      // Return fallback profile data
+      res.json({
+        id: 'coach_chassidy',
+        firstName: 'Coach',
+        lastName: 'Chassidy',
+        profileImageUrl: 'attached_assets/CE Bio Image_1749399911915.jpeg'
+      });
+    }
+  });
+
   // AI Settings routes
   app.get('/api/trainer/ai-settings', isAuthenticated, async (req: any, res) => {
     try {

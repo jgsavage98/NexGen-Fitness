@@ -72,9 +72,13 @@ export default function ChatTab() {
     queryKey: ["/api/auth/user"],
   });
 
-  // Fetch trainer profile data for coach images
+  // Fetch Coach Chassidy's profile data for coach images
   const { data: trainerProfile } = useQuery({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["/api/coach/profile"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/coach/profile");
+      return response.json();
+    },
     staleTime: 300000, // Cache for 5 minutes
   });
 
