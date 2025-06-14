@@ -1732,15 +1732,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   
                   console.log(`Automated individual chat response sent to user ${userId} with confidence ${response.confidence}/10`);
                   
+                  // Update the tracking variable to prevent background monitoring from reprocessing this message
+                  if (savedUserMessage.id > lastProcessedMessageId) {
+                    lastProcessedMessageId = savedUserMessage.id;
+                    console.log(`Updated lastProcessedMessageId to ${lastProcessedMessageId} to prevent duplicate processing`);
+                  }
+                  
                 } catch (responseError) {
                   console.error('Error generating delayed individual chat response:', responseError);
                 }
               }, responseDelay);
             } else {
               console.log(`Individual chat response confidence (${response.confidence}/10) below threshold (${individualChatSettings.confidenceThreshold}/10) - not sending automated response`);
+              
+              // Still update tracking to prevent background reprocessing
+              if (savedUserMessage.id > lastProcessedMessageId) {
+                lastProcessedMessageId = savedUserMessage.id;
+                console.log(`Updated lastProcessedMessageId to ${lastProcessedMessageId} (low confidence, no response sent)`);
+              }
             }
           } else {
             console.log('Individual chat automation disabled');
+            
+            // Still update tracking even when automation is disabled
+            if (savedUserMessage.id > lastProcessedMessageId) {
+              lastProcessedMessageId = savedUserMessage.id;
+              console.log(`Updated lastProcessedMessageId to ${lastProcessedMessageId} (automation disabled)`);
+            }
           }
           
         } catch (error) {
