@@ -220,13 +220,9 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   
   if (authToken) {
     try {
-      console.log('Raw auth token length:', authToken.length, 'First 20 chars:', authToken.substring(0, 20));
-      
       // Decode the auth token
       const decoded = Buffer.from(authToken, 'base64').toString();
       const [userId] = decoded.split(':');
-      
-      console.log('Decoded token:', decoded, 'Extracted userId:', userId);
       
       // Validate user exists in database
       const user = await storage.getUser(userId);
@@ -245,7 +241,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
         // Fall through to Replit auth if demo auth fails
       }
     } catch (error) {
-      console.error('Demo token decode error:', error, 'Token was:', authToken);
+      console.error('Demo token decode error:', error);
       // Fall through to Replit auth if demo auth fails
     }
   }

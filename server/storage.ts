@@ -207,12 +207,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentMacros(userId: string, days: number): Promise<DailyMacros[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffDateString = cutoffDate.toISOString().split('T')[0];
+    
     return await db
       .select()
       .from(dailyMacros)
       .where(and(
         eq(dailyMacros.userId, userId),
-        sql`${dailyMacros.date} >= (CURRENT_DATE - INTERVAL '${sql.raw(days.toString())} days')::date`
+        sql`${dailyMacros.date} >= ${cutoffDateString}`
       ))
       .orderBy(desc(dailyMacros.date));
   }
