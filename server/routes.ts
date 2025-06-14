@@ -2857,6 +2857,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Client not found or not assigned to you" });
       }
 
+      // Get AI settings for verbosity
+      const aiSettings = await storage.getAISettings(trainerId);
+      const verbosity = aiSettings?.individualChat?.verbosity || 'verbose';
+      
       // Use AI coach to generate a draft response
       const aiResponse = await aiCoach.getChatResponse(
         lastMessage,
@@ -2873,7 +2877,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           injuries: client.injuries || [],
           equipment: client.equipment || []
         },
-        messageContext || []
+        messageContext || [],
+        false, // isPendingApproval
+        false, // isGroupChat
+        verbosity
       );
 
       res.json({ 
@@ -3633,13 +3640,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               workoutHistory: await storage.getUserWorkouts(message.userId).then(w => w.slice(-3)) // Last 3 workouts
             };
             
+            // Get AI settings for verbosity
+            const verbosity = individualChatSettings.verbosity || 'verbose';
+            
             // Generate AI response as Coach Chassidy with comprehensive context
             const response = await aiCoach.getChatResponse(
               message.message,
               enhancedUserProfile,
               chatHistory,
               false, // isPendingApproval
-              false // isGroupChat flag
+              false, // isGroupChat flag
+              verbosity
             );
             
             // Check if response meets confidence threshold

@@ -13,6 +13,16 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
+### AI Message Verbosity Controls - FULLY OPERATIONAL (8:17 PM)
+- **Backend Verbosity Integration Complete**: Updated all getChatResponse calls in server routes to use verbosity settings from AI configuration
+- **Group Chat Verbosity Control**: Group chat AI responses now respect trainer-configured verbosity settings (brief vs verbose)
+- **Individual Chat Verbosity Control**: Individual chat automation uses verbosity settings for personalized response length
+- **System Prompt Integration**: OpenAI system prompt dynamically adjusts based on verbosity setting for optimal response length
+- **Default Settings Updated**: Backend AI settings defaults now include verbosity fields for both chat types
+- **Trainer Manual Responses**: Manual AI response generation by trainers respects verbosity preferences
+- **Background Automation**: Individual chat background monitoring uses verbosity settings for consistent experience
+- **Production Ready**: Complete verbosity control system operational across all AI response generation pathways
+
 ### Profile Photo Display System - FULLY OPERATIONAL (7:53 PM)
 - **Client Dashboard Fixed**: Updated Home.tsx to display each user's actual profile photo instead of hardcoded John image
 - **Trainer Dashboard Activity Feed Fixed**: Updated to show correct client profile photos in activity timeline
