@@ -170,11 +170,16 @@ export default function ProgressTab() {
     ? Math.min(100, Math.round((monthlyWorkouts.length / expectedWorkouts) * 100))
     : 0;
 
+  // Debug logging
+  console.log('Progress entries received:', progressEntries);
+  
   // Get weight entries from progress data
   const weightEntries = (progressEntries as ProgressEntry[]).filter((entry: ProgressEntry) => entry.weight !== null);
   const latestWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : null;
   const baselineWeight = (user as any)?.weight || null; // Use profile weight as baseline
   const goalWeight = (user as any)?.goalWeight || null;
+  
+  console.log('Latest weight:', latestWeight, 'from', weightEntries.length, 'entries');
   
   // Calculate weight progress
   const weightProgress = latestWeight && goalWeight && baselineWeight ? {
@@ -292,18 +297,28 @@ export default function ProgressTab() {
               <Scale className="w-5 h-5 mr-2 text-primary-500" />
               Weight Progress
             </h2>
-            {weightProgress && (
-              <div className="flex items-center text-sm">
-                {weightProgress.trend > 0 ? (
-                  <TrendingUp className="w-4 h-4 text-red-400 mr-1" />
-                ) : weightProgress.trend < 0 ? (
-                  <TrendingDown className="w-4 h-4 text-green-400 mr-1" />
-                ) : null}
-                <span className={weightProgress.trend > 0 ? "text-red-400" : weightProgress.trend < 0 ? "text-green-400" : "text-gray-400"}>
-                  {weightProgress.trend > 0 ? "+" : ""}{weightProgress.trend.toFixed(1)} lbs
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetchProgress()}
+                className="text-gray-400 hover:text-white hover:bg-gray-700"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+              {weightProgress && (
+                <div className="flex items-center text-sm">
+                  {weightProgress.trend > 0 ? (
+                    <TrendingUp className="w-4 h-4 text-red-400 mr-1" />
+                  ) : weightProgress.trend < 0 ? (
+                    <TrendingDown className="w-4 h-4 text-green-400 mr-1" />
+                  ) : null}
+                  <span className={weightProgress.trend > 0 ? "text-red-400" : weightProgress.trend < 0 ? "text-green-400" : "text-gray-400"}>
+                    {weightProgress.trend > 0 ? "+" : ""}{weightProgress.trend.toFixed(1)} lbs
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
