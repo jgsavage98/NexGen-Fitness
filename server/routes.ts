@@ -1673,12 +1673,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const chatHistory = await storage.getUserChatMessages(userId, 10);
             
             // Gather comprehensive client data for AI context (same as background monitoring)
+            console.log(`🔍 Gathering data for user ${userId}...`);
             const [macroTargets, recentMacros, progressEntries, todaysWorkout] = await Promise.all([
               storage.getUserMacroTargets(userId, new Date()),
               storage.getRecentMacros(userId, 7), // Last 7 days of macro uploads
               storage.getUserProgressEntries(userId),
               storage.getTodaysWorkout(userId)
             ]);
+            
+            console.log(`📊 Data retrieved for ${userId}:`, {
+              macroTargets: macroTargets ? 'Found' : 'None',
+              recentMacrosCount: recentMacros?.length || 0,
+              progressEntriesCount: progressEntries?.length || 0,
+              todaysWorkout: todaysWorkout ? 'Found' : 'None'
+            });
             
             // Build enhanced user profile with all client data
             const enhancedUserProfile = {
