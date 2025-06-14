@@ -149,7 +149,7 @@ export default function UserSwitcher() {
       // For trainers, stay on this page to show success message
       if (accountType === 'client' && data && data.user) {
         setTimeout(() => {
-          window.location.href = `/api/auth/switch/${data.user.id}`;
+          loginMutation.mutate(data.user.id);
         }, 1500);
       }
     },
