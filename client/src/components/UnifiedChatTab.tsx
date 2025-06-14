@@ -41,6 +41,12 @@ export default function UnifiedChatTab() {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Fetch trainer profile data
+  const { data: trainerProfile } = useQuery({
+    queryKey: ["/api/auth/user"],
+    staleTime: 300000, // Cache for 5 minutes
+  });
+
   // Fetch all clients sorted by unanswered messages
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/trainer/clients"],
@@ -355,7 +361,7 @@ export default function UnifiedChatTab() {
                               <>
                                 {message.userId === "coach_chassidy" ? (
                                   <img 
-                                    src="/attached_assets/CE%20Bio%20Image_1749399911915.jpeg" 
+                                    src={trainerProfile?.profileImageUrl ? `/${trainerProfile.profileImageUrl}` : "/attached_assets/CE%20Bio%20Image_1749399911915.jpeg"}
                                     alt="Coach Chassidy"
                                     className="w-5 h-5 rounded-full object-cover"
                                   />

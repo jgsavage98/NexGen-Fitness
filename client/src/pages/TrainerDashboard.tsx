@@ -108,6 +108,12 @@ export default function TrainerDashboard() {
     queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
   }, [queryClient]);
 
+  // Fetch trainer profile data
+  const { data: trainerProfile } = useQuery({
+    queryKey: ["/api/auth/user"],
+    staleTime: 300000, // Cache for 5 minutes
+  });
+
   // Fetch all clients
   const { data: clients = [], isLoading: clientsLoading, error: clientsError } = useQuery<Client[]>({
     queryKey: ["/api/trainer/clients"],
@@ -909,7 +915,8 @@ export default function TrainerDashboard() {
                           senderName = `${activity.user?.firstName || 'Unknown'} ${activity.user?.lastName || 'User'}`;
                         }
                       } else if (isCoachMessage) {
-                        profileImage = "/attached_assets/CE Bio Image_1749399911915.jpeg";
+                        // Use actual trainer profile image from authenticated user data
+                        profileImage = trainerProfile?.profileImageUrl ? `/${trainerProfile.profileImageUrl}` : "/attached_assets/CE Bio Image_1749399911915.jpeg";
                         displayName = "Chassidy Escobedo";
                       }
 
