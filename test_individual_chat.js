@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-const BASE_URL = 'http://localhost:5173';
+const BASE_URL = 'https://e2507793-01db-4a23-af7f-67f74c84824a-00-2d4tmxoczhs6p.janeway.replit.dev';
 const TEST_USER_TOKEN = 'Bearer test-token-john'; // Test user token
 const COACH_TOKEN = 'Bearer test-token-coach'; // Coach token
 
