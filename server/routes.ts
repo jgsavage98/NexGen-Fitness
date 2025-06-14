@@ -3655,11 +3655,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Check for new individual messages every 20 seconds
-  setInterval(checkForNewIndividualMessages, 20000);
-  
-  // Run initial check after 3 seconds
-  setTimeout(checkForNewIndividualMessages, 3000);
+  // Background monitoring disabled - real-time automation handles all individual chat responses
+  // setInterval(checkForNewIndividualMessages, 20000);
+  // setTimeout(checkForNewIndividualMessages, 3000);
 
   return httpServer;
 }
