@@ -13,6 +13,13 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
+### Notification Badge System - FULLY OPERATIONAL (1:45 PM)
+- **Badge Display Issue RESOLVED**: Fixed critical bug where notification badges weren't appearing for Coach Chassidy's automated responses
+- **Proper Message Targeting**: Updated getIndividualChatUnreadCount to check metadata.targetUserId instead of userId for Coach Chassidy messages
+- **Real-Time Counter Updates**: WebSocket broadcasting now correctly updates badge counts when automated responses are delivered
+- **Complete Notification Flow**: Individual chat badges now properly display (39 unread messages detected in testing)
+- **Production Ready**: Notification system fully operational with accurate real-time badge updates for all Coach Chassidy interactions
+
 ### Individual Chat Automation - FULLY OPERATIONAL WITH ACCURATE DATA (12:46 AM)
 - **Data Visibility Issue RESOLVED**: Fixed critical field mapping bug where AI couldn't access uploaded nutrition data despite successful retrieval
 - **Accurate Data-Driven Responses**: AI now correctly displays specific nutrition data (e.g., "6/13: 2279 cal, 186g protein, 143g carbs, 107g fat")
