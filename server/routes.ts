@@ -1700,6 +1700,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               workoutHistory: await storage.getUserWorkouts(userId).then(w => w.slice(-3)) // Last 3 workouts
             };
             
+            // Debug: Log the actual data being passed to AI
+            console.log('🔍 Recent macros data being passed to AI:', JSON.stringify(recentMacros, null, 2));
+            
             // Generate AI response as Coach Chassidy with comprehensive context
             const response = await aiCoach.getChatResponse(
               message,

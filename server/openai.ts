@@ -681,7 +681,13 @@ Recent Nutrition Data (Last 7 Days):`;
       userProfile.recentMacros.slice(0, 5).forEach((macro: any, index: number) => {
         const date = new Date(macro.date).toLocaleDateString();
         context += `
-- ${date}: ${macro.calories || 0} cal, ${macro.protein || 0}g protein, ${macro.carbs || 0}g carbs, ${macro.fat || 0}g fat`;
+- ${date}: ${macro.extractedCalories || 0} cal, ${macro.extractedProtein || 0}g protein, ${macro.extractedCarbs || 0}g carbs, ${macro.extractedFat || 0}g fat`;
+        if (macro.hungerLevel) {
+          context += ` (Hunger: ${macro.hungerLevel}/10)`;
+        }
+        if (macro.energyLevel) {
+          context += ` (Energy: ${macro.energyLevel}/10)`;
+        }
       });
     } else {
       context += `
