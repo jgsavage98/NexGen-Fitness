@@ -1598,13 +1598,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                           sender: 'coach_chassidy'
                         }));
                       }
-                      
+                    }
+                  });
+                  
+                  // Send consolidated counter updates separately to prevent duplicates
+                  wss.clients.forEach((client: WebSocket) => {
+                    if (client.readyState === WebSocket.OPEN) {
                       // Send counter update for individual chat (to violating user)
                       client.send(JSON.stringify({
                         type: 'counter_update',
                         targetUserId: userId,
-                        individualCount: 1, // New unread message
-                        groupCount: 0
+                        individualCount: 1 // New unread message
                       }));
                       
                       // Send counter update for group chat (to all users) only if group reminder was sent
@@ -1663,6 +1667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Broadcast AI response to group chat
                 const wss = (global as any).wss;
                 if (wss) {
+                  // Send message first
                   wss.clients.forEach((client: WebSocket) => {
                     if (client.readyState === WebSocket.OPEN) {
                       client.send(JSON.stringify({
@@ -1670,8 +1675,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         message: aiResponse,
                         sender: 'coach_chassidy'
                       }));
-                      
-                      // Send counter update for group chat
+                    }
+                  });
+                  
+                  // Send counter update separately to prevent duplicates
+                  wss.clients.forEach((client: WebSocket) => {
+                    if (client.readyState === WebSocket.OPEN) {
                       client.send(JSON.stringify({
                         type: 'group_counter_update',
                         groupCount: 1
@@ -1800,6 +1809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   // Broadcast AI response to individual chat
                   const wss = (global as any).wss;
                   if (wss) {
+                    // Send message first
                     wss.clients.forEach((client: WebSocket) => {
                       if (client.readyState === WebSocket.OPEN) {
                         client.send(JSON.stringify({
@@ -1808,8 +1818,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                           sender: 'coach_chassidy',
                           targetUserId: userId
                         }));
-                        
-                        // Send counter update for individual chat
+                      }
+                    });
+                    
+                    // Send counter update separately to prevent duplicates
+                    wss.clients.forEach((client: WebSocket) => {
+                      if (client.readyState === WebSocket.OPEN) {
                         client.send(JSON.stringify({
                           type: 'counter_update',
                           individualCount: 1,
