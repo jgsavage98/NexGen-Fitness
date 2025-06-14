@@ -680,7 +680,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGroupChatUnreadCount(userId: string): Promise<number> {
-    // Get all group chat messages from other participants
+    // Get all group chat messages from other participants (including AI messages like Coach Chassidy)
     const groupMessages = await db
       .select()
       .from(chatMessages)
@@ -688,7 +688,7 @@ export class DatabaseStorage implements IStorage {
         and(
           ne(chatMessages.userId, userId), // Not from this user
           eq(chatMessages.chatType, 'group'),
-          eq(chatMessages.isAI, false)
+          eq(chatMessages.status, 'approved') // Only approved messages
         )
       );
 
@@ -696,14 +696,29 @@ export class DatabaseStorage implements IStorage {
     let unreadCount = 0;
     for (const message of groupMessages) {
       const metadata = (message.metadata as any) || {};
-      const viewedBy = metadata.viewedBy || [];
+      let viewedBy = metadata.viewedBy || [];
+      
+      // Handle case where viewedBy might be a string representation of an array
+      if (typeof viewedBy === 'string') {
+        try {
+          viewedBy = JSON.parse(viewedBy);
+        } catch (e) {
+          viewedBy = [];
+        }
+      }
+      
+      // Ensure viewedBy is an array
+      if (!Array.isArray(viewedBy)) {
+        viewedBy = [];
+      }
       
       if (!viewedBy.includes(userId)) {
         unreadCount++;
+        console.log(`Message ${message.id} from ${message.userId} marked as unread for user ${userId}`);
       }
     }
 
-    console.log(`Group chat unread count for user ${userId}:`, unreadCount);
+    console.log(`Group chat unread count for user ${userId}: ${unreadCount} (from ${groupMessages.length} total group messages)`);
     return unreadCount;
   }
 
@@ -763,7 +778,7 @@ export class DatabaseStorage implements IStorage {
 
 
   async markGroupChatAsViewed(userId: string): Promise<void> {
-    // Mark all group chat messages from OTHER users as viewed by this user
+    // Mark all group chat messages from OTHER users as viewed by this user (including AI messages like Coach Chassidy)
     // We update the metadata to indicate this user has viewed the messages
     const groupMessages = await db
       .select()
@@ -772,7 +787,7 @@ export class DatabaseStorage implements IStorage {
         and(
           ne(chatMessages.userId, userId), // Not from this user
           eq(chatMessages.chatType, 'group'),
-          eq(chatMessages.isAI, false)
+          eq(chatMessages.status, 'approved') // Only approved messages
         )
       );
 

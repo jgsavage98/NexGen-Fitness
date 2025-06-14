@@ -13,6 +13,13 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
+### Group Chat Badge Notification System - FULLY VERIFIED (3:02 PM)
+- **Badge Display Confirmed**: Group chat notification badges appear correctly when messages from other users arrive
+- **Complete Badge Lifecycle**: Badge shows unread count, displays red notification on Chat tab, and clears when Chat is accessed
+- **Real-Time Updates**: WebSocket system delivers instant badge updates with proper count management (0→1→0)
+- **Mark-as-Viewed Integration**: markGroupChatAsViewed function properly resets badge count when user visits Chat tab
+- **Production Ready**: Group chat badge notification system working end-to-end with proper appearance, counting, and reset functionality
+
 ### Progress Tab Weight Display & Daily Logging Control - FULLY OPERATIONAL (2:24 PM)
 - **Weight Calculation Issue RESOLVED**: Fixed critical bug where Progress tab showed stale weight data (178.9 lbs instead of current 180.8 lbs)
 - **Weight Sorting Logic Fixed**: Corrected weight entry sorting to properly identify most recent weight as first entry [0] after sorting by recordedAt descending
