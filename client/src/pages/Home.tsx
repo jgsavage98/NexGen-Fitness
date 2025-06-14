@@ -152,7 +152,7 @@ export default function Home() {
                 className="flex-shrink-0 rounded-full hover:ring-2 hover:ring-primary-500 transition-all"
               >
                 <img 
-                  src="/john-profile.png" 
+                  src={(user as any)?.profileImageUrl || "/john-profile.png"} 
                   alt="User profile" 
                   className="w-10 h-10 rounded-full object-cover"
                 />
