@@ -218,6 +218,15 @@ export default function ProgressTab() {
   
   console.log('Latest weight:', latestWeight, 'from', weightEntries.length, 'entries');
   console.log('Latest weight date:', latestWeightDate);
+
+  // Check if today's weight has already been logged
+  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+  const hasLoggedToday = weightEntries.some(entry => {
+    const entryDate = new Date(entry.recordedAt).toISOString().split('T')[0];
+    return entryDate === today;
+  });
+  
+  console.log('Has logged weight today:', hasLoggedToday, 'for date:', today);
   
   // Calculate weight progress (entries are sorted newest first)
   const weightProgress = latestWeight && goalWeight && baselineWeight ? {
@@ -436,29 +445,45 @@ export default function ProgressTab() {
           )}
 
           {/* Weight Entry Form */}
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <Label htmlFor="weight" className="text-gray-300 text-sm">Log Today's Weight (lbs)</Label>
-              <Input
-                id="weight"
-                type="number"
-                step="0.1"
-                placeholder="Enter weight..."
-                value={currentWeight}
-                onChange={(e) => setCurrentWeight(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
-              />
+          {hasLoggedToday ? (
+            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <Scale className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <div className="text-green-400 font-medium">Weight logged for today</div>
+                  <div className="text-green-300 text-sm">
+                    You've already recorded {latestWeight} lbs today. Check back tomorrow!
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col justify-end">
-              <Button
-                onClick={handleWeightSubmit}
-                disabled={!currentWeight || logWeightMutation.isPending}
-                className="bg-primary-500 hover:bg-primary-600"
-              >
-                {logWeightMutation.isPending ? "Logging..." : "Log Weight"}
-              </Button>
+          ) : (
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Label htmlFor="weight" className="text-gray-300 text-sm">Log Today's Weight (lbs)</Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  step="0.1"
+                  placeholder="Enter weight..."
+                  value={currentWeight}
+                  onChange={(e) => setCurrentWeight(e.target.value)}
+                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+                />
+              </div>
+              <div className="flex flex-col justify-end">
+                <Button
+                  onClick={handleWeightSubmit}
+                  disabled={!currentWeight || logWeightMutation.isPending}
+                  className="bg-primary-500 hover:bg-primary-600"
+                >
+                  {logWeightMutation.isPending ? "Logging..." : "Log Weight"}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 

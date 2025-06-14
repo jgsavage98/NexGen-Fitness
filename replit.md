@@ -13,13 +13,16 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
-### Progress Tab Weight Display - FULLY FIXED (2:20 PM)
+### Progress Tab Weight Display & Daily Logging Control - FULLY OPERATIONAL (2:24 PM)
 - **Weight Calculation Issue RESOLVED**: Fixed critical bug where Progress tab showed stale weight data (178.9 lbs instead of current 180.8 lbs)
 - **Weight Sorting Logic Fixed**: Corrected weight entry sorting to properly identify most recent weight as first entry [0] after sorting by recordedAt descending
 - **Weight Trend Display Fixed**: Corrected weight progression display from showing incorrect "180.8 lbs → 180.8 lbs (+0.8 lbs)" to accurate "180.4 lbs → 180.8 lbs (+0.4 lbs)"
+- **Weight Chart Order Fixed**: Reversed chart data display to show chronological progression from left (oldest) to right (newest weight)
+- **Daily Logging Restriction Implemented**: Weight logging form automatically disables after today's weight is recorded, preventing duplicate entries
+- **Smart UI States**: Shows green success message when weight already logged, normal form when available to log
 - **Last Upload Dates Added**: Added "Last logged" date under Current Weight and "Last upload" date under Macro Target sections
 - **Enhanced Refresh Functionality**: Improved refresh button with proper cache invalidation, loading indicators, spinning animation, and debug logging
-- **Production Ready**: Progress tab now displays accurate real-time weight data with proper trend calculations and upload date tracking
+- **Production Ready**: Progress tab now displays accurate real-time weight data with proper trend calculations, upload date tracking, and daily logging controls
 
 ### Badge Reset System - FULLY OPERATIONAL (2:00 PM)
 - **Mark-as-Read Fixed**: Updated markMessagesAsRead to properly identify and mark Coach Chassidy's targeted messages as read
