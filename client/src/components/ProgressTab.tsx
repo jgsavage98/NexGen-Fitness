@@ -530,10 +530,11 @@ export default function ProgressTab() {
                     </defs>
                     
                     {(() => {
-                      // Calculate chart points from actual weight data
-                      const chartData = weightEntries.map((entry, index) => ({
+                      // Calculate chart points from actual weight data (reverse for chronological order)
+                      const chartEntries = [...weightEntries].reverse(); // Show oldest to newest on chart
+                      const chartData = chartEntries.map((entry, index) => ({
                         weight: entry.weight!,
-                        x: (index / Math.max(weightEntries.length - 1, 1)) * 280 + 10,
+                        x: (index / Math.max(chartEntries.length - 1, 1)) * 280 + 10,
                         date: new Date(entry.recordedAt).toLocaleDateString()
                       }));
                       
