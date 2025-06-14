@@ -743,15 +743,18 @@ export class DatabaseStorage implements IStorage {
           );
       }
     } else {
-      // Mark all unread approved messages as read (both coach messages and AI responses)
+      // Mark all unread Coach Chassidy messages targeted at this user as read
       await db
         .update(chatMessages)
         .set({ isRead: true })
         .where(
           and(
-            eq(chatMessages.userId, userId),
+            eq(chatMessages.userId, 'coach_chassidy'), // Messages from Coach Chassidy
+            eq(chatMessages.chatType, 'individual'),
+            eq(chatMessages.isAI, true),
             eq(chatMessages.isRead, false),
-            eq(chatMessages.status, 'approved')
+            eq(chatMessages.status, 'approved'),
+            sql`${chatMessages.metadata}->>'targetUserId' = ${userId}` // Targeted at this client
           )
         );
     }
