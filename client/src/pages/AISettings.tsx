@@ -37,6 +37,7 @@ interface AISettings {
     };
     responseStyle: 'supportive' | 'motivational' | 'professional' | 'friendly';
     maxResponseLength: number;
+    verbosity: 'brief' | 'verbose';
     responseDelay: {
       enabled: boolean;
       minSeconds: number; // minimum delay in seconds
@@ -55,6 +56,7 @@ interface AISettings {
     urgentResponseKeywords: string[];
     responseStyle: 'supportive' | 'motivational' | 'professional' | 'friendly';
     confidenceThreshold: number; // 1-10
+    verbosity: 'brief' | 'verbose';
     contentModeration: {
       enabled: boolean;
       profanityFilter: boolean;
@@ -135,6 +137,7 @@ export default function AISettings() {
       },
       responseStyle: 'supportive',
       maxResponseLength: 300,
+      verbosity: 'verbose',
       responseDelay: {
         enabled: true,
         minSeconds: 15,
@@ -153,6 +156,7 @@ export default function AISettings() {
       urgentResponseKeywords: ["emergency", "urgent", "help", "crisis"],
       responseStyle: 'supportive',
       confidenceThreshold: 7,
+      verbosity: 'verbose',
       contentModeration: {
         enabled: true,
         profanityFilter: true,
@@ -488,6 +492,28 @@ export default function AISettings() {
                     <SelectItem value="friendly">Casual & Friendly</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-base font-medium">Message Verbosity</Label>
+                <Select
+                  value={settings.groupChat.verbosity}
+                  onValueChange={(value) => updateGroupChatSetting('verbosity', value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="brief">Brief Messages</SelectItem>
+                    <SelectItem value="verbose">Detailed Messages</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {settings.groupChat.verbosity === 'brief' 
+                    ? 'AI will send concise, to-the-point messages'
+                    : 'AI will provide detailed explanations and comprehensive responses'
+                  }
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -1030,6 +1056,28 @@ export default function AISettings() {
                     <SelectItem value="friendly">Casual & Friendly</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-base font-medium">Message Verbosity</Label>
+                <Select
+                  value={settings.individualChat.verbosity}
+                  onValueChange={(value) => updateIndividualChatSetting('verbosity', value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="brief">Brief Messages</SelectItem>
+                    <SelectItem value="verbose">Detailed Messages</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {settings.individualChat.verbosity === 'brief' 
+                    ? 'AI will send concise, focused responses'
+                    : 'AI will provide detailed explanations and comprehensive coaching'
+                  }
+                </p>
               </div>
 
               <div className="space-y-2">
