@@ -878,7 +878,7 @@ export default function TrainerDashboard() {
                       const isCoachMessage = activity.userId === 'coach_chassidy';
                       
                       // Determine profile image and display name
-                      let profileImage = "/john-profile.png";
+                      let profileImage = activity.user?.profileImageUrl || "/john-profile.png";
                       let displayName = `${activity.user?.firstName || 'Unknown'} ${activity.user?.lastName || 'User'}`;
                       let senderName = "";
                       
@@ -895,8 +895,6 @@ export default function TrainerDashboard() {
                       } else if (isCoachMessage) {
                         profileImage = "/attached_assets/CE Bio Image_1749399911915.jpeg";
                         displayName = "Chassidy Escobedo";
-                      } else if (activity.user?.profileImageUrl) {
-                        profileImage = activity.user.profileImageUrl;
                       }
 
                       return (

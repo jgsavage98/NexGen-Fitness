@@ -141,11 +141,19 @@ export default function ClientUploadHistory({ clientId }: ClientUploadHistoryPro
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
           <CardTitle className="text-white flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center">
-              <span className="text-white font-semibold">
-                {client.firstName[0]}{client.lastName[0]}
-              </span>
-            </div>
+            {client.profileImageUrl ? (
+              <img 
+                src={client.profileImageUrl} 
+                alt={`${client.firstName} ${client.lastName}`}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center">
+                <span className="text-white font-semibold">
+                  {client.firstName[0]}{client.lastName[0]}
+                </span>
+              </div>
+            )}
             <div>
               <span>{client.firstName} {client.lastName}</span>
               <p className="text-sm text-gray-400 font-normal">
