@@ -13,9 +13,11 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
-### Auto Topic Generation Scheduling - FULLY OPERATIONAL (2:23 AM)
+### Auto Topic Generation Scheduling - FULLY OPERATIONAL (2:34 AM)
 - **Complete Automated Scheduling System**: Implemented background scheduler that automatically posts topics at configured intervals
 - **Smart Time Window Posting**: Topics are randomly scheduled between 12pm-2pm ET daily with proper DST handling
+- **Day-of-Week Awareness**: Fixed hashtag logic to prevent inappropriate day-specific tags (e.g., #MotivationMonday on Saturday)
+- **Contextual Topic Generation**: AI now knows current day and time context for appropriate greetings and hashtags
 - **Comprehensive Backend Infrastructure**: Created TopicScheduler class with interval checking, timezone calculations, and repetition avoidance
 - **Manual Testing Capability**: Added test endpoint and UI button for immediate topic generation testing
 - **Real-Time WebSocket Integration**: Auto-generated topics broadcast instantly to all connected clients with proper counter updates

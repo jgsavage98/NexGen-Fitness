@@ -215,6 +215,21 @@ class TopicScheduler {
       const customPrompts = settings?.groupChat?.customTopicPrompts || '';
       const avoidRepetition = settings?.groupChat?.avoidTopicRepetition || false;
       
+      // Get current day of week and time context
+      const now = new Date();
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const currentDay = dayNames[now.getDay()];
+      const hour = now.getHours();
+      
+      let timeContext = '';
+      if (hour < 12) {
+        timeContext = 'morning';
+      } else if (hour < 17) {
+        timeContext = 'afternoon';
+      } else {
+        timeContext = 'evening';
+      }
+      
       // Get recent topics to avoid repetition if enabled
       let recentTopicsContext = '';
       if (avoidRepetition) {
@@ -231,6 +246,10 @@ class TopicScheduler {
             role: "system",
             content: `You are Coach Chassidy (Rachel Freiman from MindStrong Fitness), creating an engaging discussion topic for your fitness and nutrition group chat.
 
+CURRENT CONTEXT:
+- Today is ${currentDay}
+- Time of day: ${timeContext}
+
 TOPIC REQUIREMENTS:
 - Focus on these categories: ${categories.join(', ')}
 - Style: ${style}
@@ -238,6 +257,16 @@ TOPIC REQUIREMENTS:
 - Make it engaging and encourage client participation
 - Keep it positive and motivational
 - Use Coach Chassidy's warm, upbeat, straight-talking "knowledgeable best friend with teacher energy" voice
+
+IMPORTANT HASHTAG RULES:
+- Only use day-specific hashtags that match today (${currentDay})
+- Do NOT use #MotivationMonday unless it's actually Monday
+- Do NOT use #TransformationTuesday unless it's actually Tuesday  
+- Do NOT use #WellnessWednesday unless it's actually Wednesday
+- Do NOT use #ThrowbackThursday unless it's actually Thursday
+- Do NOT use #FridayFeels unless it's actually Friday
+- Use general hashtags instead when the day doesn't match
+- Examples of safe general hashtags: #FitnessJourney #HealthyLiving #NutritionTips #WorkoutMotivation
 
 ${customPrompts ? `CUSTOM FOCUS AREAS: ${customPrompts}` : ''}
 
@@ -250,9 +279,9 @@ TOPIC STYLES:
 
 Generate a single topic post that Coach Chassidy would make. Keep it conversational, supportive, and focused on the chosen categories. Include an engaging question or call-to-action.
 
-Example formats:
-- "Good morning, team! 💪 Who's trying a new recipe this week? Share what you're excited to cook!"
-- "Wednesday Workout Check-in: What's your favorite way to stay active when you're short on time?"
+Example formats for ${currentDay} ${timeContext}:
+- "Good ${timeContext}, team! 💪 Who's trying a new recipe this week? Share what you're excited to cook!"
+- "${currentDay} Check-in: What's your favorite way to stay active when you're short on time?"
 - "Nutrition tip: Did you know that eating protein with every meal helps keep you fuller longer? What's your go-to protein source?"
 
 ${recentTopicsContext}
