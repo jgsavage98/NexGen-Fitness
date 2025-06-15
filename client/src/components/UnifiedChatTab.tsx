@@ -400,9 +400,22 @@ export default function UnifiedChatTab() {
               <CardContent className="flex-1 flex flex-col min-h-0">
                 {/* Chat Messages */}
                 <div className="flex-1 overflow-y-auto border border-gray-600 rounded-lg p-4 space-y-3 bg-gray-900 max-h-[400px]">
-                  {!Array.isArray(clientChatMessages) || clientChatMessages.length === 0 ? (
+                  {chatError ? (
+                    <div className="text-center text-red-500 py-4">
+                      <p>Error loading messages: {chatError.message}</p>
+                      <button 
+                        onClick={() => refetchClientChat()}
+                        className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : !Array.isArray(clientChatMessages) || clientChatMessages.length === 0 ? (
                     <div className="text-center text-gray-500 py-8">
                       <p>No conversation yet. Start by sending a message!</p>
+                      <p className="text-xs text-gray-600 mt-2">
+                        Selected: {selectedChatClient === "group-chat" ? "Group Chat" : selectedChatClient || "None"}
+                      </p>
                     </div>
                   ) : (
                     clientChatMessages.map((message: ChatMessage) => (

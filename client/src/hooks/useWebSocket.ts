@@ -16,9 +16,16 @@ export function useWebSocket(onMessage?: (message: WebSocketMessage) => void) {
 
   const connect = useCallback(() => {
     try {
-      // Connect to WebSocket server
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      // Connect to WebSocket server - handle Replit environment
+      let wsUrl;
+      if (window.location.hostname.includes('replit.dev') || window.location.hostname.includes('replit.app')) {
+        // For Replit environment, use the current host with wss protocol
+        wsUrl = `wss://${window.location.host}/ws`;
+      } else {
+        // For local development
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.host}/ws`;
+      }
       
       console.log('Attempting WebSocket connection to:', wsUrl);
       ws.current = new WebSocket(wsUrl);
