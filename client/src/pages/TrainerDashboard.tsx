@@ -87,6 +87,24 @@ export default function TrainerDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Check if current user is authenticated
+  const { data: currentUser, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
+
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading trainer dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   // WebSocket for real-time badge updates
   const { isConnected } = useWebSocket((message) => {
     if (message.type === 'counter_update' || message.type === 'group_counter_update') {

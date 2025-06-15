@@ -97,20 +97,32 @@ export default function UnifiedChatTab() {
   const totalUnansweredCount = clients.reduce((total, client) => total + (client.unansweredCount || 0), 0);
 
   // Query to fetch chat messages for selected client or group chat
-  const { data: clientChatMessages = [], refetch: refetchClientChat } = useQuery({
+  const { data: clientChatMessages = [], refetch: refetchClientChat, error: chatError } = useQuery({
     queryKey: selectedChatClient === "group-chat" ? ["/api/trainer/group-chat"] : [`/api/trainer/client-chat/${selectedChatClient}`],
     queryFn: async () => {
       if (!selectedChatClient) return [];
-      if (selectedChatClient === "group-chat") {
-        const response = await apiRequest("GET", "/api/trainer/group-chat");
+      try {
+        if (selectedChatClient === "group-chat") {
+          const response = await apiRequest("GET", "/api/trainer/group-chat");
+          if (!response.ok) {
+            throw new Error(`Failed to fetch group chat: ${response.status}`);
+          }
+          return response.json();
+        }
+        const response = await apiRequest("GET", `/api/trainer/client-chat/${selectedChatClient}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch client chat: ${response.status}`);
+        }
         return response.json();
+      } catch (error) {
+        console.error("Chat fetch error:", error);
+        throw error;
       }
-      const response = await apiRequest("GET", `/api/trainer/client-chat/${selectedChatClient}`);
-      return response.json();
     },
     enabled: !!selectedChatClient,
-    refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
-    refetchIntervalInBackground: true, // Continue polling when tab is not focused
+    retry: false, // Don't retry failed requests to prevent spam
+    refetchInterval: selectedChatClient ? 3000 : false, // Only refetch when chat is selected
+    refetchIntervalInBackground: true,
   });
 
   // Update client list when chat messages change to refresh unread counts
