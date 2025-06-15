@@ -3343,6 +3343,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint for auto topic generation
+  app.post('/api/trainer/test-auto-topic', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Check if user is a trainer
+      if (userId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied - trainers only" });
+      }
+      
+      const { topicScheduler } = await import('./topicScheduler');
+      const result = await topicScheduler.triggerManualTopic(userId);
+      
+      if (result) {
+        res.json({ message: "Auto topic posted successfully", success: true });
+      } else {
+        res.status(400).json({ message: "Auto topic generation is not enabled", success: false });
+      }
+    } catch (error) {
+      console.error("Error testing auto topic:", error);
+      res.status(500).json({ message: "Failed to test auto topic generation" });
+    }
+  });
+
   // Store reports in memory for easy access
   const reportStore = new Map<string, { html: string; title: string; generatedAt: string }>();
 
