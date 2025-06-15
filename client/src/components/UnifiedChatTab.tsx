@@ -83,15 +83,15 @@ export default function UnifiedChatTab() {
   // Fetch all clients sorted by unanswered messages
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/trainer/clients"],
-    refetchInterval: 2000, // Refetch every 2 seconds to update message counts
-    refetchIntervalInBackground: true,
+    refetchInterval: 10000, // Reduced frequency to improve performance
+    refetchIntervalInBackground: false,
   });
 
   // Fetch group chat unread count
   const { data: groupChatUnread = { count: 0 } } = useQuery<{ count: number }>({
     queryKey: ["/api/trainer/group-chat-unread"],
-    refetchInterval: 2000, // Refetch every 2 seconds to update counts
-    refetchIntervalInBackground: true,
+    refetchInterval: 10000, // Reduced frequency to improve performance
+    refetchIntervalInBackground: false,
   });
 
   // Calculate total unanswered messages across all clients
@@ -127,8 +127,8 @@ export default function UnifiedChatTab() {
     },
     enabled: !!selectedChatClient,
     retry: false, // Don't retry failed requests to prevent spam
-    refetchInterval: selectedChatClient ? 3000 : false, // Only refetch when chat is selected
-    refetchIntervalInBackground: true,
+    refetchInterval: false, // Disable automatic refetching to improve performance
+    refetchIntervalInBackground: false,
   });
 
   // Update client list when chat messages change to refresh unread counts
