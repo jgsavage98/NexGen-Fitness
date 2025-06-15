@@ -97,23 +97,28 @@ export default function UnifiedChatTab() {
   const totalUnansweredCount = clients.reduce((total, client) => total + (client.unansweredCount || 0), 0);
 
   // Query to fetch chat messages for selected client or group chat
-  const { data: clientChatMessages = [], refetch: refetchClientChat, error: chatError } = useQuery({
+  const { data: clientChatMessages = [], refetch: refetchClientChat, error: chatError, isLoading: isChatLoading } = useQuery({
     queryKey: selectedChatClient === "group-chat" ? ["/api/trainer/group-chat"] : [`/api/trainer/client-chat/${selectedChatClient}`],
     queryFn: async () => {
       if (!selectedChatClient) return [];
+      console.log(`Fetching chat messages for: ${selectedChatClient}`);
       try {
         if (selectedChatClient === "group-chat") {
           const response = await apiRequest("GET", "/api/trainer/group-chat");
           if (!response.ok) {
             throw new Error(`Failed to fetch group chat: ${response.status}`);
           }
-          return response.json();
+          const data = await response.json();
+          console.log(`Group chat fetched: ${data.length} messages`);
+          return data;
         }
         const response = await apiRequest("GET", `/api/trainer/client-chat/${selectedChatClient}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch client chat: ${response.status}`);
         }
-        return response.json();
+        const data = await response.json();
+        console.log(`Individual chat fetched for ${selectedChatClient}: ${data.length} messages`);
+        return data;
       } catch (error) {
         console.error("Chat fetch error:", error);
         throw error;
@@ -264,7 +269,10 @@ export default function UnifiedChatTab() {
               <div className="max-h-[300px] lg:max-h-[500px] overflow-y-auto">
                 {/* Group Chat Option */}
                 <button
-                  onClick={() => setSelectedChatClient("group-chat")}
+                  onClick={() => {
+                    console.log("Group chat selected");
+                    setSelectedChatClient("group-chat");
+                  }}
                   className={`w-full text-left p-3 border-b border-gray-700 hover:bg-gray-800 transition-colors ${
                     selectedChatClient === "group-chat" ? 'bg-gray-800 border-l-4 border-l-primary-500' : ''
                   }`}
@@ -304,7 +312,10 @@ export default function UnifiedChatTab() {
                     .map((client) => (
                     <button
                       key={client.id}
-                      onClick={() => setSelectedChatClient(client.id)}
+                      onClick={() => {
+                        console.log(`Individual chat selected for client: ${client.firstName} ${client.lastName} (${client.id})`);
+                        setSelectedChatClient(client.id);
+                      }}
                       className={`w-full text-left p-3 border-b border-gray-700 hover:bg-gray-800 transition-colors ${
                         selectedChatClient === client.id ? 'bg-gray-800 border-l-4 border-l-primary-500' : ''
                       }`}
@@ -400,7 +411,11 @@ export default function UnifiedChatTab() {
               <CardContent className="flex-1 flex flex-col min-h-0">
                 {/* Chat Messages */}
                 <div className="flex-1 overflow-y-auto border border-gray-600 rounded-lg p-4 space-y-3 bg-gray-900 max-h-[400px]">
-                  {chatError ? (
+                  {isChatLoading ? (
+                    <div className="text-center text-gray-400 py-8">
+                      <p>Loading messages...</p>
+                    </div>
+                  ) : chatError ? (
                     <div className="text-center text-red-500 py-4">
                       <p>Error loading messages: {chatError.message}</p>
                       <button 
@@ -415,6 +430,9 @@ export default function UnifiedChatTab() {
                       <p>No conversation yet. Start by sending a message!</p>
                       <p className="text-xs text-gray-600 mt-2">
                         Selected: {selectedChatClient === "group-chat" ? "Group Chat" : selectedChatClient || "None"}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Messages array: {Array.isArray(clientChatMessages) ? `Length ${clientChatMessages.length}` : typeof clientChatMessages}
                       </p>
                     </div>
                   ) : (
