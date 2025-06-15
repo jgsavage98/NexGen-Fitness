@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 
 interface Client {
@@ -40,6 +41,37 @@ export default function UnifiedChatTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // WebSocket for real-time updates
+  const { isConnected } = useWebSocket((message) => {
+    const { type } = message;
+    
+    if (type === 'new_group_message') {
+      // Refresh group chat messages
+      if (selectedChatClient === "group-chat") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", "group-chat"] });
+      }
+      // Refresh group chat unread count
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
+    }
+    
+    if (type === 'counter_update' || type === 'group_counter_update') {
+      // Refresh client list to update badge counters
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      // Refresh specific chat if it's open
+      if (selectedChatClient && selectedChatClient !== "group-chat") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedChatClient] });
+      }
+    }
+    
+    if (type === 'private_moderation_message') {
+      // Refresh individual chat messages and counters
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      if (selectedChatClient && selectedChatClient !== "group-chat") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedChatClient] });
+      }
+    }
+  });
 
   // Fetch trainer profile data
   const { data: trainerProfile } = useQuery({
@@ -104,25 +136,6 @@ export default function UnifiedChatTab() {
     scrollToBottom();
   }, [clientChatMessages]);
 
-  // Invalidate client list when a chat is opened to update unanswered counts
-  useEffect(() => {
-    if (selectedChatClient) {
-      // Mark group chat as viewed when group chat is selected
-      if (selectedChatClient === "group-chat") {
-        markGroupViewedMutation.mutate();
-      }
-      
-      // Immediately invalidate to refresh the count after chat is opened
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-      
-      // Also invalidate after a short delay to ensure backend processing is complete
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-      }, 1000);
-    }
-  }, [selectedChatClient, queryClient]);
-
-  // Send message to client or group chat mutation
   // Mark group chat as viewed mutation
   const markGroupViewedMutation = useMutation({
     mutationFn: async () => {
@@ -137,6 +150,44 @@ export default function UnifiedChatTab() {
       console.error("Error marking group chat as viewed:", error);
     },
   });
+
+  // Mark individual chat messages as read for trainer
+  const markIndividualChatViewedMutation = useMutation({
+    mutationFn: async (clientId: string) => {
+      const response = await apiRequest("POST", "/api/trainer/mark-messages-read", {
+        clientId: clientId
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate client list to update unread counts
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+    },
+    onError: (error) => {
+      console.error("Error marking individual chat as viewed:", error);
+    },
+  });
+
+  // Invalidate client list when a chat is opened to update unanswered counts
+  useEffect(() => {
+    if (selectedChatClient) {
+      // Mark group chat as viewed when group chat is selected
+      if (selectedChatClient === "group-chat") {
+        markGroupViewedMutation.mutate();
+      } else {
+        // Mark individual chat messages as read for trainer
+        markIndividualChatViewedMutation.mutate(selectedChatClient);
+      }
+      
+      // Immediately invalidate to refresh the count after chat is opened
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      
+      // Also invalidate after a short delay to ensure backend processing is complete
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      }, 1000);
+    }
+  }, [selectedChatClient, queryClient, markGroupViewedMutation, markIndividualChatViewedMutation]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async ({ clientId, message }: { clientId: string; message: string }) => {
@@ -361,7 +412,7 @@ export default function UnifiedChatTab() {
                               <>
                                 {message.userId === "coach_chassidy" ? (
                                   <img 
-                                    src={trainerProfile?.profileImageUrl ? `/${trainerProfile.profileImageUrl}` : "/attached_assets/CE%20Bio%20Image_1749399911915.jpeg"}
+                                    src={(trainerProfile as any)?.profileImageUrl ? `/${(trainerProfile as any).profileImageUrl}` : "/attached_assets/CE%20Bio%20Image_1749399911915.jpeg"}
                                     alt="Coach Chassidy"
                                     className="w-5 h-5 rounded-full object-cover"
                                   />
