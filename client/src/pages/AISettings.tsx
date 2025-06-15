@@ -247,6 +247,29 @@ export default function AISettings() {
     },
   });
 
+  const testTopicMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/trainer/test-auto-topic', {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Test Topic Generated",
+        description: "A test topic has been posted to the group chat successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate test topic",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleTestAutoTopic = () => {
+    testTopicMutation.mutate();
+  };
+
   useEffect(() => {
     if (currentSettings && typeof currentSettings === 'object') {
       console.log('Settings fetched from database:', {
@@ -636,6 +659,25 @@ export default function AISettings() {
                           checked={settings.groupChat.avoidTopicRepetition !== false}
                           onCheckedChange={(checked) => updateGroupChatSetting('avoidTopicRepetition', checked)}
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-xs">Test Auto Topic Generation</Label>
+                        <Button
+                          onClick={handleTestAutoTopic}
+                          disabled={!settings.groupChat.autoTopicGeneration || testTopicMutation.isPending}
+                          variant="outline"
+                          className="w-full"
+                          size="sm"
+                        >
+                          {testTopicMutation.isPending ? 'Generating...' : 'Generate Test Topic'}
+                        </Button>
+                        <p className="text-xs text-muted-foreground">
+                          {settings.groupChat.autoTopicGeneration 
+                            ? 'Click to immediately post a test topic to the group chat'
+                            : 'Enable auto topic generation to test this feature'
+                          }
+                        </p>
                       </div>
                     </div>
                   </div>

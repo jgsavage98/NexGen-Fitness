@@ -13,6 +13,14 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 14, 2025)
 
+### Auto Topic Generation Scheduling - FULLY OPERATIONAL (2:23 AM)
+- **Complete Automated Scheduling System**: Implemented background scheduler that automatically posts topics at configured intervals
+- **Smart Time Window Posting**: Topics are randomly scheduled between 12pm-2pm ET daily with proper DST handling
+- **Comprehensive Backend Infrastructure**: Created TopicScheduler class with interval checking, timezone calculations, and repetition avoidance
+- **Manual Testing Capability**: Added test endpoint and UI button for immediate topic generation testing
+- **Real-Time WebSocket Integration**: Auto-generated topics broadcast instantly to all connected clients with proper counter updates
+- **Production Ready**: Scheduler starts automatically with server boot and operates continuously for Coach Chassidy
+
 ### Navigation Badge Counter Duplication Fix - FULLY OPERATIONAL (11:58 PM)
 - **Critical Frontend Count Duplication RESOLVED**: Fixed navigation badge showing double unread count by removing duplicate addition in Home.tsx
 - **Backend Already Combined**: The /api/chat/unread-count endpoint already returns individual + group chat counts combined
