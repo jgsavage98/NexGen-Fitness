@@ -15,6 +15,11 @@ export function useWebSocket(onMessage?: (message: WebSocketMessage) => void) {
   const maxReconnectAttempts = 5;
 
   const connect = useCallback(() => {
+    // Don't connect if already connected or connecting
+    if (ws.current && (ws.current.readyState === WebSocket.CONNECTING || ws.current.readyState === WebSocket.OPEN)) {
+      return;
+    }
+
     try {
       // Connect to WebSocket server - handle Replit environment
       let wsUrl;
