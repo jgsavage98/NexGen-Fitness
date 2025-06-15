@@ -1413,6 +1413,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark individual chat messages as read by trainer
+  app.post('/api/trainer/mark-messages-read', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      const { clientId } = req.body;
+
+      // Verify trainer has access to this client
+      const trainer = await storage.getTrainer(trainerId);
+      if (!trainer) {
+        return res.status(403).json({ message: "Unauthorized - Trainer access required" });
+      }
+
+      const client = await storage.getUser(clientId);
+      if (!client || client.trainerId !== trainerId) {
+        return res.status(404).json({ message: "Client not found or not assigned to you" });
+      }
+
+      // Get unread client messages and mark them as viewed by trainer
+      const messages = await storage.getClientChatMessages(clientId, trainerId, 100);
+      const clientMessageIds = messages
+        .filter(msg => !msg.isAI && (!msg.metadata || !(msg.metadata as any)?.fromCoach || !(msg.metadata as any)?.trainerViewed))
+        .map(msg => msg.id);
+
+      if (clientMessageIds.length > 0) {
+        await Promise.all(clientMessageIds.map(async (messageId) => {
+          const [currentMessage] = await db
+            .select({ metadata: chatMessages.metadata })
+            .from(chatMessages)
+            .where(eq(chatMessages.id, messageId));
+          
+          const currentMetadata = currentMessage?.metadata || {};
+          const updatedMetadata = { ...currentMetadata, trainerViewed: true };
+          
+          await db
+            .update(chatMessages)
+            .set({ metadata: updatedMetadata })
+            .where(eq(chatMessages.id, messageId));
+        }));
+      }
+
+      res.json({ success: true, markedCount: clientMessageIds.length });
+    } catch (error) {
+      console.error("Error marking trainer messages as read:", error);
+      res.status(500).json({ message: "Failed to mark messages as read" });
+    }
+  });
+
   // Trainer chat routes - moved to proper location with authentication
 
   app.get('/api/trainer/pending-chat-approvals', isAuthenticated, async (req: any, res) => {
