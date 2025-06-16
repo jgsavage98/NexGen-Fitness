@@ -867,7 +867,7 @@ export class DatabaseStorage implements IStorage {
 
   async getGroupChatMessages(trainerId?: string, limit: number = 50): Promise<ChatMessage[]> {
     if (trainerId) {
-      // Trainer view - get messages with user details
+      // Trainer view - get APPROVED messages with user details (same filtering as client view)
       return await db
         .select({
           id: chatMessages.id,
@@ -896,7 +896,8 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(users.trainerId, trainerId),
-            eq(chatMessages.chatType, 'group')
+            eq(chatMessages.chatType, 'group'),
+            eq(chatMessages.status, 'approved') // FIXED: Added status filter for consistency
           )
         )
         .orderBy(chatMessages.createdAt)
