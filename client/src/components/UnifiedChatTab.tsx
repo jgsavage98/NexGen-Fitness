@@ -42,37 +42,36 @@ export default function UnifiedChatTab() {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Temporarily disable WebSocket to fix chat functionality
-  // const { isConnected } = useWebSocket((message) => {
-  //   const { type } = message;
-  //   
-  //   if (type === 'new_group_message') {
-  //     // Refresh group chat messages
-  //     if (selectedChatClient === "group-chat") {
-  //       queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", "group-chat"] });
-  //     }
-  //     // Refresh group chat unread count
-  //     queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
-  //   }
-  //   
-  //   if (type === 'counter_update' || type === 'group_counter_update') {
-  //     // Refresh client list to update badge counters
-  //     queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-  //     // Refresh specific chat if it's open
-  //     if (selectedChatClient && selectedChatClient !== "group-chat") {
-  //       queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedChatClient] });
-  //     }
-  //   }
-  //   
-  //   if (type === 'private_moderation_message') {
-  //     // Refresh individual chat messages and counters
-  //     queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-  //     if (selectedChatClient && selectedChatClient !== "group-chat") {
-  //       queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedChatClient] });
-  //     }
-  //   }
-  // });
-  const isConnected = false; // Disabled WebSocket for now
+  // WebSocket for real-time updates
+  const { isConnected } = useWebSocket((message) => {
+    const { type } = message;
+    
+    if (type === 'new_group_message') {
+      // Refresh group chat messages
+      if (selectedChatClient === "group-chat") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", "group-chat"] });
+      }
+      // Refresh group chat unread count
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
+    }
+    
+    if (type === 'counter_update' || type === 'group_counter_update') {
+      // Refresh client list to update badge counters
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      // Refresh specific chat if it's open
+      if (selectedChatClient && selectedChatClient !== "group-chat") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedChatClient] });
+      }
+    }
+    
+    if (type === 'private_moderation_message') {
+      // Refresh individual chat messages and counters
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      if (selectedChatClient && selectedChatClient !== "group-chat") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedChatClient] });
+      }
+    }
+  });
 
   // Fetch trainer profile data
   const { data: trainerProfile } = useQuery({

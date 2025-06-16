@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { topicScheduler } from "./topicScheduler";
+// Topic scheduler import removed
 
 const app = express();
 
@@ -90,7 +90,6 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Start the auto topic generation scheduler
-    topicScheduler.start();
+    // Topic scheduler removed
   });
 })();
