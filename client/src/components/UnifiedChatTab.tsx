@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-// import { useWebSocket } from "@/hooks/useWebSocket"; // Temporarily disabled
+import { useWebSocket } from "../hooks/useWebSocket";
 
 
 interface Client {

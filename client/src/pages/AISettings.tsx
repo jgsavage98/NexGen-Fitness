@@ -247,28 +247,7 @@ export default function AISettings() {
     },
   });
 
-  const testTopicMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest('POST', '/api/trainer/test-auto-topic', {});
-    },
-    onSuccess: () => {
-      toast({
-        title: "Test Topic Generated",
-        description: "A test topic has been posted to the group chat successfully.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to generate test topic",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleTestAutoTopic = () => {
-    testTopicMutation.mutate();
-  };
+  // Topic generation functionality removed
 
   useEffect(() => {
     if (currentSettings && typeof currentSettings === 'object') {
@@ -566,123 +545,7 @@ export default function AISettings() {
                 </p>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-base font-medium">Auto Topic Generation</Label>
-                    <p className="text-sm text-muted-foreground">Automatically post discussion topics</p>
-                  </div>
-                  <Switch
-                    checked={settings.groupChat.autoTopicGeneration}
-                    onCheckedChange={(checked) => updateGroupChatSetting('autoTopicGeneration', checked)}
-                  />
-                </div>
-                
-                {settings.groupChat.autoTopicGeneration && (
-                  <div className="space-y-4 pl-4 border-l-2 border-muted">
-                    <div className="space-y-2">
-                      <Label htmlFor="topic-frequency">Topic Frequency (hours)</Label>
-                      <Input
-                        id="topic-frequency"
-                        type="number"
-                        value={settings.groupChat.topicFrequency}
-                        onChange={(e) => updateGroupChatSetting('topicFrequency', parseInt(e.target.value))}
-                        min="1"
-                        max="168"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium">Topic Direction & Focus</Label>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="topic-categories" className="text-xs">Primary Topic Categories</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {['Nutrition', 'Workouts', 'Motivation', 'Progress', 'Habits', 'Recovery'].map((category) => (
-                            <div key={category} className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                id={`category-${category.toLowerCase()}`}
-                                checked={settings.groupChat.topicCategories?.includes(category.toLowerCase()) || false}
-                                onChange={(e) => {
-                                  const categories = settings.groupChat.topicCategories || [];
-                                  const updatedCategories = e.target.checked
-                                    ? [...categories, category.toLowerCase()]
-                                    : categories.filter(c => c !== category.toLowerCase());
-                                  updateGroupChatSetting('topicCategories', updatedCategories);
-                                }}
-                                className="rounded border-gray-300"
-                              />
-                              <Label htmlFor={`category-${category.toLowerCase()}`} className="text-xs">{category}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="topic-style" className="text-xs">Topic Style</Label>
-                        <Select
-                          value={settings.groupChat.topicStyle || 'engaging'}
-                          onValueChange={(value) => updateGroupChatSetting('topicStyle', value)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="engaging">Engaging Questions</SelectItem>
-                            <SelectItem value="educational">Educational Tips</SelectItem>
-                            <SelectItem value="challenges">Fun Challenges</SelectItem>
-                            <SelectItem value="discussions">Open Discussions</SelectItem>
-                            <SelectItem value="tips">Quick Tips & Facts</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="custom-topics" className="text-xs">Custom Topic Prompts</Label>
-                        <Textarea
-                          id="custom-topics"
-                          placeholder="Add specific topics you'd like the AI to generate discussions about..."
-                          value={settings.groupChat.customTopicPrompts || ''}
-                          onChange={(e) => updateGroupChatSetting('customTopicPrompts', e.target.value)}
-                          rows={3}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Examples: "Weekly meal prep strategies", "Home workout equipment alternatives", "Building healthy morning routines"
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="avoid-repetition" className="text-xs">Avoid Topic Repetition</Label>
-                        <Switch
-                          id="avoid-repetition"
-                          checked={settings.groupChat.avoidTopicRepetition !== false}
-                          onCheckedChange={(checked) => updateGroupChatSetting('avoidTopicRepetition', checked)}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-xs">Test Auto Topic Generation</Label>
-                        <Button
-                          onClick={handleTestAutoTopic}
-                          disabled={!settings.groupChat.autoTopicGeneration || testTopicMutation.isPending}
-                          variant="outline"
-                          className="w-full"
-                          size="sm"
-                        >
-                          {testTopicMutation.isPending ? 'Generating...' : 'Generate Test Topic'}
-                        </Button>
-                        <p className="text-xs text-muted-foreground">
-                          {settings.groupChat.autoTopicGeneration 
-                            ? 'Click to immediately post a test topic to the group chat'
-                            : 'Enable auto topic generation to test this feature'
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              {/* Topic generation feature temporarily removed for system stability */}
 
               <Separator />
 
