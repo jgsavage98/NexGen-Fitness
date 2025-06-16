@@ -42,78 +42,19 @@ export default function UnifiedChatTab() {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Debug logging for state changes
-  useEffect(() => {
-    console.log("UnifiedChatTab - selectedChatClient changed:", selectedChatClient);
-  }, [selectedChatClient]);
-
-  // Debug logging for query state
-  useEffect(() => {
-    console.log("Chat query state:", {
-      selectedChatClient,
-      isLoading: isChatLoading,
-      error: chatError,
-      messagesLength: clientChatMessages?.length || 0,
-      enabled: !!selectedChatClient
-    });
-  }, [selectedChatClient, isChatLoading, chatError, clientChatMessages]);
-
-  // Memoized WebSocket callback to prevent infinite loops
-  const handleWebSocketMessage = useCallback((message: any) => {
-    const { type } = message;
-    
-    if (type === 'new_group_message') {
-      // Refresh group chat messages
-      if (selectedChatClient === "group-chat") {
-        queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", "group-chat"] });
-      }
-      // Refresh group chat unread count
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
-    }
-    
-    if (type === 'counter_update' || type === 'group_counter_update') {
-      // Refresh client list to update badge counters
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-      // Refresh specific chat if it's open
-      if (selectedChatClient && selectedChatClient !== "group-chat") {
-        queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedChatClient] });
-      }
-    }
-    
-    if (type === 'private_moderation_message') {
-      // Refresh individual chat messages and counters
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-      if (selectedChatClient && selectedChatClient !== "group-chat") {
-        queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedChatClient] });
-      }
-    }
-  }, [selectedChatClient, queryClient]);
-
-  // WebSocket temporarily disabled for performance optimization
-  const isConnected = false;
-
-  // Fetch trainer profile data
-  const { data: trainerProfile } = useQuery({
-    queryKey: ["/api/auth/user"],
-    staleTime: 300000, // Cache for 5 minutes
-  });
-
-  // Fetch all clients sorted by unanswered messages
+  // Fetch clients
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/trainer/clients"],
-    refetchInterval: 10000, // Reduced frequency to improve performance
+    refetchInterval: 10000,
     refetchIntervalInBackground: false,
   });
 
   // Fetch group chat unread count
   const { data: groupChatUnread = { count: 0 } } = useQuery<{ count: number }>({
     queryKey: ["/api/trainer/group-chat-unread"],
-    refetchInterval: 10000, // Reduced frequency to improve performance
+    refetchInterval: 10000,
     refetchIntervalInBackground: false,
   });
-
-  // Calculate total unanswered messages across all clients
-  const totalUnansweredCount = clients.reduce((total, client) => total + (client.unansweredCount || 0), 0);
 
   // Query to fetch chat messages for selected client or group chat
   const { data: clientChatMessages = [], refetch: refetchClientChat, error: chatError, isLoading: isChatLoading } = useQuery({
@@ -144,10 +85,42 @@ export default function UnifiedChatTab() {
       }
     },
     enabled: !!selectedChatClient,
-    retry: 1, // Allow one retry
-    refetchInterval: 5000, // Re-enable polling every 5 seconds for real-time updates
+    retry: 1,
+    refetchInterval: 5000,
     refetchIntervalInBackground: false,
   });
+
+  // Calculate total unanswered messages across all clients
+  const totalUnansweredCount = clients.reduce((total, client) => total + (client.unansweredCount || 0), 0);
+
+  // Memoized WebSocket callback to prevent infinite loops
+  const handleWebSocketMessage = useCallback((message: any) => {
+    const { type } = message;
+    
+    if (type === 'new_group_message') {
+      if (selectedChatClient === "group-chat") {
+        queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat"] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
+    }
+    
+    if (type === 'counter_update' || type === 'group_counter_update') {
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      if (selectedChatClient && selectedChatClient !== "group-chat") {
+        queryClient.invalidateQueries({ queryKey: [`/api/trainer/client-chat/${selectedChatClient}`] });
+      }
+    }
+    
+    if (type === 'private_moderation_message') {
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      if (selectedChatClient && selectedChatClient !== "group-chat") {
+        queryClient.invalidateQueries({ queryKey: [`/api/trainer/client-chat/${selectedChatClient}`] });
+      }
+    }
+  }, [selectedChatClient, queryClient]);
+
+  // Initialize WebSocket connection (disabled for performance optimization)
+  // useWebSocket("ws://localhost:5000/ws", handleWebSocketMessage);
 
   // Update client list when chat messages change to refresh unread counts
   useEffect(() => {
@@ -157,470 +130,259 @@ export default function UnifiedChatTab() {
   }, [clientChatMessages, queryClient]);
 
   // Auto-scroll to bottom when new messages arrive
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // Helper function to get user name for group chat messages
-  const getUserName = (userId: string) => {
-    if (userId === "coach_chassidy") return "Coach Chassidy";
-    const client = clients.find(c => c.id === userId);
-    return client ? `${client.firstName} ${client.lastName}` : 'Unknown User';
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [clientChatMessages]);
 
-  // Mark group chat as viewed mutation
-  const markGroupViewedMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/chat/mark-group-viewed");
-      return response.json();
-    },
-    onSuccess: () => {
-      // Invalidate group chat unread count
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
-    },
-    onError: (error) => {
-      console.error("Error marking group chat as viewed:", error);
-    },
-  });
-
-  // Mark individual chat messages as read for trainer
-  const markIndividualChatViewedMutation = useMutation({
-    mutationFn: async (clientId: string) => {
-      const response = await apiRequest("POST", "/api/trainer/mark-messages-read", {
-        clientId: clientId
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      // Invalidate client list to update unread counts
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-    },
-    onError: (error) => {
-      console.error("Error marking individual chat as viewed:", error);
-    },
-  });
-
-  // Invalidate client list when a chat is opened to update unanswered counts
-  useEffect(() => {
-    if (selectedChatClient) {
-      // Mark group chat as viewed when group chat is selected
-      if (selectedChatClient === "group-chat") {
-        markGroupViewedMutation.mutate();
-      } else {
-        // Mark individual chat messages as read for trainer
-        markIndividualChatViewedMutation.mutate(selectedChatClient);
-      }
-      
-      // Immediately invalidate to refresh the count after chat is opened
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-      
-      // Also invalidate after a short delay to ensure backend processing is complete
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-      }, 1000);
-    }
-  }, [selectedChatClient, queryClient, markGroupViewedMutation, markIndividualChatViewedMutation]);
-
+  // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ clientId, message }: { clientId: string; message: string }) => {
-      if (clientId === "group-chat") {
-        const response = await apiRequest("POST", "/api/chat/message", {
-          message,
-          chatType: 'group'
+    mutationFn: async (messageData: { message: string; isAI?: boolean }) => {
+      if (selectedChatClient === "group-chat") {
+        return apiRequest("POST", "/api/chat/messages", {
+          message: messageData.message,
+          chatType: "group",
+          isAI: messageData.isAI || false,
         });
-        return response.json();
       } else {
-        const response = await apiRequest("POST", "/api/trainer/send-message", {
-          clientId,
-          message,
+        return apiRequest("POST", "/api/chat/messages", {
+          message: messageData.message,
+          chatType: "individual",
+          targetUserId: selectedChatClient,
+          isAI: messageData.isAI || false,
         });
-        return response.json();
       }
     },
     onSuccess: () => {
       setNewMessage("");
       refetchClientChat();
-      // Immediately invalidate client list to update badges
       queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-      // Also force refetch to ensure immediate badge updates
-      queryClient.refetchQueries({ queryKey: ["/api/trainer/clients"] });
-      // Auto-scroll to bottom after sending message
-      setTimeout(scrollToBottom, 100);
       toast({
         title: "Message sent",
-        description: "Your message has been sent to the client",
+        description: "Your message has been delivered.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Failed to send message:", error);
       toast({
-        title: "Error",
-        description: "Failed to send message",
+        title: "Failed to send message",
+        description: error.message || "An error occurred while sending the message.",
         variant: "destructive",
       });
     },
   });
 
+  // Generate AI response mutation
+  const generateAIResponseMutation = useMutation({
+    mutationFn: async () => {
+      if (selectedChatClient === "group-chat") {
+        return apiRequest("POST", "/api/trainer/generate-ai-response", {
+          chatType: "group",
+        });
+      } else {
+        return apiRequest("POST", "/api/trainer/generate-ai-response", {
+          chatType: "individual",
+          targetUserId: selectedChatClient,
+        });
+      }
+    },
+    onSuccess: () => {
+      refetchClientChat();
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      toast({
+        title: "AI response generated",
+        description: "Coach Chassidy has responded to the conversation.",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Failed to generate AI response:", error);
+      toast({
+        title: "Failed to generate AI response",
+        description: error.message || "An error occurred while generating the AI response.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) return;
+    sendMessageMutation.mutate({ message: newMessage.trim() });
+  };
+
+  const handleGenerateAI = () => {
+    setIsGeneratingAI(true);
+    generateAIResponseMutation.mutate();
+    setTimeout(() => setIsGeneratingAI(false), 2000);
+  };
+
+  const getClientName = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    return client ? `${client.firstName} ${client.lastName}` : "Unknown Client";
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  if (chatError) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        <p>Failed to load chat messages: {chatError.message}</p>
+        <Button onClick={() => refetchClientChat()} className="mt-2">
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Client Chat Management</h2>
-        <div className="flex space-x-2">
-          <Badge variant="outline" className="text-blue-400 border-blue-400">
-            Unified Chat
-          </Badge>
-        </div>
-      </div>
-
-
-
-      <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6 min-h-[600px] lg:h-[600px]">
-        {/* Client List Sidebar */}
-        <div className="lg:col-span-1 space-y-4 order-2 lg:order-1">
-          <Card className="bg-surface border-gray-700 h-auto lg:h-full">
-            <CardHeader>
-              <CardTitle className="text-white text-sm">Clients (Most Unanswered First)</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="max-h-[300px] lg:max-h-[500px] overflow-y-auto">
-                {/* Group Chat Option */}
-                <button
-                  onClick={() => {
-                    console.log("Group chat selected");
-                    setSelectedChatClient("group-chat");
-                  }}
-                  className={`w-full text-left p-3 border-b border-gray-700 hover:bg-gray-800 transition-colors ${
-                    selectedChatClient === "group-chat" ? 'bg-gray-800 border-l-4 border-l-primary-500' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                        <Users className="w-4 h-4 text-white" />
-                      </div>
-                      <div>
-                        <h4 className="text-white font-medium text-sm">Group Chat</h4>
-                        <p className="text-gray-400 text-xs">All Clients</p>
-                      </div>
-                    </div>
-                    {groupChatUnread.count > 0 && (
-                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                        {groupChatUnread.count}
-                      </span>
-                    )}
-                  </div>
-                </button>
-
-                {clients.length === 0 ? (
-                  <div className="text-center text-gray-500 py-8">
-                    <p>No clients found</p>
-                  </div>
-                ) : (
-                  clients
-                    .sort((a, b) => {
-                      // First sort by unanswered count (descending)
-                      const aCount = a.unansweredCount || 0;
-                      const bCount = b.unansweredCount || 0;
-                      if (bCount !== aCount) return bCount - aCount;
-                      // Then alphabetically by name for consistent ordering
-                      return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
-                    })
-                    .map((client) => (
-                    <button
-                      key={client.id}
-                      onClick={() => {
-                        console.log(`Individual chat selected for client: ${client.firstName} ${client.lastName} (${client.id})`);
-                        setSelectedChatClient(client.id);
-                      }}
-                      className={`w-full text-left p-3 border-b border-gray-700 hover:bg-gray-800 transition-colors ${
-                        selectedChatClient === client.id ? 'bg-gray-800 border-l-4 border-l-primary-500' : ''
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          {client.profileImageUrl ? (
-                            <img 
-                              src={client.profileImageUrl} 
-                              alt={`${client.firstName} ${client.lastName}`}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
-                              <span className="text-white font-semibold text-xs">
-                                {client.firstName[0]}{client.lastName[0]}
-                              </span>
-                            </div>
-                          )}
-                          <div>
-                            <h4 className="text-white font-medium text-sm">
-                              {client.firstName} {client.lastName}
-                            </h4>
-                            <p className="text-gray-400 text-xs">{client.email}</p>
-                          </div>
-                        </div>
-                        {(client.unansweredCount || 0) > 0 && (
-                          <Badge variant="destructive" className="text-xs">
-                            {client.unansweredCount}
-                          </Badge>
-                        )}
-                      </div>
-                    </button>
-                  ))
+      {/* Chat Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Client Communications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Group Chat Option */}
+            <Button
+              variant={selectedChatClient === "group-chat" ? "default" : "outline"}
+              className="h-auto p-4 flex flex-col items-start gap-2"
+              onClick={() => setSelectedChatClient("group-chat")}
+            >
+              <div className="flex items-center gap-2 w-full">
+                <Users className="h-4 w-4" />
+                <span className="font-medium">Group Chat</span>
+                {groupChatUnread.count > 0 && (
+                  <Badge variant="destructive" className="ml-auto">
+                    {groupChatUnread.count}
+                  </Badge>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <p className="text-sm text-muted-foreground text-left">
+                Community discussions and group support
+              </p>
+            </Button>
 
-        {/* Chat Interface */}
-        <div className="lg:col-span-2 order-1 lg:order-2">
-          {!selectedChatClient ? (
-            <Card className="bg-surface border-gray-700 h-auto lg:h-full flex items-center justify-center min-h-[300px]">
-              <CardContent className="text-center">
-                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400">Select a client to start chatting</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-surface border-gray-700 h-auto lg:h-[600px] flex flex-col min-h-[400px] lg:min-h-0">
-              <CardHeader className="flex-shrink-0">
-                <CardTitle className="text-white flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    {selectedChatClient === "group-chat" ? (
-                      <>
-                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                          <Users className="w-4 h-4 text-white" />
-                        </div>
-                        <span>Group Chat - All Clients</span>
-                      </>
-                    ) : (
-                      <>
-                        {(() => {
-                          const client = clients.find(c => c.id === selectedChatClient);
-                          if (!client) return null;
-                          
-                          return client.profileImageUrl ? (
-                            <img 
-                              src={client.profileImageUrl} 
-                              alt={`${client.firstName} ${client.lastName}`}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
-                              <span className="text-white font-semibold text-sm">
-                                {client.firstName[0]}{client.lastName[0]}
-                              </span>
-                            </div>
-                          );
-                        })()}
-                        <span>
-                          {(() => {
-                            const client = clients.find(c => c.id === selectedChatClient);
-                            return client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
-                          })()}
-                        </span>
-                      </>
-                    )}
+            {/* Individual Client Chats */}
+            {clients.map((client) => (
+              <Button
+                key={client.id}
+                variant={selectedChatClient === client.id ? "default" : "outline"}
+                className="h-auto p-4 flex flex-col items-start gap-2"
+                onClick={() => setSelectedChatClient(client.id)}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
+                    {client.firstName[0]}
                   </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col min-h-0">
-                {/* Chat Messages */}
-                <div className="flex-1 overflow-y-auto border border-gray-600 rounded-lg p-4 space-y-3 bg-gray-900 max-h-[400px]">
-                  {isChatLoading ? (
-                    <div className="text-center text-gray-400 py-8">
-                      <p>Loading messages...</p>
-                    </div>
-                  ) : chatError ? (
-                    <div className="text-center text-red-500 py-4">
-                      <p>Error loading messages: {chatError.message}</p>
-                      <button 
-                        onClick={() => refetchClientChat()}
-                        className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-                      >
-                        Retry
-                      </button>
-                    </div>
-                  ) : !Array.isArray(clientChatMessages) || clientChatMessages.length === 0 ? (
-                    <div className="text-center text-gray-500 py-8">
-                      <p>No conversation yet. Start by sending a message!</p>
-                      <p className="text-xs text-gray-600 mt-2">
-                        Selected: {selectedChatClient === "group-chat" ? "Group Chat" : selectedChatClient || "None"}
-                      </p>
-                      <p className="text-xs text-gray-600 mt-1">
-                        Messages array: {Array.isArray(clientChatMessages) ? `Length ${clientChatMessages.length}` : typeof clientChatMessages}
-                      </p>
-                    </div>
-                  ) : (
-                    clientChatMessages.map((message: ChatMessage) => (
-                      <div key={message.id} className={`flex ${
-                        (selectedChatClient === "group-chat" && message.userId === "coach_chassidy") ||
-                        (selectedChatClient !== "group-chat" && (message.metadata?.fromCoach || message.isAI)) 
-                          ? 'justify-start' : 'justify-end'
-                      }`}>
-                        <div className={`max-w-[70%] rounded-lg p-3 ${
-                          (selectedChatClient === "group-chat" && message.userId === "coach_chassidy") ||
-                          (selectedChatClient !== "group-chat" && message.metadata?.fromCoach)
-                            ? 'bg-green-600 text-white' 
-                            : message.isAI 
-                              ? 'bg-blue-600 text-white' 
-                              : 'bg-gray-700 text-gray-100'
-                        }`}>
-                          <div className="flex items-center space-x-2 mb-1">
-                            {selectedChatClient === "group-chat" && (
-                              <>
-                                {message.userId === "coach_chassidy" ? (
-                                  <img 
-                                    src={(trainerProfile as any)?.profileImageUrl ? `/${(trainerProfile as any).profileImageUrl}` : "/attached_assets/CE%20Bio%20Image_1749399911915.jpeg"}
-                                    alt="Coach Chassidy"
-                                    className="w-5 h-5 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  (() => {
-                                    const client = clients.find(c => c.id === message.userId);
-                                    return client?.profileImageUrl ? (
-                                      <img 
-                                        src={client.profileImageUrl} 
-                                        alt={`${client.firstName} ${client.lastName}`}
-                                        className="w-5 h-5 rounded-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center">
-                                        <span className="text-white font-semibold text-xs">
-                                          {client ? `${client.firstName[0]}${client.lastName[0]}` : 'U'}
-                                        </span>
-                                      </div>
-                                    );
-                                  })()
-                                )}
-                              </>
-                            )}
-                            <span className="text-xs font-medium">
-                              {selectedChatClient === "group-chat" 
-                                ? getUserName(message.userId)
-                                : message.metadata?.fromCoach 
-                                  ? 'Coach Chassidy' 
-                                  : message.isAI 
-                                    ? 'AI Coach' 
-                                    : clients.find(c => c.id === selectedChatClient)?.firstName || 'Client'}
-                            </span>
-                            <span className="text-xs opacity-70">
-                              {new Date(message.createdAt).toLocaleString()}
-                            </span>
-                          </div>
-                          <p className="text-sm break-words">{message.message}</p>
-                          {message.status === 'pending_approval' && !message.metadata?.fromCoach && (
-                            <Badge variant="outline" className="mt-1 text-xs border-orange-300 text-orange-300">
-                              Pending Approval
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))
+                  <span className="font-medium">{client.firstName} {client.lastName}</span>
+                  {(client.unansweredCount || 0) > 0 && (
+                    <Badge variant="destructive" className="ml-auto">
+                      {client.unansweredCount}
+                    </Badge>
                   )}
-                  {/* Invisible element to scroll to */}
-                  <div ref={messagesEndRef} />
                 </div>
+                <p className="text-sm text-muted-foreground text-left">
+                  {client.goal} • {client.weight}lbs → {client.goalWeight}lbs
+                </p>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-                {/* Message Input - Always visible at bottom */}
-                <div className="flex-shrink-0 space-y-3 mt-4 border-t border-gray-600 pt-4">
-                  <Textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="bg-gray-800 border-gray-600 text-white min-h-[80px] resize-none"
-                    disabled={sendMessageMutation.isPending}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (newMessage.trim()) {
-                          sendMessageMutation.mutate({
-                            clientId: selectedChatClient,
-                            message: newMessage.trim()
-                          });
-                        }
-                      }
-                    }}
-                  />
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-gray-500">
-                      Press Enter to send, Shift+Enter for new line
-                    </p>
-                    <div className="flex space-x-2">
-                      <Button
-                        onClick={async () => {
-                          setIsGeneratingAI(true);
-                          try {
-                            // Get the last client message to respond to
-                            const messages = Array.isArray(clientChatMessages) ? clientChatMessages : [];
-                            const lastClientMessage = messages
-                              .filter((msg: ChatMessage) => !msg.isAI && (!msg.metadata || !(msg.metadata as any)?.fromCoach))
-                              .slice(-1)[0];
-                            
-                            if (!lastClientMessage) {
-                              toast({ 
-                                title: "No message to respond to", 
-                                description: "There are no client messages to generate a response for",
-                                variant: "destructive" 
-                              });
-                              return;
-                            }
-
-                            const response = await apiRequest('POST', '/api/trainer/generate-draft-response', {
-                              clientId: selectedChatClient,
-                              lastMessage: lastClientMessage.message,
-                              messageContext: messages.slice(-5) // Send last 5 messages for context
-                            });
-                            
-                            const data = await response.json();
-                            if (data.draftResponse) {
-                              setNewMessage(data.draftResponse);
-                              toast({ 
-                                title: "AI Draft Generated", 
-                                description: "Review and edit the draft before sending" 
-                              });
-                            }
-                          } catch (error) {
-                            toast({ 
-                              title: "Error", 
-                              description: "Failed to generate AI draft response",
-                              variant: "destructive" 
-                            });
-                          } finally {
-                            setIsGeneratingAI(false);
-                          }
-                        }}
-                        disabled={isGeneratingAI}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        size="sm"
-                      >
-                        {isGeneratingAI ? "Generating..." : "Generate AI Response"}
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          if (newMessage.trim()) {
-                            sendMessageMutation.mutate({
-                              clientId: selectedChatClient,
-                              message: newMessage.trim()
-                            });
-                          }
-                        }}
-                        disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        {sendMessageMutation.isPending ? "Sending..." : "Send"}
-                      </Button>
+      {/* Chat Messages */}
+      {selectedChatClient && (
+        <Card className="flex flex-col h-[600px]">
+          <CardHeader className="flex-none">
+            <CardTitle>
+              {selectedChatClient === "group-chat" ? "Group Chat" : getClientName(selectedChatClient)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col overflow-hidden">
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+              {isChatLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading messages...
+                </div>
+              ) : clientChatMessages.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No messages yet. Start the conversation!
+                </div>
+              ) : (
+                clientChatMessages.map((message: ChatMessage) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.isAI ? "justify-start" : "justify-end"}`}
+                  >
+                    <div
+                      className={`max-w-[70%] rounded-lg p-3 ${
+                        message.isAI
+                          ? "bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800"
+                          : "bg-gray-100 dark:bg-gray-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium">
+                          {message.isAI ? "Coach Chassidy" : 
+                           selectedChatClient === "group-chat" ? 
+                           (message as any).user?.firstName + " " + (message as any).user?.lastName :
+                           getClientName(message.userId)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatTime(message.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">{message.message}</p>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <div className="flex-none space-y-2">
+              <Textarea
+                placeholder="Type your message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                className="resize-none"
+                rows={3}
+              />
+              <div className="flex justify-between items-center">
+                <Button
+                  onClick={handleGenerateAI}
+                  variant="outline"
+                  disabled={isGeneratingAI || generateAIResponseMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  {isGeneratingAI ? "Generating..." : "Generate AI Response"}
+                </Button>
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                >
+                  {sendMessageMutation.isPending ? "Sending..." : "Send"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
