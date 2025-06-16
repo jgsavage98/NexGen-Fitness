@@ -13,10 +13,11 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 16, 2025)
 
-### Group Chat Synchronization Fix - FULLY OPERATIONAL (12:28 PM)
+### Group Chat Synchronization Fix - FULLY OPERATIONAL (12:31 PM)
 - **Critical Data Consistency Issue RESOLVED**: Fixed trainer and client group chat displaying different message sets due to inconsistent status filtering and message ordering
 - **Database Query Alignment**: Updated `getGroupChatMessages()` to include `status='approved'` filter matching client-side filtering logic
 - **Message Ordering Fixed**: Changed trainer group chat to use descending order (newest first) instead of ascending order to match client behavior
+- **API Response Alignment**: Added `messages.reverse()` to trainer group chat endpoint ensuring chronological order matches client interface
 - **Date Format Consistency**: Updated trainer date formatting to include month and day (e.g., "Jun 16, 12:28 PM") matching client display format
 - **Recent Messages Display**: Trainer now sees the most recent 50 messages instead of oldest 50 messages, ensuring current conversation visibility
 - **Chronological Context Restored**: Both interfaces now display full date/time information enabling proper visual message ordering

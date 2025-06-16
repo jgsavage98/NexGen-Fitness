@@ -2869,7 +2869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const messages = await storage.getGroupChatMessages(trainerId, parseInt(limit as string));
-      res.json(messages);
+      res.json(messages.reverse()); // Return in chronological order (oldest first)
     } catch (error) {
       console.error("Error fetching group chat messages:", error);
       res.status(500).json({ message: "Failed to fetch group chat messages" });
