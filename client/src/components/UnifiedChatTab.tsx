@@ -42,6 +42,22 @@ export default function UnifiedChatTab() {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log("UnifiedChatTab - selectedChatClient changed:", selectedChatClient);
+  }, [selectedChatClient]);
+
+  // Debug logging for query state
+  useEffect(() => {
+    console.log("Chat query state:", {
+      selectedChatClient,
+      isLoading: isChatLoading,
+      error: chatError,
+      messagesLength: clientChatMessages?.length || 0,
+      enabled: !!selectedChatClient
+    });
+  }, [selectedChatClient, isChatLoading, chatError, clientChatMessages]);
+
   // Memoized WebSocket callback to prevent infinite loops
   const handleWebSocketMessage = useCallback((message: any) => {
     const { type } = message;
