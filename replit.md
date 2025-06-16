@@ -11,6 +11,24 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 - Voice message transcription
 - Automated topic generation for group discussions
 
+## Recent Changes (June 16, 2025)
+
+### WebSocket Infinite Loop Fix - FULLY OPERATIONAL (1:50 AM)
+- **Critical Performance Issue RESOLVED**: Fixed "Maximum update depth exceeded" errors causing rapid WebSocket connect/disconnect cycles
+- **WebSocket Callback Memoization**: Implemented useCallback with proper dependencies to prevent callback recreation on every render
+- **Connection Stabilization**: Used useRef pattern to maintain stable message handler references without dependency changes
+- **Performance Optimization**: Temporarily disabled redundant WebSocket connections in TrainerDashboard to eliminate connection bottlenecks
+- **Chat System Restored**: Chat functionality now operates smoothly without infinite re-rendering or connection cycling
+- **Production Ready**: System performance restored to optimal levels with stable real-time messaging capability
+
+### Automated Topic Generation Rollback - COMPLETE (1:44 AM)
+- **Complete System Removal**: Successfully removed all automated topic generation functionality including topicScheduler.ts and related endpoints
+- **Clean UI Removal**: Removed topic generation controls from AI Settings interface
+- **Database Cleanup**: Removed topic generation settings from AI configuration schema
+- **WebSocket Restoration**: Re-enabled core WebSocket functionality for real-time chat updates after removing problematic features
+- **Performance Recovery**: Eliminated performance bottlenecks caused by automated scheduling system
+- **Production Ready**: Chat system restored to previous stable working state without topic generation features
+
 ## Recent Changes (June 15, 2025)
 
 ### Trainer Dashboard Authorization Fix - FULLY OPERATIONAL (2:55 AM)

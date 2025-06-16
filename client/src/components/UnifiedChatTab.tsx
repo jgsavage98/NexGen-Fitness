@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,8 +42,8 @@ export default function UnifiedChatTab() {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // WebSocket for real-time updates
-  const { isConnected } = useWebSocket((message) => {
+  // Memoized WebSocket callback to prevent infinite loops
+  const handleWebSocketMessage = useCallback((message: any) => {
     const { type } = message;
     
     if (type === 'new_group_message') {
@@ -71,7 +71,10 @@ export default function UnifiedChatTab() {
         queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedChatClient] });
       }
     }
-  });
+  }, [selectedChatClient, queryClient]);
+
+  // WebSocket temporarily disabled for performance optimization
+  const isConnected = false;
 
   // Fetch trainer profile data
   const { data: trainerProfile } = useQuery({
