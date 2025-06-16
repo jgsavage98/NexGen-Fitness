@@ -900,7 +900,7 @@ export class DatabaseStorage implements IStorage {
             eq(chatMessages.status, 'approved') // FIXED: Added status filter for consistency
           )
         )
-        .orderBy(chatMessages.createdAt)
+        .orderBy(desc(chatMessages.createdAt))
         .limit(limit);
     } else {
       // AI context - get all group chat messages
