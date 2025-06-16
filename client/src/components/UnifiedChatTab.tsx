@@ -35,7 +35,7 @@ interface ChatMessage {
 }
 
 export default function UnifiedChatTab() {
-  const [selectedChatClient, setSelectedChatClient] = useState<string>("");
+  const [selectedChatClient, setSelectedChatClient] = useState<string>("group-chat");
   const [newMessage, setNewMessage] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const { toast } = useToast();
@@ -128,8 +128,8 @@ export default function UnifiedChatTab() {
       }
     },
     enabled: !!selectedChatClient,
-    retry: false, // Don't retry failed requests to prevent spam
-    refetchInterval: false, // Disable automatic refetching to improve performance
+    retry: 1, // Allow one retry
+    refetchInterval: 5000, // Re-enable polling every 5 seconds for real-time updates
     refetchIntervalInBackground: false,
   });
 
