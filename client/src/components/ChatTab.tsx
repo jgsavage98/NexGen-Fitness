@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { MessageCircle, Users } from "lucide-react";
+import PDFAttachment from "@/components/PDFAttachment";
 
 export default function ChatTab() {
   const [newMessage, setNewMessage] = useState("");
@@ -283,29 +284,14 @@ export default function ChatTab() {
                         {message.message}
                       </p>
                       
-                      {/* PDF Report Thumbnail */}
+                      {/* PDF Report Attachment */}
                       {message.metadata?.hasPdfReport && message.metadata?.pdfUrl && (
-                        <div className="mt-3 mb-2">
-                          <div 
-                            onClick={() => window.open(message.metadata?.pdfUrl, '_blank')}
-                            className="cursor-pointer bg-white/10 border border-primary-300/30 rounded-lg p-3 hover:bg-white/20 transition-colors group"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-12 h-12 bg-primary-500/20 rounded-lg flex items-center justify-center border border-primary-300/30">
-                                <i className="fas fa-file-pdf text-primary-300 text-xl"></i>
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-primary-100 font-medium text-sm">
-                                  {message.metadata?.reportTitle || 'Progress Report'}
-                                </p>
-                                <p className="text-primary-300/70 text-xs">
-                                  Click to download PDF report
-                                </p>
-                              </div>
-                              <i className="fas fa-download text-primary-300/70 group-hover:text-primary-300 transition-colors"></i>
-                            </div>
-                          </div>
-                        </div>
+                        <PDFAttachment
+                          pdfPath={message.metadata.pdfUrl}
+                          thumbnailPath={message.metadata?.thumbnailUrl}
+                          filename={message.metadata?.reportFilename || 'Progress_Report.pdf'}
+                          title={message.metadata?.reportTitle || 'Weekly Progress Report'}
+                        />
                       )}
                       
                       <span className="text-xs text-primary-300">
