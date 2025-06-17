@@ -13,16 +13,17 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 17, 2025)
 
-### Automated Weekly Check-in System - FULLY OPERATIONAL & TESTED (1:02 PM)
+### Automated Weekly Check-in System - FULLY OPERATIONAL & CONTENT FILTERING FIXED (1:22 PM)
 - **Complete Weekly Check-in Scheduler**: Implemented comprehensive automated weekly check-in system that delivers personalized progress reviews every Tuesday at 9:00 AM Eastern Time
 - **Database Schema Integration**: Added WeeklyCheckin table with proper relations and storage methods for tracking weekly check-in history
 - **AI-Powered Progress Analysis**: Weekly check-ins analyze client's macro uploads, weight entries, goal progress, upload adherence, and individual chat history for comprehensive coaching insights
 - **Scheduler Infrastructure**: Created WeeklyCheckinScheduler class with timezone-aware cron scheduling, proper Eastern Time handling, and intelligent data gathering
 - **Manual Trigger API**: Added `/api/trainer/weekly-checkin/trigger` endpoint for Coach Chassidy to manually trigger weekly check-ins for testing
 - **Real-Time Integration**: Weekly check-ins broadcast through existing WebSocket system for instant delivery to individual chat channels
-- **Content Filtering Support**: Weekly check-in messages respect existing content filtering settings for consistent coach voice
+- **Content Filtering Integration**: Fixed critical issue where weekly check-in messages weren't applying content filtering - now properly filters excluded characters like "-" from AI responses
+- **Individual Chat Filtering Enabled**: Activated individual chat content filtering in AI settings to ensure weekly check-ins respect trainer's filtering preferences
 - **SUCCESSFULLY TESTED**: System automatically triggered at 1:02 PM ET on Tuesday, June 17th, 2025, successfully delivering weekly check-ins to Chrissy and Jonah Hill
-- **Production Ready**: Scheduler automatically starts with server boot and operates continuously, delivering comprehensive weekly progress reviews with authentic client data
+- **Production Ready**: Scheduler automatically starts with server boot and operates continuously, delivering comprehensive weekly progress reviews with authentic client data and proper content filtering
 
 ### AI Response Content Filtering System - FULLY OPERATIONAL (1:09 AM)
 - **Complete Content Filtering Implementation**: Added comprehensive responseFiltering feature allowing trainers to exclude specific words and characters from AI responses to make them appear more human-like

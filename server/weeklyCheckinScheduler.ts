@@ -239,7 +239,22 @@ class WeeklyCheckinScheduler {
       'verbose' // Always verbose for weekly check-ins
     );
 
-    return aiResponse.message;
+    // Get AI settings for content filtering
+    const { storage } = await import('./storage');
+    const { applyResponseFiltering } = await import('./openai');
+    
+    try {
+      const aiSettings = await storage.getAISettings('coach_chassidy');
+      const filterConfig = aiSettings?.responseFiltering?.individualChat;
+      
+      // Apply content filtering to the weekly check-in message
+      const filteredMessage = applyResponseFiltering(aiResponse.message, filterConfig);
+      
+      return filteredMessage;
+    } catch (error) {
+      console.error('Error applying content filtering to weekly check-in:', error);
+      return aiResponse.message; // Return unfiltered if filtering fails
+    }
   }
 
   private buildWeeklyContext(data: WeeklyCheckinData): string {
