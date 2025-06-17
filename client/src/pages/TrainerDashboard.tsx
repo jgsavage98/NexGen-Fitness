@@ -87,6 +87,51 @@ export default function TrainerDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      // Clear localStorage
+      localStorage.removeItem('demo_auth_token');
+      localStorage.removeItem('demo_user_id');
+      localStorage.removeItem('url_auth_token');
+      
+      // Clear cookies
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'connect.sid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "Logged out",
+        description: "Successfully logged out",
+      });
+      
+      // Force reload to clear auth state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+    },
+    onError: (error) => {
+      toast({
+        title: "Logout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Check if current user is authenticated
   const { data: currentUser, isLoading: userLoading } = useQuery({
     queryKey: ["/api/auth/user"],
@@ -674,24 +719,17 @@ export default function TrainerDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  // Clear all authentication data
-                  localStorage.removeItem('url_auth_token');
-                  sessionStorage.clear();
-                  
-                  // Clear all cookies
-                  document.cookie.split(";").forEach(function(c) { 
-                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-                  });
-                  
-                  // Redirect to account selection
-                  window.location.href = '/';
-                }}
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
                 className="border-gray-300 text-gray-900 bg-white hover:bg-gray-100 hover:border-gray-400 font-medium text-xs sm:text-sm"
               >
                 <LogOut className="w-4 h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Switch Account</span>
-                <span className="sm:hidden">Switch</span>
+                <span className="hidden sm:inline">
+                  {logoutMutation.isPending ? 'Logging out...' : 'Switch Account'}
+                </span>
+                <span className="sm:hidden">
+                  {logoutMutation.isPending ? 'Logout...' : 'Switch'}
+                </span>
               </Button>
             </div>
           </div>
