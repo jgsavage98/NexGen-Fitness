@@ -38,6 +38,12 @@ interface AISettings {
     responseStyle: 'supportive' | 'motivational' | 'professional' | 'friendly';
     maxResponseLength: number;
     verbosity: 'brief' | 'verbose';
+    responseFiltering: {
+      enabled: boolean;
+      excludedWords: string[];
+      excludedCharacters: string[];
+      description: string;
+    };
     responseDelay: {
       enabled: boolean;
       minSeconds: number; // minimum delay in seconds
@@ -65,6 +71,12 @@ interface AISettings {
       customKeywords: string[];
       fitnessStrictness: number; // 1-10 scale
       autoRedirect: boolean;
+    };
+    responseFiltering: {
+      enabled: boolean;
+      excludedWords: string[];
+      excludedCharacters: string[];
+      description: string;
     };
     responseDelay: {
       enabled: boolean;
@@ -138,6 +150,12 @@ export default function AISettings() {
       responseStyle: 'supportive',
       maxResponseLength: 300,
       verbosity: 'verbose',
+      responseFiltering: {
+        enabled: false,
+        excludedWords: [],
+        excludedCharacters: ['-'],
+        description: 'Remove specified words and characters to make responses appear more natural and human-like'
+      },
       responseDelay: {
         enabled: true,
         minSeconds: 15,
@@ -157,6 +175,12 @@ export default function AISettings() {
       responseStyle: 'supportive',
       confidenceThreshold: 7,
       verbosity: 'verbose',
+      responseFiltering: {
+        enabled: false,
+        excludedWords: [],
+        excludedCharacters: ['-'],
+        description: 'Remove specified words and characters to make responses appear more natural and human-like'
+      },
       contentModeration: {
         enabled: true,
         profanityFilter: true,
@@ -165,6 +189,12 @@ export default function AISettings() {
         customKeywords: ["spam", "promotion"],
         fitnessStrictness: 7,
         autoRedirect: true
+      },
+      responseFiltering: {
+        enabled: false,
+        excludedWords: [],
+        excludedCharacters: ['-'],
+        description: 'Remove specified words and characters to make responses appear more natural and human-like'
       },
       responseDelay: {
         enabled: true,
@@ -543,6 +573,84 @@ export default function AISettings() {
                     : 'AI will provide detailed explanations and comprehensive responses'
                   }
                 </p>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-medium">Response Filtering</Label>
+                    <p className="text-sm text-muted-foreground">Remove specific words or characters to make AI responses appear more natural</p>
+                  </div>
+                  <Switch
+                    checked={settings.groupChat.responseFiltering.enabled}
+                    onCheckedChange={(checked) => 
+                      setSettings(prev => ({
+                        ...prev,
+                        groupChat: {
+                          ...prev.groupChat,
+                          responseFiltering: {
+                            ...prev.groupChat.responseFiltering,
+                            enabled: checked
+                          }
+                        }
+                      }))
+                    }
+                  />
+                </div>
+
+                {settings.groupChat.responseFiltering.enabled && (
+                  <div className="space-y-4 pl-4 border-l-2 border-muted">
+                    <div className="space-y-2">
+                      <Label htmlFor="excluded-words">Excluded Words</Label>
+                      <Input
+                        id="excluded-words"
+                        placeholder="Enter words separated by commas (e.g., furthermore, however, additionally)"
+                        value={settings.groupChat.responseFiltering.excludedWords.join(', ')}
+                        onChange={(e) => {
+                          const words = e.target.value.split(',').map(w => w.trim()).filter(w => w.length > 0);
+                          setSettings(prev => ({
+                            ...prev,
+                            groupChat: {
+                              ...prev.groupChat,
+                              responseFiltering: {
+                                ...prev.groupChat.responseFiltering,
+                                excludedWords: words
+                              }
+                            }
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="excluded-characters">Excluded Characters</Label>
+                      <Input
+                        id="excluded-characters"
+                        placeholder="Enter characters separated by commas (e.g., -, *, •)"
+                        value={settings.groupChat.responseFiltering.excludedCharacters.join(', ')}
+                        onChange={(e) => {
+                          const chars = e.target.value.split(',').map(c => c.trim()).filter(c => c.length > 0);
+                          setSettings(prev => ({
+                            ...prev,
+                            groupChat: {
+                              ...prev.groupChat,
+                              responseFiltering: {
+                                ...prev.groupChat.responseFiltering,
+                                excludedCharacters: chars
+                              }
+                            }
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-md">
+                      <strong>Purpose:</strong> {settings.groupChat.responseFiltering.description}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Topic generation feature temporarily removed for system stability */}
