@@ -1644,11 +1644,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   true, // isGroupChat flag
                   verbosity
                 );
+                
+                // Apply content filtering to AI response
+                const filteredMessage = applyResponseFiltering(
+                  response.message, 
+                  aiSettings?.groupChat?.responseFiltering
+                );
               
                 // Save AI response as Coach Chassidy
                 aiResponse = await storage.saveChatMessage({
                   userId: 'coach_chassidy',
-                  message: response.message,
+                  message: filteredMessage,
                   isAI: true,
                   chatType: 'group',
                   metadata: {
@@ -1783,10 +1789,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               setTimeout(async () => {
                 try {
+                  // Apply content filtering to AI response
+                  const filteredMessage = applyResponseFiltering(
+                    response.message, 
+                    aiSettings?.individualChat?.responseFiltering
+                  );
+                  
                   // Save AI response as Coach Chassidy
                   const aiResponse = await storage.saveChatMessage({
                     userId: 'coach_chassidy',
-                    message: response.message,
+                    message: filteredMessage,
                     isAI: true,
                     chatType: 'individual',
                     status: 'approved', // Auto-approve individual chat responses
@@ -2796,8 +2808,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         false, // isGroupChat
         verbosity
       );
+      
+      // Apply content filtering to AI response
+      const filteredMessage = applyResponseFiltering(
+        aiResponse.message, 
+        aiSettings?.individualChat?.responseFiltering
+      );
 
-      res.json({ message: aiResponse.message });
+      res.json({ message: filteredMessage });
     } catch (error: any) {
       console.error('Error generating AI response:', error);
       res.status(500).json({ error: 'Failed to generate AI response' });
