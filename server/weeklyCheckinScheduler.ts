@@ -93,8 +93,8 @@ class WeeklyCheckinScheduler {
 
       const existingCheckin = await storage.getWeeklyCheckinRecord(client.id, startOfWeek);
       if (existingCheckin) {
-        console.log(`✅ Weekly check-in already sent to ${client.firstName} this week`);
-        return;
+        console.log(`✅ Weekly check-in already sent to ${client.firstName} this week - forcing new one for PDF testing`);
+        // Continue with generation for PDF testing
       }
 
       // Gather comprehensive client data for the past week
