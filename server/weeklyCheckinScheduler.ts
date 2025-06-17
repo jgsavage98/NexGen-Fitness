@@ -1,6 +1,7 @@
 import { aiCoach } from './openai.js';
 import { storage } from './storage.js';
 import { applyResponseFiltering } from './openai.js';
+import { generateProgressReportPDF, savePDFToFile, type ProgressReportData } from './pdfGenerator.js';
 
 interface WeeklyCheckinData {
   client: any;
@@ -102,12 +103,26 @@ class WeeklyCheckinScheduler {
       // Generate AI-powered weekly check-in message
       const checkinMessage = await this.generateCheckinMessage(weeklyData);
       
+      // Generate PDF progress report
+      const pdfReportData = await this.generatePDFReportData(weeklyData);
+      const pdfBuffer = await generateProgressReportPDF(pdfReportData);
+      
+      // Save PDF to file system
+      const reportDate = today.toISOString().split('T')[0];
+      const pdfFilename = `${client.firstName}_${client.lastName}_Progress_Report_${reportDate}.pdf`;
+      const pdfPath = await savePDFToFile(pdfBuffer, pdfFilename);
+      
+      console.log(`📄 Generated PDF progress report: ${pdfPath}`);
+      
+      // Create enhanced message with PDF attachment reference
+      const messageWithPDF = `${checkinMessage}\n\n📊 Your detailed progress report is attached: ${pdfFilename}`;
+      
       // Get AI settings for filtering
       const aiSettings = await storage.getAISettings('coach_chassidy');
       
       // Apply content filtering
       const filteredMessage = applyResponseFiltering(
-        checkinMessage,
+        messageWithPDF,
         aiSettings?.individualChat?.responseFiltering
       );
 
@@ -130,7 +145,8 @@ class WeeklyCheckinScheduler {
         clientId: client.id,
         checkinDate: today,
         weekStartDate: startOfWeek,
-        messageContent: filteredMessage
+        messageContent: filteredMessage,
+        pdfReportPath: pdfPath
       });
 
       // Broadcast to WebSocket clients for real-time updates
@@ -256,6 +272,8 @@ class WeeklyCheckinScheduler {
       return aiResponse.message; // Return unfiltered if filtering fails
     }
   }
+
+
 
   private buildWeeklyContext(data: WeeklyCheckinData): string {
     const { client, weeklyMacros, weeklyWeightEntries, recentChatHistory, adherenceMetrics } = data;
