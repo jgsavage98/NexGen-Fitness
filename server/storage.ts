@@ -1137,8 +1137,8 @@ export class DatabaseStorage implements IStorage {
       console.log('Storage: Found record ID:', results[0].id);
       console.log('Storage: Settings content keys:', Object.keys(results[0].settings || {}));
       console.log('Storage: Verbosity settings:', {
-        groupChatVerbosity: results[0].settings?.groupChat?.verbosity,
-        individualChatVerbosity: results[0].settings?.individualChat?.verbosity
+        groupChatVerbosity: (results[0].settings as any)?.groupChat?.verbosity,
+        individualChatVerbosity: (results[0].settings as any)?.individualChat?.verbosity
       });
     }
     
@@ -1175,8 +1175,8 @@ export class DatabaseStorage implements IStorage {
     // Verify the save by reading back
     const saved = await this.getAISettings(trainerId);
     console.log('Storage: Verification - saved verbosity settings:', {
-      groupChatVerbosity: saved?.groupChat?.verbosity,
-      individualChatVerbosity: saved?.individualChat?.verbosity
+      groupChatVerbosity: saved?.groupChat?.verbosity || 'not set',
+      individualChatVerbosity: saved?.individualChat?.verbosity || 'not set'
     });
   }
 

@@ -159,9 +159,11 @@ class WeeklyCheckinScheduler {
     
     // Get weekly weight entries
     const weeklyWeightEntries = await storage.getUserProgressEntries(client.id);
-    const recentWeightEntries = weeklyWeightEntries.filter(entry => 
-      entry.recordedAt && new Date(entry.recordedAt) >= oneWeekAgo
-    );
+    const recentWeightEntries = weeklyWeightEntries.filter(entry => {
+      if (!entry.recordedAt) return false;
+      const recordedDate = typeof entry.recordedAt === 'string' ? new Date(entry.recordedAt) : entry.recordedAt;
+      return recordedDate >= oneWeekAgo;
+    });
 
     // Get recent chat history (last 20 messages)
     const recentChatHistory = await storage.getClientChatMessages(client.id, 'coach_chassidy', 20);
@@ -227,13 +229,12 @@ class WeeklyCheckinScheduler {
 
     // Generate AI response using the coaching system
     const aiResponse = await aiCoach.getChatResponse(
-      `Generate a personalized weekly check-in message for ${client.firstName}. This is their scheduled Tuesday morning progress review.`,
+      `Generate a personalized weekly check-in message for ${client.firstName}. This is their scheduled Tuesday morning progress review. ${context}`,
       client,
       [], // No immediate message history for context
       false, // isPendingApproval
       false, // isGroupChat
-      'verbose', // Always verbose for weekly check-ins
-      context // Pass the weekly context
+      'verbose' // Always verbose for weekly check-ins
     );
 
     return aiResponse.message;
@@ -322,9 +323,9 @@ class WeeklyCheckinScheduler {
         }
         return `Weekly check-ins generated for ${clients.length} clients`;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Manual trigger error:', error);
-      return `Error: ${error.message}`;
+      return `Error: ${error?.message || 'Unknown error'}`;
     }
   }
 }

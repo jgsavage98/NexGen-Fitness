@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-// Topic scheduler import removed
+import { weeklyCheckinScheduler } from "./weeklyCheckinScheduler";
 
 const app = express();
 
@@ -90,6 +90,8 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Topic scheduler removed
+    // Start weekly check-in scheduler
+    weeklyCheckinScheduler.start();
+    log('Weekly check-in scheduler started');
   });
 })();
