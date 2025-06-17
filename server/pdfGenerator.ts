@@ -1,6 +1,7 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import fs from 'fs/promises';
 import path from 'path';
+import { fromPath } from 'pdf2pic';
 
 export interface ProgressReportData {
   client: {
@@ -474,4 +475,44 @@ export async function savePDFToFile(pdfBuffer: Buffer, filename: string): Promis
   await fs.writeFile(filePath, pdfBuffer);
   
   return `/reports/${filename}`;
+}
+
+export async function generatePDFThumbnail(pdfPath: string, filename: string): Promise<string> {
+  try {
+    // Ensure thumbnails directory exists
+    const thumbnailsDir = path.join(process.cwd(), 'public', 'thumbnails');
+    
+    try {
+      await fs.access(thumbnailsDir);
+    } catch {
+      await fs.mkdir(thumbnailsDir, { recursive: true });
+    }
+    
+    // Generate thumbnail filename
+    const thumbnailName = filename.replace('.pdf', '_thumbnail.png');
+    const thumbnailPath = path.join(thumbnailsDir, thumbnailName);
+    
+    // Convert PDF path to work with pdf2pic
+    const fullPdfPath = path.isAbsolute(pdfPath) ? pdfPath : path.join(process.cwd(), 'public', pdfPath);
+    
+    // Configure pdf2pic options
+    const convert = fromPath(fullPdfPath, {
+      density: 150,           // DPI for quality
+      saveFilename: thumbnailName.replace('.png', ''),
+      savePath: thumbnailsDir,
+      format: 'png',
+      width: 300,            // Thumbnail width
+      height: 390            // Thumbnail height (A4 ratio)
+    });
+    
+    // Convert first page to thumbnail
+    await convert(1, { responseType: 'image' });
+    
+    console.log(`PDF thumbnail generated: ${thumbnailPath}`);
+    return `/thumbnails/${thumbnailName}`;
+  } catch (error) {
+    console.error('Error generating PDF thumbnail:', error);
+    // Return fallback icon if thumbnail generation fails
+    return '/icons/pdf-icon.png';
+  }
 }

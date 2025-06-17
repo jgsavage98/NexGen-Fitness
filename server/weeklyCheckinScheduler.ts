@@ -1,7 +1,7 @@
 import { aiCoach } from './openai.js';
 import { storage } from './storage.js';
 import { applyResponseFiltering } from './openai.js';
-import { generateProgressReportPDF, savePDFToFile, type ProgressReportData } from './pdfGenerator.js';
+import { generateProgressReportPDF, savePDFToFile, generatePDFThumbnail, type ProgressReportData } from './pdfGenerator.js';
 
 interface WeeklyCheckinData {
   client: any;
