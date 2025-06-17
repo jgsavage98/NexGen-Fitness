@@ -13,6 +13,15 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (June 17, 2025)
 
+### PDF Progress Reports Integrated with Weekly Check-ins - FULLY OPERATIONAL (3:15 PM)
+- **PDF Generation Integration**: Added comprehensive PDF progress report generation to weekly check-in system using existing PDF infrastructure
+- **Automated Report Creation**: Weekly check-ins now automatically generate detailed PDF reports containing client progress data, weight trends, adherence metrics, and goal tracking
+- **Enhanced Message Delivery**: Weekly check-in messages now include PDF attachment references with descriptive filenames (FirstName_LastName_Progress_Report_Date.pdf)
+- **Data Integration**: Created generatePDFReportData method to convert weekly check-in data into proper PDF format with authentic client metrics
+- **File Management**: PDF reports saved to file system with organized naming convention and metadata storage in message records
+- **Content Filtering Maintained**: PDF attachment messages respect existing content filtering preferences for consistent coach voice
+- **Production Ready**: Complete PDF generation system integrated with weekly automation, delivering comprehensive progress reports alongside personalized coaching messages
+
 ### Automated Weekly Check-in System - FULLY OPERATIONAL & CONTENT FILTERING FIXED (1:22 PM)
 - **Complete Weekly Check-in Scheduler**: Implemented comprehensive automated weekly check-in system that delivers personalized progress reviews every Tuesday at 9:00 AM Eastern Time
 - **Database Schema Integration**: Added WeeklyCheckin table with proper relations and storage methods for tracking weekly check-in history

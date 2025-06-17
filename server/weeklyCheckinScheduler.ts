@@ -374,13 +374,14 @@ class WeeklyCheckinScheduler {
   // Manual trigger for testing
   async triggerWeeklyCheckinNow(clientId?: string) {
     try {
-      console.log('🧪 Manual weekly check-in trigger activated');
+      console.log('🧪 Manual weekly check-in trigger activated - forcing PDF generation test');
       
       if (clientId) {
         const client = await storage.getUser(clientId);
         if (client) {
-          await this.generateWeeklyCheckinForClient(client);
-          return `Weekly check-in generated for ${client.firstName}`;
+          // Force generation for PDF testing by temporarily bypassing weekly check
+          await this.generateWeeklyCheckinForClientWithPDF(client);
+          return `Weekly check-in with PDF generated for ${client.firstName}`;
         } else {
           return 'Client not found';
         }
@@ -388,14 +389,86 @@ class WeeklyCheckinScheduler {
         // Generate for all clients
         const clients = await storage.getTrainerClients('coach_chassidy');
         for (const client of clients) {
-          await this.generateWeeklyCheckinForClient(client);
+          await this.generateWeeklyCheckinForClientWithPDF(client);
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
-        return `Weekly check-ins generated for ${clients.length} clients`;
+        return `Weekly check-ins with PDFs generated for ${clients.length} clients`;
       }
     } catch (error: any) {
       console.error('Manual trigger error:', error);
       return `Error: ${error?.message || 'Unknown error'}`;
+    }
+  }
+
+  // Force PDF generation for testing
+  private async generateWeeklyCheckinForClientWithPDF(client: any) {
+    try {
+      console.log(`🧪 TESTING: Generating weekly check-in with PDF for ${client.firstName} ${client.lastName}`);
+
+      // Gather comprehensive client data for the past week
+      const weeklyData = await this.gatherWeeklyClientData(client);
+      
+      // Generate AI-powered weekly check-in message
+      const checkinMessage = await this.generateCheckinMessage(weeklyData);
+      
+      // Generate PDF progress report
+      console.log('📄 Generating PDF progress report...');
+      const pdfReportData = await this.generatePDFReportData(weeklyData);
+      const pdfBuffer = await generateProgressReportPDF(pdfReportData);
+      
+      // Save PDF to file system
+      const today = new Date();
+      const reportDate = today.toISOString().split('T')[0];
+      const pdfFilename = `${client.firstName}_${client.lastName}_Progress_Report_${reportDate}_TEST.pdf`;
+      const pdfPath = await savePDFToFile(pdfBuffer, pdfFilename);
+      
+      console.log(`✅ PDF generated successfully: ${pdfPath}`);
+      
+      // Create enhanced message with PDF attachment reference
+      const messageWithPDF = `${checkinMessage}\n\n📊 Your detailed progress report is attached: ${pdfFilename}`;
+      
+      // Get AI settings for filtering
+      const aiSettings = await storage.getAISettings('coach_chassidy');
+      
+      // Apply content filtering
+      const filteredMessage = applyResponseFiltering(
+        messageWithPDF,
+        aiSettings?.individualChat?.responseFiltering
+      );
+
+      // Save the test check-in message to individual chat
+      await storage.saveChatMessage({
+        userId: client.id,
+        message: filteredMessage,
+        isAI: true,
+        status: 'approved',
+        metadata: {
+          fromCoach: true,
+          trainerId: 'coach_chassidy',
+          messageType: 'weekly_checkin_test',
+          checkinDate: today.toISOString(),
+          pdfReportPath: pdfPath,
+          pdfFilename: pdfFilename
+        }
+      });
+
+      // Broadcast to WebSocket clients for real-time updates
+      if ((global as any).wss) {
+        (global as any).wss.clients.forEach((wsClient: any) => {
+          if (wsClient.readyState === 1) { // WebSocket.OPEN
+            wsClient.send(JSON.stringify({
+              type: 'individual_message_update',
+              userId: client.id
+            }));
+          }
+        });
+      }
+
+      console.log(`✅ TEST: Weekly check-in with PDF sent to ${client.firstName}`);
+
+    } catch (error) {
+      console.error(`❌ TEST FAILED: Failed to generate weekly check-in with PDF for ${client.firstName}:`, error);
+      throw error;
     }
   }
 }
