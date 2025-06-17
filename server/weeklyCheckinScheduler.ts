@@ -424,8 +424,13 @@ class WeeklyCheckinScheduler {
       
       console.log(`✅ PDF generated successfully: ${pdfPath}`);
       
-      // Create enhanced message with PDF attachment reference
-      const messageWithPDF = `${checkinMessage}\n\n📊 Your detailed progress report is attached: ${pdfFilename}`;
+      // Generate PDF thumbnail
+      console.log('🖼️ Generating PDF thumbnail...');
+      const thumbnailPath = await generatePDFThumbnail(pdfPath, pdfFilename);
+      console.log(`✅ Thumbnail generated: ${thumbnailPath}`);
+      
+      // Create enhanced message with PDF thumbnail and download link
+      const messageWithPDF = `${checkinMessage}\n\n📊 Your detailed progress report is ready!\n\n🔗 View & Download Report: ${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}${pdfPath}`;
       
       // Get AI settings for filtering
       const aiSettings = await storage.getAISettings('coach_chassidy');
@@ -448,7 +453,8 @@ class WeeklyCheckinScheduler {
           messageType: 'weekly_checkin_test',
           checkinDate: today.toISOString(),
           pdfReportPath: pdfPath,
-          pdfFilename: pdfFilename
+          pdfFilename: pdfFilename,
+          thumbnailPath: thumbnailPath
         }
       });
 
