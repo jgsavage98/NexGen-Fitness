@@ -15,6 +15,10 @@ export interface ProgressReportData {
   weightChange: number;
   avgAdherence: number;
   reportDate: string;
+  weightHistory?: Array<{
+    weight: number;
+    recordedAt: string | Date;
+  }>;
 }
 
 export async function generateProgressReportPDF(data: ProgressReportData): Promise<Buffer> {
@@ -174,17 +178,50 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
     borderWidth: 1,
   });
   
-  // Simple weight progression
-  const startWeight = data.client.weight + Math.abs(data.weightChange);
-  const endWeight = data.currentWeight;
+  // Use authentic weight history data if available
+  const weightHistory = data.weightHistory || [];
   const goalWeight = data.client.goalWeight;
+  const currentWeight = data.currentWeight;
+  
+  // Prepare weight data points (sort by date, most recent first)
+  const sortedWeightHistory = weightHistory.sort((a, b) => {
+    const dateA = new Date(a.recordedAt);
+    const dateB = new Date(b.recordedAt);
+    return dateB.getTime() - dateA.getTime();
+  });
+  
+  // Calculate weight range for y-axis scaling
+  let minWeight = goalWeight;
+  let maxWeight = data.client.weight;
+  
+  if (sortedWeightHistory.length > 0) {
+    const weights = sortedWeightHistory.map(entry => entry.weight);
+    minWeight = Math.min(minWeight, ...weights);
+    maxWeight = Math.max(maxWeight, ...weights, currentWeight);
+  } else {
+    // Fallback if no weight history
+    minWeight = Math.min(goalWeight, currentWeight);
+    maxWeight = Math.max(data.client.weight, currentWeight);
+  }
+  
+  // Add padding to weight range
+  const weightRange = maxWeight - minWeight;
+  const padding = Math.max(2, weightRange * 0.1);
+  minWeight -= padding;
+  maxWeight += padding;
   
   // Draw y-axis labels (weights)
-  const weights = [goalWeight - 5, goalWeight, startWeight, startWeight + 5];
-  weights.forEach((weight, index) => {
-    const y = chartY + (index * chartHeight / 3);
-    page.drawText(`${weight}`, {
-      x: chartX - 25,
+  const yAxisWeights = [];
+  const numYLabels = 4;
+  for (let i = 0; i < numYLabels; i++) {
+    const weight = minWeight + (i * (maxWeight - minWeight) / (numYLabels - 1));
+    yAxisWeights.push(weight);
+  }
+  
+  yAxisWeights.forEach((weight, index) => {
+    const y = chartY + (index * chartHeight / (numYLabels - 1));
+    page.drawText(`${weight.toFixed(1)}`, {
+      x: chartX - 30,
       y: y - 3,
       size: 8,
       font: helveticaFont,
@@ -192,26 +229,8 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
     });
   });
   
-  // Draw baseline line (starting weight)
-  const baselineY = chartY + chartHeight * 0.6;
-  page.drawLine({
-    start: { x: chartX + 10, y: baselineY },
-    end: { x: chartX + chartWidth - 10, y: baselineY },
-    thickness: 1,
-    color: rgb(0.7, 0.7, 0.7),
-    dashArray: [3, 3],
-  });
-  
-  page.drawText(`Baseline: ${startWeight.toFixed(1)} lbs`, {
-    x: chartX + chartWidth - 120,
-    y: baselineY + 8,
-    size: 8,
-    font: helveticaFont,
-    color: lightGray,
-  });
-  
   // Draw goal line
-  const goalY = chartY + chartHeight * 0.2;
+  const goalY = chartY + ((goalWeight - minWeight) / (maxWeight - minWeight)) * chartHeight;
   page.drawLine({
     start: { x: chartX + 10, y: goalY },
     end: { x: chartX + chartWidth - 10, y: goalY },
@@ -222,50 +241,105 @@ export async function generateProgressReportPDF(data: ProgressReportData): Promi
   
   page.drawText(`Goal: ${goalWeight} lbs`, {
     x: chartX + chartWidth - 100,
-    y: goalY - 12,
+    y: goalY + 5,
     size: 8,
     font: helveticaFont,
     color: green,
   });
   
-  // Draw weight progress line (declining trend)
-  const progressY = chartY + chartHeight * 0.4; // Current weight position
-  page.drawLine({
-    start: { x: chartX + 10, y: baselineY },
-    end: { x: chartX + chartWidth - 10, y: progressY },
-    thickness: 3,
-    color: primaryBlue,
-  });
-  
-  // Add data points
-  for (let i = 0; i <= 4; i++) {
-    const x = chartX + 10 + (i * (chartWidth - 20) / 4);
-    const y = baselineY - (i * (baselineY - progressY) / 4);
+  // Draw weight progress line using authentic data
+  if (sortedWeightHistory.length >= 2) {
+    // Use actual weight entries for line chart
+    const dataPoints = sortedWeightHistory.slice(0, Math.min(7, sortedWeightHistory.length)); // Last 7 entries
+    dataPoints.reverse(); // Oldest to newest for left-to-right progression
+    
+    for (let i = 0; i < dataPoints.length - 1; i++) {
+      const currentPoint = dataPoints[i];
+      const nextPoint = dataPoints[i + 1];
+      
+      const x1 = chartX + 10 + (i * (chartWidth - 20) / (dataPoints.length - 1));
+      const x2 = chartX + 10 + ((i + 1) * (chartWidth - 20) / (dataPoints.length - 1));
+      
+      const y1 = chartY + ((currentPoint.weight - minWeight) / (maxWeight - minWeight)) * chartHeight;
+      const y2 = chartY + ((nextPoint.weight - minWeight) / (maxWeight - minWeight)) * chartHeight;
+      
+      // Draw line segment
+      page.drawLine({
+        start: { x: x1, y: y1 },
+        end: { x: x2, y: y2 },
+        thickness: 3,
+        color: primaryBlue,
+      });
+    }
+    
+    // Draw data points
+    dataPoints.forEach((point, index) => {
+      const x = chartX + 10 + (index * (chartWidth - 20) / (dataPoints.length - 1));
+      const y = chartY + ((point.weight - minWeight) / (maxWeight - minWeight)) * chartHeight;
+      
+      page.drawCircle({
+        x: x,
+        y: y,
+        size: 3,
+        color: primaryBlue,
+      });
+    });
+    
+    // X-axis labels using actual dates
+    const firstDate = new Date(dataPoints[0].recordedAt);
+    const lastDate = new Date(dataPoints[dataPoints.length - 1].recordedAt);
+    
+    page.drawText(firstDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), {
+      x: chartX + 5,
+      y: chartY - 12,
+      size: 8,
+      font: helveticaFont,
+      color: lightGray,
+    });
+    
+    page.drawText(lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), {
+      x: chartX + chartWidth - 35,
+      y: chartY - 12,
+      size: 8,
+      font: helveticaFont,
+      color: lightGray,
+    });
+  } else {
+    // Fallback for insufficient data - show current weight point
+    const currentY = chartY + ((currentWeight - minWeight) / (maxWeight - minWeight)) * chartHeight;
     
     page.drawCircle({
-      x: x,
-      y: y,
-      size: 3,
+      x: chartX + chartWidth / 2,
+      y: currentY,
+      size: 4,
       color: primaryBlue,
     });
+    
+    page.drawText('Insufficient data for trend', {
+      x: chartX + chartWidth / 2 - 60,
+      y: chartY + chartHeight / 2,
+      size: 9,
+      font: helveticaFont,
+      color: lightGray,
+    });
+    
+    // X-axis labels
+    page.drawText('Start', {
+      x: chartX + 5,
+      y: chartY - 12,
+      size: 8,
+      font: helveticaFont,
+      color: lightGray,
+    });
+    
+    page.drawText('Current', {
+      x: chartX + chartWidth - 35,
+      y: chartY - 12,
+      size: 8,
+      font: helveticaFont,
+      color: lightGray,
+    });
   }
-  
-  // X-axis labels
-  page.drawText('Jun 8', {
-    x: chartX + 5,
-    y: chartY - 12,
-    size: 8,
-    font: helveticaFont,
-    color: lightGray,
-  });
-  
-  page.drawText('Today', {
-    x: chartX + chartWidth - 25,
-    y: chartY - 12,
-    size: 8,
-    font: helveticaFont,
-    color: lightGray,
-  });
   
   yPosition -= 90;
   

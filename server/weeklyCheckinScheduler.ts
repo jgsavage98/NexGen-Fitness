@@ -172,9 +172,12 @@ class WeeklyCheckinScheduler {
   private async generatePDFReportData(weeklyData: WeeklyCheckinData): Promise<ProgressReportData> {
     const client = weeklyData.client;
     
+    // Get all weight entries for complete history (not just this week)
+    const allWeightEntries = await storage.getUserProgressEntries(client.id);
+    
     // Calculate current weight from recent weight entries
-    const currentWeight = weeklyData.weeklyWeightEntries.length > 0 
-      ? weeklyData.weeklyWeightEntries[0].weight 
+    const currentWeight = allWeightEntries.length > 0 
+      ? allWeightEntries[0].weight 
       : client.weight;
     
     // Calculate weight change (current vs starting weight)
@@ -190,6 +193,12 @@ class WeeklyCheckinScheduler {
       day: 'numeric'
     });
     
+    // Prepare weight history for PDF chart
+    const weightHistory = allWeightEntries.map(entry => ({
+      weight: entry.weight,
+      recordedAt: entry.recordedAt
+    }));
+    
     return {
       client: {
         firstName: client.firstName,
@@ -201,7 +210,8 @@ class WeeklyCheckinScheduler {
       currentWeight: currentWeight,
       weightChange: weightChange,
       avgAdherence: avgAdherence,
-      reportDate: reportDate
+      reportDate: reportDate,
+      weightHistory: weightHistory
     };
   }
 
