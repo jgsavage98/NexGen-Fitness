@@ -483,9 +483,9 @@ export async function generatePDFThumbnail(pdfPath: string, filename: string): P
     // This ensures the PDF attachment system works without external dependencies
     console.log(`PDF thumbnail requested for: ${filename}`);
     console.log(`Using fallback PDF icon for consistent display`);
-    return '/icons/pdf-icon.png';
+    return '/icons/pdf-icon.svg';
   } catch (error) {
     console.error('Error in PDF thumbnail function:', error);
-    return '/icons/pdf-icon.png';
+    return '/icons/pdf-icon.svg';
   }
 }
