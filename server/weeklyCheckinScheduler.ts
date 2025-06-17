@@ -136,7 +136,9 @@ class WeeklyCheckinScheduler {
           fromCoach: true,
           trainerId: 'coach_chassidy',
           messageType: 'weekly_checkin',
-          checkinDate: today.toISOString()
+          checkinDate: today.toISOString(),
+          pdfReportPath: pdfPath,
+          pdfFilename: pdfFilename
         }
       });
 
@@ -145,8 +147,7 @@ class WeeklyCheckinScheduler {
         clientId: client.id,
         checkinDate: today,
         weekStartDate: startOfWeek,
-        messageContent: filteredMessage,
-        pdfReportPath: pdfPath
+        messageContent: filteredMessage
       });
 
       // Broadcast to WebSocket clients for real-time updates
@@ -161,11 +162,47 @@ class WeeklyCheckinScheduler {
         });
       }
 
-      console.log(`✅ Weekly check-in sent to ${client.firstName}`);
+      console.log(`✅ Weekly check-in sent to ${client.firstName} with PDF report`);
 
     } catch (error) {
       console.error(`❌ Failed to generate weekly check-in for ${client.firstName}:`, error);
     }
+  }
+
+  private async generatePDFReportData(weeklyData: WeeklyCheckinData): Promise<ProgressReportData> {
+    const client = weeklyData.client;
+    
+    // Calculate current weight from recent weight entries
+    const currentWeight = weeklyData.weeklyWeightEntries.length > 0 
+      ? weeklyData.weeklyWeightEntries[0].weight 
+      : client.weight;
+    
+    // Calculate weight change (current vs starting weight)
+    const weightChange = currentWeight - client.weight;
+    
+    // Calculate average adherence percentage
+    const avgAdherence = weeklyData.adherenceMetrics.uploadPercentage;
+    
+    // Format report date
+    const reportDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    return {
+      client: {
+        firstName: client.firstName,
+        lastName: client.lastName,
+        weight: client.weight,
+        goalWeight: client.goalWeight,
+        goal: client.goal
+      },
+      currentWeight: currentWeight,
+      weightChange: weightChange,
+      avgAdherence: avgAdherence,
+      reportDate: reportDate
+    };
   }
 
   private async gatherWeeklyClientData(client: any): Promise<WeeklyCheckinData> {
@@ -272,8 +309,6 @@ class WeeklyCheckinScheduler {
       return aiResponse.message; // Return unfiltered if filtering fails
     }
   }
-
-
 
   private buildWeeklyContext(data: WeeklyCheckinData): string {
     const { client, weeklyMacros, weeklyWeightEntries, recentChatHistory, adherenceMetrics } = data;
