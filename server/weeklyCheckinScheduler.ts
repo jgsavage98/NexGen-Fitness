@@ -193,11 +193,13 @@ class WeeklyCheckinScheduler {
       day: 'numeric'
     });
     
-    // Prepare weight history for PDF chart
-    const weightHistory = allWeightEntries.map(entry => ({
-      weight: entry.weight,
-      recordedAt: entry.recordedAt
-    }));
+    // Prepare weight history for PDF chart (filter out null values)
+    const weightHistory = allWeightEntries
+      .filter(entry => entry.weight !== null && entry.recordedAt !== null)
+      .map(entry => ({
+        weight: entry.weight!,
+        recordedAt: entry.recordedAt!
+      }));
     
     return {
       client: {
