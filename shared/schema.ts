@@ -433,6 +433,24 @@ export const aiSettings = pgTable("ai_settings", {
 export type AISettings = typeof aiSettings.$inferSelect;
 export type InsertAISettings = typeof aiSettings.$inferInsert;
 
+// Weekly check-in records table
+export const weeklyCheckins = pgTable("weekly_checkins", {
+  id: serial("id").primaryKey(),
+  clientId: varchar("client_id").notNull().references(() => users.id),
+  checkinDate: timestamp("checkin_date").notNull(),
+  weekStartDate: timestamp("week_start_date").notNull(),
+  messageContent: text("message_content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWeeklyCheckinSchema = createInsertSchema(weeklyCheckins).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type WeeklyCheckin = typeof weeklyCheckins.$inferSelect;
+export type InsertWeeklyCheckin = z.infer<typeof insertWeeklyCheckinSchema>;
+
 
 export type Trainer = typeof trainers.$inferSelect;
 export type InsertTrainer = z.infer<typeof insertTrainerSchema>;

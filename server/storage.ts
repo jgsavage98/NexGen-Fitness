@@ -11,6 +11,7 @@ import {
   chatMessages,
   progressEntries,
   aiSettings,
+  weeklyCheckins,
   type User,
   type UpsertUser,
   type Trainer,
@@ -36,6 +37,8 @@ import {
   type UpdateUserProfile,
   type AISettings,
   type InsertAISettings,
+  type WeeklyCheckin,
+  type InsertWeeklyCheckin,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ne, desc, and, gte, lte, sql, asc, lt, count, or, isNotNull, not } from "drizzle-orm";
@@ -124,6 +127,11 @@ export interface IStorage {
   }): Promise<Exercise[]>;
   createExercise(exercise: InsertExercise): Promise<Exercise>;
   bulkImportExercises(exercises: InsertExercise[]): Promise<Exercise[]>;
+  
+  // Weekly check-in operations
+  getWeeklyCheckinRecord(clientId: string, weekStartDate: Date): Promise<WeeklyCheckin | undefined>;
+  saveWeeklyCheckinRecord(checkin: InsertWeeklyCheckin): Promise<WeeklyCheckin>;
+  getTrainerClients(trainerId: string): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1167,9 +1175,45 @@ export class DatabaseStorage implements IStorage {
     // Verify the save by reading back
     const saved = await this.getAISettings(trainerId);
     console.log('Storage: Verification - saved verbosity settings:', {
-      groupChatVerbosity: saved.groupChat?.verbosity,
-      individualChatVerbosity: saved.individualChat?.verbosity
+      groupChatVerbosity: saved?.groupChat?.verbosity,
+      individualChatVerbosity: saved?.individualChat?.verbosity
     });
+  }
+
+  // Weekly check-in operations
+  async getWeeklyCheckinRecord(clientId: string, weekStartDate: Date): Promise<WeeklyCheckin | undefined> {
+    const [checkin] = await db
+      .select()
+      .from(weeklyCheckins)
+      .where(
+        and(
+          eq(weeklyCheckins.clientId, clientId),
+          eq(weeklyCheckins.weekStartDate, weekStartDate)
+        )
+      );
+    return checkin;
+  }
+
+  async saveWeeklyCheckinRecord(checkin: InsertWeeklyCheckin): Promise<WeeklyCheckin> {
+    const [savedCheckin] = await db
+      .insert(weeklyCheckins)
+      .values(checkin)
+      .returning();
+    return savedCheckin;
+  }
+
+  async getTrainerClients(trainerId: string): Promise<User[]> {
+    const clients = await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          eq(users.trainerId, trainerId),
+          not(eq(users.id, trainerId)) // Exclude the trainer themselves
+        )
+      )
+      .orderBy(users.firstName);
+    return clients;
   }
 }
 
