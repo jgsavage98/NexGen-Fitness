@@ -5,6 +5,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { aiCoach, extractNutritionFromScreenshot, applyResponseFiltering } from "./openai";
+import { weeklyCheckinScheduler } from "./weeklyCheckinScheduler";
 import { seedTestData, clearTestData } from "./testData";
 import { getTodayInTimezone, getDateInTimezone, getMonthBoundsInTimezone } from "./timezone";
 import { generateProgressReportPDF, savePDFToFile, type ProgressReportData } from "./pdfGenerator";
@@ -2659,6 +2660,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error regenerating macro change:", error);
       res.status(500).json({ message: "Failed to regenerate macro change" });
+    }
+  });
+
+  // Weekly check-in endpoints
+  app.post('/api/trainer/weekly-checkin/trigger', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      if (trainerId !== 'coach_chassidy') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { clientId } = req.body;
+      const result = await weeklyCheckinScheduler.triggerWeeklyCheckinNow(clientId);
+      
+      res.json({ 
+        message: "Weekly check-in triggered successfully",
+        result
+      });
+    } catch (error) {
+      console.error("Error triggering weekly check-in:", error);
+      res.status(500).json({ message: "Failed to trigger weekly check-in" });
     }
   });
 
