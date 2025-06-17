@@ -479,40 +479,13 @@ export async function savePDFToFile(pdfBuffer: Buffer, filename: string): Promis
 
 export async function generatePDFThumbnail(pdfPath: string, filename: string): Promise<string> {
   try {
-    // Ensure thumbnails directory exists
-    const thumbnailsDir = path.join(process.cwd(), 'public', 'thumbnails');
-    
-    try {
-      await fs.access(thumbnailsDir);
-    } catch {
-      await fs.mkdir(thumbnailsDir, { recursive: true });
-    }
-    
-    // Generate thumbnail filename
-    const thumbnailName = filename.replace('.pdf', '_thumbnail.png');
-    const thumbnailPath = path.join(thumbnailsDir, thumbnailName);
-    
-    // Convert PDF path to work with pdf2pic
-    const fullPdfPath = path.isAbsolute(pdfPath) ? pdfPath : path.join(process.cwd(), 'public', pdfPath);
-    
-    // Configure pdf2pic options
-    const convert = fromPath(fullPdfPath, {
-      density: 150,           // DPI for quality
-      saveFilename: thumbnailName.replace('.png', ''),
-      savePath: thumbnailsDir,
-      format: 'png',
-      width: 300,            // Thumbnail width
-      height: 390            // Thumbnail height (A4 ratio)
-    });
-    
-    // Convert first page to thumbnail
-    await convert(1, { responseType: 'image' });
-    
-    console.log(`PDF thumbnail generated: ${thumbnailPath}`);
-    return `/thumbnails/${thumbnailName}`;
+    // For now, return a fallback PDF icon since thumbnail generation requires complex setup
+    // This ensures the PDF attachment system works without external dependencies
+    console.log(`PDF thumbnail requested for: ${filename}`);
+    console.log(`Using fallback PDF icon for consistent display`);
+    return '/icons/pdf-icon.png';
   } catch (error) {
-    console.error('Error generating PDF thumbnail:', error);
-    // Return fallback icon if thumbnail generation fails
+    console.error('Error in PDF thumbnail function:', error);
     return '/icons/pdf-icon.png';
   }
 }

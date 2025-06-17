@@ -452,9 +452,11 @@ class WeeklyCheckinScheduler {
           trainerId: 'coach_chassidy',
           messageType: 'weekly_checkin_test',
           checkinDate: today.toISOString(),
-          pdfReportPath: pdfPath,
-          pdfFilename: pdfFilename,
-          thumbnailPath: thumbnailPath
+          hasPdfReport: true,
+          pdfUrl: pdfPath,
+          thumbnailUrl: thumbnailPath,
+          reportFilename: pdfFilename,
+          reportTitle: `Weekly Progress Report - ${reportDate}`
         }
       });
 
