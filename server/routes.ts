@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { aiCoach, extractNutritionFromScreenshot } from "./openai";
+import { aiCoach, extractNutritionFromScreenshot, applyResponseFiltering } from "./openai";
 import { seedTestData, clearTestData } from "./testData";
 import { getTodayInTimezone, getDateInTimezone, getMonthBoundsInTimezone } from "./timezone";
 import { generateProgressReportPDF, savePDFToFile, type ProgressReportData } from "./pdfGenerator";

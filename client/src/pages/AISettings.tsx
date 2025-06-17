@@ -190,12 +190,6 @@ export default function AISettings() {
         fitnessStrictness: 7,
         autoRedirect: true
       },
-      responseFiltering: {
-        enabled: false,
-        excludedWords: [],
-        excludedCharacters: ['-'],
-        description: 'Remove specified words and characters to make responses appear more natural and human-like'
-      },
       responseDelay: {
         enabled: true,
         minSeconds: 30,

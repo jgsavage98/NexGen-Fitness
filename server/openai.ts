@@ -947,4 +947,43 @@ Respond with JSON:
   }
 }
 
+// Content filtering utility function
+export function applyResponseFiltering(message: string, filterConfig: any): string {
+  if (!filterConfig?.enabled) {
+    return message;
+  }
+
+  let filteredMessage = message;
+  
+  // Remove excluded words (case-insensitive)
+  if (filterConfig.excludedWords && filterConfig.excludedWords.length > 0) {
+    filterConfig.excludedWords.forEach((word: string) => {
+      if (word.trim()) {
+        const regex = new RegExp(`\\b${word.trim()}\\b`, 'gi');
+        filteredMessage = filteredMessage.replace(regex, '');
+      }
+    });
+  }
+  
+  // Remove excluded characters
+  if (filterConfig.excludedCharacters && filterConfig.excludedCharacters.length > 0) {
+    filterConfig.excludedCharacters.forEach((char: string) => {
+      if (char.trim()) {
+        const escapedChar = char.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedChar, 'g');
+        filteredMessage = filteredMessage.replace(regex, '');
+      }
+    });
+  }
+  
+  // Clean up extra whitespace and punctuation
+  filteredMessage = filteredMessage
+    .replace(/\s+/g, ' ')  // Multiple spaces to single space
+    .replace(/\s+([.,!?])/g, '$1')  // Remove space before punctuation
+    .replace(/([.,!?])\s*([.,!?])/g, '$1$2')  // Remove duplicate punctuation
+    .trim();
+    
+  return filteredMessage;
+}
+
 export const aiCoach = new AICoach();
