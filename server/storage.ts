@@ -858,16 +858,46 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Unauthorized access to client chat");
     }
 
+    // Get complete conversation including both client messages and Coach Chassidy responses
     const messages = await db
-      .select()
+      .select({
+        id: chatMessages.id,
+        userId: chatMessages.userId,
+        message: chatMessages.message,
+        isAI: chatMessages.isAI,
+        chatType: chatMessages.chatType,
+        metadata: chatMessages.metadata,
+        isRead: chatMessages.isRead,
+        status: chatMessages.status,
+        trainerId: chatMessages.trainerId,
+        trainerNotes: chatMessages.trainerNotes,
+        approvedAt: chatMessages.approvedAt,
+        originalAIResponse: chatMessages.originalAIResponse,
+        createdAt: chatMessages.createdAt,
+        user: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
       .from(chatMessages)
+      .leftJoin(users, eq(chatMessages.userId, users.id))
       .where(
         and(
-          eq(chatMessages.userId, clientId),
-          eq(chatMessages.chatType, 'individual')
+          or(
+            eq(chatMessages.userId, clientId), // Client's messages
+            and(
+              eq(chatMessages.userId, 'coach_chassidy'), // Coach Chassidy's messages
+              eq(sql`${chatMessages.metadata}->>'targetUserId'`, clientId) // targeted to this client
+            )
+          ),
+          eq(chatMessages.chatType, 'individual'),
+          eq(chatMessages.status, 'approved')
         )
       )
-      .orderBy(chatMessages.createdAt)
+      .orderBy(desc(chatMessages.createdAt))
       .limit(limit);
     
     return messages;

@@ -2909,6 +2909,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const messages = await storage.getGroupChatMessages(trainerId, parseInt(limit as string));
+      
+      // Mark group chat messages as viewed by trainer when they access them
+      await storage.markGroupChatAsViewed(trainerId);
+      
       res.json(messages.reverse()); // Return in chronological order (oldest first)
     } catch (error) {
       console.error("Error fetching group chat messages:", error);
