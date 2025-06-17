@@ -243,7 +243,7 @@ export default function ChatTab() {
       </div>
 
       {/* Chat Messages */}
-      <div className="flex-1 px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin">
+      <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin overflow-x-hidden">
         {messages.length === 0 && (
           <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
             <div className="flex items-start space-x-3">
@@ -269,18 +269,18 @@ export default function ChatTab() {
           return (
             <div key={message.id} className="mb-4">
               {isCoach ? (
-                <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
+                <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4 max-w-full">
+                  <div className="flex items-start space-x-3 min-w-0">
                     <img 
                       src={trainerProfile?.profileImageUrl ? `/${trainerProfile.profileImageUrl}` : "/attached_assets/CE Bio Image_1749399911915.jpeg"}
                       alt="Coach Chassidy"
                       className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
                     />
-                    <div className="text-sm flex-1">
+                    <div className="text-sm flex-1 min-w-0">
                       <p className="font-semibold text-primary-300 mb-1">
                         {chatType === 'group' ? 'Coach Chassidy:' : 'Message from Coach Chassidy:'}
                       </p>
-                      <p className="text-primary-100 mb-2">
+                      <p className="text-primary-100 mb-2 break-words whitespace-pre-wrap overflow-wrap-anywhere">
                         {message.message}
                       </p>
                       
@@ -301,8 +301,8 @@ export default function ChatTab() {
                   </div>
                 </div>
               ) : (
-                <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-                  <div className="flex items-start space-x-3 max-w-xs">
+                <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} max-w-full`}>
+                  <div className="flex items-start space-x-3 max-w-[85%] sm:max-w-md">
                     {!isCurrentUser && chatType === 'group' && (
                       <>
                         {message.user?.profileImageUrl ? (
@@ -321,17 +321,17 @@ export default function ChatTab() {
                       </>
                     )}
                     
-                    <div className={`rounded-lg p-4 ${
+                    <div className={`rounded-lg p-4 min-w-0 ${
                       isCurrentUser 
                         ? 'bg-primary-500 rounded-tr-none' 
                         : 'bg-gray-700 rounded-tl-none'
                     }`}>
                       {!isCurrentUser && chatType === 'group' && (
-                        <p className="text-xs text-gray-300 mb-1 font-semibold">
+                        <p className="text-xs text-gray-300 mb-1 font-semibold break-words">
                           {message.user ? `${message.user.firstName} ${message.user.lastName}` : 'Unknown User'}
                         </p>
                       )}
-                      <p className="text-sm text-white">
+                      <p className="text-sm text-white break-words whitespace-pre-wrap overflow-wrap-anywhere">
                         {message.message}
                       </p>
                       <span className="text-xs mt-2 block text-white/70">
