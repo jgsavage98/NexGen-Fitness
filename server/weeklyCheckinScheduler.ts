@@ -56,7 +56,7 @@ class WeeklyCheckinScheduler {
       const minute = etTime.getMinutes();
       
       const isTuesday = dayOfWeek === 2;
-      const isTargetTime = (hour === 8 && minute >= 55) || (hour === 9 && minute < 30) || (hour === 13 && minute >= 0); // 8:55-9:29 AM window or 1:00+ PM for testing
+      const isTargetTime = hour === 9 && minute < 30; // 9:00-9:29 AM ET window
       
       console.log(`🗓️ Time check: ${hour}:${minute.toString().padStart(2, '0')} on ${dayOfWeek === 2 ? 'Tuesday' : 'other day'}, target time: ${isTargetTime}`);
       
