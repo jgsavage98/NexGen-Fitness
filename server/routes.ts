@@ -2953,9 +2953,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         false, // isGroupChat
         verbosity
       );
+      
+      // Apply content filtering to draft response
+      const filteredDraftResponse = applyResponseFiltering(
+        aiResponse.message, 
+        aiSettings?.individualChat?.responseFiltering
+      );
 
       res.json({ 
-        draftResponse: aiResponse.message,
+        draftResponse: filteredDraftResponse,
         confidence: aiResponse.confidence 
       });
     } catch (error) {
