@@ -683,6 +683,13 @@ Current Macro Targets:
       context += `
 
 Recent Nutrition Data (Last 7 Days):`;
+      // Debug logging to see what data we have
+      console.log(`🔍 AI Context Debug - Recent Macros for ${userProfile.firstName}:`, {
+        count: userProfile.recentMacros.length,
+        dates: userProfile.recentMacros.map((m: any) => m.date),
+        todayData: userProfile.recentMacros.find((m: any) => m.date === new Date().toISOString().split('T')[0])
+      });
+      
       userProfile.recentMacros.slice(0, 5).forEach((macro: any, index: number) => {
         const date = new Date(macro.date).toLocaleDateString();
         context += `
