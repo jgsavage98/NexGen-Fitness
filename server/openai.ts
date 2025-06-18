@@ -684,10 +684,19 @@ Current Macro Targets:
 
 Recent Nutrition Data (Last 7 Days):`;
       // Debug logging to see what data we have
+      const todayDate = new Date().toISOString().split('T')[0];
+      const todayData = userProfile.recentMacros.find((m: any) => m.date === todayDate);
       console.log(`🔍 AI Context Debug - Recent Macros for ${userProfile.firstName}:`, {
         count: userProfile.recentMacros.length,
         dates: userProfile.recentMacros.map((m: any) => m.date),
-        todayData: userProfile.recentMacros.find((m: any) => m.date === new Date().toISOString().split('T')[0])
+        todayDate,
+        todayData: todayData ? {
+          date: todayData.date,
+          extractedCalories: todayData.extractedCalories,
+          extracted_calories: todayData.extracted_calories,
+          extractedProtein: todayData.extractedProtein,
+          extracted_protein: todayData.extracted_protein
+        } : 'Not found'
       });
       
       userProfile.recentMacros.slice(0, 5).forEach((macro: any, index: number) => {
@@ -767,6 +776,10 @@ Assigned Workout Plans:`;
 
 IMPORTANT: This client has NO workout completion logs in the system. Do NOT mention workout consistency, progress, or completion unless actual completion data exists.`;
 
+    // Debug log the complete context being sent to AI
+    console.log(`📝 Complete AI Context for ${userProfile.firstName}:`);
+    console.log(context.substring(0, 1000) + '...');
+    
     return context.trim();
   }
 
