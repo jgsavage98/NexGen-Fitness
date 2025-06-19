@@ -664,6 +664,7 @@ Client Profile:
 - Height: ${userProfile.height || 'not specified'} cm
 - Current Weight: ${userProfile.weight || 'not specified'} kg
 - Activity Level: ${userProfile.activityLevel || 'not specified'}
+- Timezone: ${userProfile.timezone || 'America/New_York'} (Current time: ${new Date().toLocaleString('en-US', { timeZone: userProfile.timezone || 'America/New_York' })})
 - Movement Restrictions: ${userProfile.injuries?.join(', ') || 'none reported'}
 - Available Equipment: ${userProfile.equipment?.join(', ') || 'bodyweight only'}`;
 
@@ -778,6 +779,8 @@ IMPORTANT: This client has NO workout completion logs in the system. Do NOT ment
 
     // Debug log the complete context being sent to AI
     console.log(`📝 Complete AI Context for ${userProfile.firstName}:`);
+    console.log(`Timezone: ${userProfile.timezone || 'America/New_York'}`);
+    console.log(`Current time in user's timezone: ${new Date().toLocaleString('en-US', { timeZone: userProfile.timezone || 'America/New_York' })}`);
     console.log(context.substring(0, 1000) + '...');
     
     return context.trim();
