@@ -1158,7 +1158,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const days = parseInt(req.query.days as string) || 7;
       
-      const recentMacros = await storage.getRecentMacros(userId, days);
+      // Use timezone-aware method to properly calculate date ranges
+      const recentMacros = await storage.getRecentMacrosInTimezone(userId, days);
       res.json(recentMacros);
     } catch (error) {
       console.error("Error fetching recent macros:", error);

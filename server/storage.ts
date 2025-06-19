@@ -42,6 +42,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ne, desc, and, gte, lte, sql, asc, lt, count, or, isNotNull, not } from "drizzle-orm";
+import { getTodayInTimezone, getDateInTimezone } from "./timezone";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -200,6 +201,19 @@ export class DatabaseStorage implements IStorage {
     return macros;
   }
 
+  // Timezone-aware version for getting today's macros
+  async getTodaysMacros(userId: string): Promise<DailyMacros | undefined> {
+    const user = await this.getUser(userId);
+    const userTimezone = user?.timezone || 'America/New_York';
+    const todayStr = getTodayInTimezone(userTimezone);
+    
+    const [macros] = await db
+      .select()
+      .from(dailyMacros)
+      .where(and(eq(dailyMacros.userId, userId), eq(dailyMacros.date, todayStr)));
+    return macros;
+  }
+
   async createDailyMacros(macros: InsertDailyMacros): Promise<DailyMacros> {
     const [newMacros] = await db.insert(dailyMacros).values(macros).returning();
     return newMacros;
@@ -218,6 +232,26 @@ export class DatabaseStorage implements IStorage {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
     const cutoffDateString = cutoffDate.toISOString().split('T')[0];
+    
+    return await db
+      .select()
+      .from(dailyMacros)
+      .where(and(
+        eq(dailyMacros.userId, userId),
+        sql`${dailyMacros.date} >= ${cutoffDateString}`
+      ))
+      .orderBy(desc(dailyMacros.date));
+  }
+
+  // Timezone-aware version for getting recent macros
+  async getRecentMacrosInTimezone(userId: string, days: number): Promise<DailyMacros[]> {
+    const user = await this.getUser(userId);
+    const userTimezone = user?.timezone || 'America/New_York';
+    
+    // Calculate cutoff date in user's timezone
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffDateString = getDateInTimezone(cutoffDate, userTimezone);
     
     return await db
       .select()
