@@ -221,8 +221,8 @@ class WeeklyCheckinScheduler {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    // Get weekly macro uploads
-    const weeklyMacros = await storage.getRecentMacros(client.id, 7);
+    // Get weekly macro uploads with timezone awareness
+    const weeklyMacros = await storage.getRecentMacrosInTimezone(client.id, 7);
     
     // Get weekly weight entries
     const weeklyWeightEntries = await storage.getUserProgressEntries(client.id);

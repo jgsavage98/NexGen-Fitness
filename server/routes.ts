@@ -667,8 +667,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (profileData.onboardingCompleted) {
         const macroRecommendation = await aiCoach.calculateMacroTargets(updatedUser);
         
-        // Get baseline macros from recent daily_macros entries (from screenshot upload)
-        const recentMacros = await storage.getRecentMacros(userId, 7);
+        // Get baseline macros from recent daily_macros entries with timezone awareness
+        const recentMacros = await storage.getRecentMacrosInTimezone(userId, 7);
         const baselineMacros = recentMacros.length > 0 ? {
           calories: recentMacros[0].extractedCalories || 2000,
           protein: recentMacros[0].extractedProtein || 120,
@@ -1735,11 +1735,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Get chat history for context
             const chatHistory = await storage.getUserChatMessages(userId, 10);
             
-            // Gather comprehensive client data for AI context (same as background monitoring)
-            console.log(`🔍 Gathering data for user ${userId}...`);
+            // Gather comprehensive client data for AI context with timezone awareness
+            console.log(`🔍 Gathering timezone-aware data for user ${userId}...`);
             const [macroTargets, recentMacros, progressEntries, todaysWorkout] = await Promise.all([
               storage.getUserMacroTargets(userId, new Date()),
-              storage.getRecentMacros(userId, 7), // Last 7 days of macro uploads
+              storage.getRecentMacrosInTimezone(userId, 7), // Last 7 days with timezone awareness
               storage.getUserProgressEntries(userId),
               storage.getTodaysWorkout(userId)
             ]);
@@ -3004,8 +3004,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get client progress entries
       const progressEntries = await storage.getUserProgressEntries(clientId);
       
-      // Get recent macro data
-      const recentMacros = await storage.getRecentMacros(clientId, 30);
+      // Get recent macro data with timezone awareness
+      const recentMacros = await storage.getRecentMacrosInTimezone(clientId, 30);
       
       // Get workout logs
       const workoutLogs = await storage.getUserWorkoutLogs(clientId);
@@ -3081,7 +3081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { days = '30' } = req.query;
       
       const daysCount = parseInt(days as string);
-      const macros = await storage.getRecentMacros(clientId, daysCount);
+      const macros = await storage.getRecentMacrosInTimezone(clientId, daysCount);
       
       // Get macro targets for the same period
       const macrosWithTargets = await Promise.all(
