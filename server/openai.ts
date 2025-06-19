@@ -681,12 +681,10 @@ Current Macro Targets:
 
     // Add recent macro uploads (last 7 days)
     if (userProfile.recentMacros && userProfile.recentMacros.length > 0) {
-      context += `
-
-Recent Nutrition Data (Last 7 Days):`;
-      // Debug logging to see what data we have - use timezone-aware date calculation
+      // Use timezone-aware date calculation
       const todayDate = new Date().toLocaleDateString('en-CA', { timeZone: userProfile.timezone || 'America/New_York' });
       const todayData = userProfile.recentMacros.find((m: any) => m.date === todayDate);
+      
       console.log(`🔍 AI Context Debug - Recent Macros for ${userProfile.firstName}:`, {
         count: userProfile.recentMacros.length,
         dates: userProfile.recentMacros.map((m: any) => m.date),
@@ -699,6 +697,35 @@ Recent Nutrition Data (Last 7 Days):`;
           extracted_protein: todayData.extracted_protein
         } : 'Not found'
       });
+
+      if (todayData) {
+        // Handle both camelCase and snake_case field names for compatibility
+        const todayCalories = todayData.extractedCalories || todayData.extracted_calories || 0;
+        const todayProtein = todayData.extractedProtein || todayData.extracted_protein || 0;
+        const todayCarbs = todayData.extractedCarbs || todayData.extracted_carbs || 0;
+        const todayFat = todayData.extractedFat || todayData.extracted_fat || 0;
+        const todayHunger = todayData.hungerLevel || todayData.hunger_level;
+        const todayEnergy = todayData.energyLevel || todayData.energy_level;
+        
+        context += `
+
+TODAY'S UPLOADED MACROS:
+- ${todayCalories} calories, ${todayProtein}g protein, ${todayCarbs}g carbs, ${todayFat}g fat`;
+        if (todayHunger) {
+          context += ` (Hunger: ${todayHunger}/5)`;
+        }
+        if (todayEnergy) {
+          context += ` (Energy: ${todayEnergy}/5)`;
+        }
+        context += `
+
+Recent Nutrition Data (Last 7 Days):`;
+      } else {
+        context += `
+
+Recent Nutrition Data (Last 7 Days):
+- No macro upload for today yet - encourage client to log today's nutrition`;
+      }
       
       userProfile.recentMacros.slice(0, 5).forEach((macro: any, index: number) => {
         const date = new Date(macro.date).toLocaleDateString();
