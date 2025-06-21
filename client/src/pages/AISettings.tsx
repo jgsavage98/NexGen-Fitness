@@ -121,6 +121,12 @@ interface AISettings {
     includeAIInsights: boolean;
     customMetrics: string[];
   };
+  weeklyCheckins: {
+    enabled: boolean;
+    emojiLevel: number; // 1-10 scale: 1=minimal, 5=moderate, 10=heavy emojis
+    celebrationType: 'subtle' | 'moderate' | 'enthusiastic';
+    personalTouchLevel: number; // 1-10 scale
+  };
 }
 
 export default function AISettings() {
@@ -232,6 +238,12 @@ export default function AISettings() {
       autoGeneration: true,
       includeAIInsights: true,
       customMetrics: ["Adherence Score", "Energy Levels", "Sleep Quality"]
+    },
+    weeklyCheckins: {
+      enabled: true,
+      emojiLevel: 5, // Current mid-range level
+      celebrationType: 'moderate',
+      personalTouchLevel: 7
     }
   });
 
