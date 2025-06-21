@@ -291,8 +291,14 @@ class WeeklyCheckinScheduler {
   private async generateCheckinMessage(data: WeeklyCheckinData): Promise<string> {
     const { client, weeklyMacros, weeklyWeightEntries, recentChatHistory, adherenceMetrics } = data;
 
-    // Build comprehensive context for AI
-    const context = this.buildWeeklyContext(data);
+    // Get AI settings for emoji level and other customizations
+    const aiSettings = await storage.getAISettings('coach_chassidy');
+    const emojiLevel = aiSettings?.weeklyCheckins?.emojiLevel || 5;
+    const celebrationType = aiSettings?.weeklyCheckins?.celebrationType || 'moderate';
+    const personalTouchLevel = aiSettings?.weeklyCheckins?.personalTouchLevel || 7;
+
+    // Build comprehensive context for AI with emoji instructions
+    const context = this.buildWeeklyContext(data, emojiLevel, celebrationType, personalTouchLevel);
 
     // Generate AI response using the coaching system
     const aiResponse = await aiCoach.getChatResponse(
@@ -322,7 +328,7 @@ class WeeklyCheckinScheduler {
     }
   }
 
-  private buildWeeklyContext(data: WeeklyCheckinData): string {
+  private buildWeeklyContext(data: WeeklyCheckinData, emojiLevel: number, celebrationType: string, personalTouchLevel: number): string {
     const { client, weeklyMacros, weeklyWeightEntries, recentChatHistory, adherenceMetrics } = data;
 
     let context = `WEEKLY CHECK-IN CONTEXT for ${client.firstName}:\n\n`;

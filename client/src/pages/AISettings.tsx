@@ -461,7 +461,7 @@ export default function AISettings() {
       </div>
 
       <Tabs defaultValue="group-chat" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-1">
           <TabsTrigger value="group-chat" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
             <Users className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Group Chat</span>
@@ -471,6 +471,11 @@ export default function AISettings() {
             <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Individual Chat</span>
             <span className="sm:hidden">Individual</span>
+          </TabsTrigger>
+          <TabsTrigger value="weekly-checkins" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Check-ins</span>
+            <span className="sm:hidden">Check-ins</span>
           </TabsTrigger>
           <TabsTrigger value="macros" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
             <Target className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -488,7 +493,7 @@ export default function AISettings() {
             <span className="lg:hidden">Nutrition</span>
           </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+            <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden lg:inline">Progress Reports</span>
             <span className="lg:hidden">Reports</span>
           </TabsTrigger>
@@ -1484,6 +1489,140 @@ export default function AISettings() {
                     </div>
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Weekly Check-ins Settings */}
+        <TabsContent value="weekly-checkins">
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Check-in AI Behavior</CardTitle>
+              <CardDescription>
+                Configure AI personality and emoji usage for automated weekly progress check-ins
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Enable Weekly Check-ins</Label>
+                  <p className="text-sm text-muted-foreground">AI sends automated weekly progress reviews every Tuesday</p>
+                </div>
+                <Switch
+                  checked={settings.weeklyCheckins.enabled}
+                  onCheckedChange={(checked) => 
+                    setSettings(prev => ({
+                      ...prev,
+                      weeklyCheckins: {
+                        ...prev.weeklyCheckins,
+                        enabled: checked
+                      }
+                    }))
+                  }
+                />
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-medium">Emoji Level</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Control how many emojis Coach Chassidy uses in weekly check-in messages
+                  </p>
+                  <div className="px-3">
+                    <Slider
+                      value={[settings.weeklyCheckins.emojiLevel]}
+                      onValueChange={([value]) => 
+                        setSettings(prev => ({
+                          ...prev,
+                          weeklyCheckins: {
+                            ...prev.weeklyCheckins,
+                            emojiLevel: value
+                          }
+                        }))
+                      }
+                      max={10}
+                      min={1}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>Minimal (1)</span>
+                      <span>Current: {settings.weeklyCheckins.emojiLevel}</span>
+                      <span>Heavy (10)</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                    <p className="text-sm text-gray-600">
+                      <strong>Preview:</strong> {
+                        settings.weeklyCheckins.emojiLevel <= 3 
+                          ? "Minimal emojis - mostly text-based with occasional celebration emoji"
+                          : settings.weeklyCheckins.emojiLevel <= 7
+                          ? "Moderate emojis - balanced mix of text and emojis like 💪 🎉 ⭐"
+                          : "Heavy emojis - enthusiastic with multiple emojis throughout message 🔥💪🎉⭐🚀"
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Celebration Style</Label>
+                  <Select
+                    value={settings.weeklyCheckins.celebrationType}
+                    onValueChange={(value) => 
+                      setSettings(prev => ({
+                        ...prev,
+                        weeklyCheckins: {
+                          ...prev.weeklyCheckins,
+                          celebrationType: value as 'subtle' | 'moderate' | 'enthusiastic'
+                        }
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="subtle">Subtle - Calm acknowledgment of progress</SelectItem>
+                      <SelectItem value="moderate">Moderate - Encouraging celebration of wins</SelectItem>
+                      <SelectItem value="enthusiastic">Enthusiastic - High-energy motivation</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-base font-medium">Personal Touch Level</Label>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      How personalized and detailed should the check-in messages be
+                    </p>
+                    <div className="px-3">
+                      <Slider
+                        value={[settings.weeklyCheckins.personalTouchLevel]}
+                        onValueChange={([value]) => 
+                          setSettings(prev => ({
+                            ...prev,
+                            weeklyCheckins: {
+                              ...prev.weeklyCheckins,
+                              personalTouchLevel: value
+                            }
+                          }))
+                        }
+                        max={10}
+                        min={1}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                        <span>Brief</span>
+                        <span>Level: {settings.weeklyCheckins.personalTouchLevel}</span>
+                        <span>Detailed</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
