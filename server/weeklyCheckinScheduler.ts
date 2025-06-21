@@ -311,11 +311,9 @@ class WeeklyCheckinScheduler {
     );
 
     // Get AI settings for content filtering
-    const { storage } = await import('./storage');
     const { applyResponseFiltering } = await import('./openai');
     
     try {
-      const aiSettings = await storage.getAISettings('coach_chassidy');
       const filterConfig = aiSettings?.responseFiltering?.individualChat;
       
       // Apply content filtering to the weekly check-in message
@@ -384,7 +382,23 @@ class WeeklyCheckinScheduler {
     context += `- Give actionable advice for the upcoming week\n`;
     context += `- Reference specific data points to show you're paying attention\n`;
     context += `- Keep tone warm, motivational, and coach-like\n`;
-    context += `- End with a question to encourage engagement\n`;
+    context += `- End with a question to encourage engagement\n\n`;
+
+    // Add emoji level instructions
+    context += `EMOJI USAGE INSTRUCTIONS:\n`;
+    if (emojiLevel <= 3) {
+      context += `- Use MINIMAL emojis (1-2 total) - mostly text-based with occasional celebration emoji\n`;
+      context += `- Focus on clear, professional communication with very light emoji usage\n`;
+    } else if (emojiLevel <= 7) {
+      context += `- Use MODERATE emojis (3-5 total) - balanced mix of text and emojis like 💪 🎉 ⭐\n`;
+      context += `- Include emojis for key celebrations, motivation, and emphasis points\n`;
+    } else {
+      context += `- Use HEAVY emojis (6+ total) - enthusiastic with multiple emojis throughout message 🔥💪🎉⭐🚀\n`;
+      context += `- Be energetic and expressive with frequent emoji usage for maximum motivation\n`;
+    }
+    
+    context += `- Celebration style: ${celebrationType} approach to acknowledging progress\n`;
+    context += `- Personal touch level: ${personalTouchLevel}/10 (higher = more detailed and personalized)\n`;
 
     return context;
   }

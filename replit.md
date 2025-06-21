@@ -11,6 +11,17 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 - Voice message transcription
 - Automated topic generation for group discussions
 
+## Recent Changes (June 21, 2025)
+
+### Weekly Check-in Emoji Control System - FULLY OPERATIONAL (5:44 PM)
+- **Complete Emoji Level Control**: Implemented comprehensive emoji control system for weekly check-ins with 1-10 scale slider in AI Settings
+- **Three-Tier Emoji System**: Low (1-3), moderate (4-7), and heavy (8-10) emoji usage with specific count guidelines and preview descriptions
+- **AI Settings Interface Enhanced**: Added new "Weekly Check-ins" tab with emoji level slider, celebration style dropdown, and personal touch level controls
+- **Backend Integration Complete**: Updated weekly check-in scheduler to incorporate emoji settings from AI configuration into message generation prompts
+- **Dynamic AI Instructions**: Context builder now includes emoji usage instructions that adjust based on trainer's configured emoji level preference
+- **Comprehensive Customization**: Full control over celebration style (subtle/moderate/enthusiastic) and personal touch level (1-10 detail scale)
+- **Production Ready**: Emoji control system fully integrated into existing weekly check-in automation with real-time settings application
+
 ## Recent Changes (June 20, 2025)
 
 ### New Client Account Created - Angie Varrecchio (5:25 PM)
