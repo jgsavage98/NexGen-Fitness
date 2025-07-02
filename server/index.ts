@@ -87,11 +87,12 @@ app.use((req, res, next) => {
   const isLocalMac = process.platform === 'darwin' && process.env.NODE_ENV === 'development';
   const host = isLocalMac ? '127.0.0.1' : '0.0.0.0';
   
-  server.listen({
-    port,
-    host,
-    reusePort: true,
-  }, () => {
+  // Remove reusePort for macOS compatibility
+  const listenOptions = isLocalMac 
+    ? { port, host }
+    : { port, host, reusePort: true };
+  
+  server.listen(listenOptions, () => {
     log(`serving on port ${port}`);
     
     // Start weekly check-in scheduler
