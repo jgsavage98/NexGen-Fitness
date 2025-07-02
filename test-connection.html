@@ -21,14 +21,14 @@
     <div id="results"></div>
 
     <script>
-        const API_BASE_URL = 'https://e2507793-01db-4a23-af7f-67f74c84824a-00-2d4tmxoczhs6p.janeway.replit.dev';
+        const API_BASE_URL = 'http://localhost:5001';
         
         async function testConnection() {
             const statusDiv = document.getElementById('status');
             const resultsDiv = document.getElementById('results');
             
             statusDiv.className = 'status loading';
-            statusDiv.textContent = 'Testing connection to Replit backend...';
+            statusDiv.textContent = 'Testing connection to local backend...';
             resultsDiv.innerHTML = '';
             
             try {
