@@ -1,0 +1,56 @@
+jsavage@Johns-MacBook-Pro-3 docker-config % # Test if anything is listening on port 5000
+lsof -i :5000
+
+# Try to see if the server responds with any headers
+curl -v http://localhost:5000/api/auth/available-users
+
+# Also try with 127.0.0.1 explicitly
+curl -v http://127.0.0.1:5000/api/auth/available-users
+zsh: command not found: #
+COMMAND     PID    USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+ControlCe  1624 jsavage   10u  IPv4 0xf701ac29948ac62e      0t0  TCP *:commplex-main (LISTEN)
+ControlCe  1624 jsavage   11u  IPv6  0x2ecd26ccddad78f      0t0  TCP *:commplex-main (LISTEN)
+node      41592 jsavage   31u  IPv4 0x33449216fa30bbc9      0t0  TCP localhost:commplex-main (LISTEN)
+zsh: command not found: #
+* Host localhost:5000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:5000...
+* Connected to localhost (::1) port 5000
+> GET /api/auth/available-users HTTP/1.1
+> Host: localhost:5000
+> User-Agent: curl/8.7.1
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 403 Forbidden
+< Content-Length: 0
+< Server: AirTunes/860.7.1
+< X-Apple-ProcessingTime: 0
+< X-Apple-RequestReceivedTimestamp: 42108019
+< 
+* Connection #0 to host localhost left intact
+zsh: command not found: #
+*   Trying 127.0.0.1:5000...
+* Connected to 127.0.0.1 (127.0.0.1) port 5000
+> GET /api/auth/available-users HTTP/1.1
+> Host: 127.0.0.1:5000
+> User-Agent: curl/8.7.1
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 500 Internal Server Error
+< X-Powered-By: Express
+< Access-Control-Allow-Origin: undefined
+< Access-Control-Allow-Credentials: true
+< Access-Control-Allow-Headers: Content-Type, Authorization, Content-Length, X-Requested-With
+< Access-Control-Allow-Methods: GET,PUT,POST,DELETE,OPTIONS
+< Content-Type: application/json; charset=utf-8
+< Content-Length: 49
+< ETag: W/"31-cTLyuZrTZhoNpxkqok0MBLCOsYA"
+< Date: Wed, 02 Jul 2025 16:36:20 GMT
+< Connection: keep-alive
+< Keep-Alive: timeout=5
+< 
+* Connection #0 to host 127.0.0.1 left intact
+{"message":"secret option required for sessions"}%    

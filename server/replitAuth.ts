@@ -18,7 +18,8 @@ declare module 'express-session' {
   }
 }
 
-if (!process.env.REPLIT_DOMAINS) {
+// Allow local development without REPLIT_DOMAINS
+if (!process.env.REPLIT_DOMAINS && process.env.NODE_ENV !== 'development') {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
@@ -42,7 +43,7 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || 'dev-secret-key-for-local-development',
     store: sessionStore,
     resave: true,
     saveUninitialized: true,
