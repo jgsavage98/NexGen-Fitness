@@ -82,7 +82,7 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
+  const port = process.env.PORT || 5001;
   // Use 0.0.0.0 for local Mac development to accept all interfaces, 0.0.0.0 for Replit
   const isLocalMac = process.platform === 'darwin' && process.env.NODE_ENV === 'development';
   const host = '0.0.0.0'; // Bind to all interfaces for both Mac and Replit
