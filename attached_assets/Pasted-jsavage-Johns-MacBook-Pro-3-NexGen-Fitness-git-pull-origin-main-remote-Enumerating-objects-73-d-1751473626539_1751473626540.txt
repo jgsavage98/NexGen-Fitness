@@ -1,0 +1,53 @@
+jsavage@Johns-MacBook-Pro-3 NexGen-Fitness % git pull origin main
+remote: Enumerating objects: 73, done.
+remote: Counting objects: 100% (19/19), done.
+remote: Total 73 (delta 19), reused 19 (delta 19), pack-reused 54 (from 1)
+Unpacking objects: 100% (73/73), 10.35 MiB | 6.09 MiB/s, done.
+From https://github.com/jgsavage98/NexGen-Fitness
+ * branch            main       -> FETCH_HEAD
+   e804bbc..6abfbcf  main       -> origin/main
+Updating e804bbc..6abfbcf
+Fast-forward
+ DOWNLOAD_AND_SETUP.md                                                                     | 201 +++++++++++------------------------------
+ TestApp.js                                                                                | 206 +++++++++++++++++++++++++++++++++++++++++++
+ ...e-Processing-template-Installing-Ruby-Gems-Installing--1751468678144_1751468678144.txt |  24 +++++
+ ...your-local-machine-git-clone-https-github-com-jgsavage-1751470845301_1751470845302.txt |  46 ++++++++++
+ ...act-native-run-ios-verbose-error-Error-Command-was-kil-1751467930129_1751467930130.txt |  31 +++++++
+ "attached_assets/Screenshot 2025-07-02 at 11.13.13\342\200\257AM_1751469204762.png"       | Bin 0 -> 832744 bytes
+ "attached_assets/Screenshot 2025-07-02 at 11.19.28\342\200\257AM_1751469907753.png"       | Bin 0 -> 553217 bytes
+ "attached_assets/Screenshot 2025-07-02 at 11.32.43\342\200\257AM_1751470373344.png"       | Bin 0 -> 615858 bytes
+ "attached_assets/Screenshot 2025-07-02 at 11.43.24\342\200\257AM_1751471015242.png"       | Bin 0 -> 1507584 bytes
+ "attached_assets/Screenshot 2025-07-02 at 11.47.10\342\200\257AM_1751471244204.png"       | Bin 0 -> 1566011 bytes
+ "attached_assets/Screenshot 2025-07-02 at 11.51.24\342\200\257AM_1751471495132.png"       | Bin 0 -> 1612798 bytes
+ "attached_assets/Screenshot 2025-07-02 at 11.54.25\342\200\257AM_1751471676003.png"       | Bin 0 -> 1519093 bytes
+ "attached_assets/Screenshot 2025-07-02 at 12.03.46\342\200\257PM_1751472235849.png"       | Bin 0 -> 1638014 bytes
+ "attached_assets/Screenshot 2025-07-02 at 12.08.53\342\200\257PM_1751472544462.png"       | Bin 0 -> 1778480 bytes
+ expo-setup-steps.md                                                                       |  78 ++++++++++++++++
+ manual-expo-test/App.js                                                                   |  39 ++++++++
+ manual-expo-test/app.json                                                                 |  30 +++++++
+ manual-expo-test/package.json                                                             |  20 +++++
+ mobile-setup-guide.md                                                                     |  50 +++++++++++
+ mobile/src/config/api.ts                                                                  |   6 +-
+ replit.md                                                                                 |  18 ++--
+ server/index.ts                                                                           |   6 +-
+ simple-mobile-app.js                                                                      | 206 +++++++++++++++++++++++++++++++++++++++++++
+ 23 files changed, 799 insertions(+), 162 deletions(-)
+ create mode 100644 TestApp.js
+ create mode 100644 attached_assets/Pasted--Downloading-template-Copying-template-Processing-template-Installing-Ruby-Gems-Installing--1751468678144_1751468678144.txt
+ create mode 100644 attached_assets/Pasted-jsavage-Johns-MacBook-Pro-3-Personal-On-your-local-machine-git-clone-https-github-com-jgsavage-1751470845301_1751470845302.txt
+ create mode 100644 attached_assets/Pasted-jsavage-Johns-MacBook-Pro-3-mobile-npx-react-native-run-ios-verbose-error-Error-Command-was-kil-1751467930129_1751467930130.txt
+ create mode 100644 "attached_assets/Screenshot 2025-07-02 at 11.13.13\342\200\257AM_1751469204762.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-02 at 11.19.28\342\200\257AM_1751469907753.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-02 at 11.32.43\342\200\257AM_1751470373344.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-02 at 11.43.24\342\200\257AM_1751471015242.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-02 at 11.47.10\342\200\257AM_1751471244204.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-02 at 11.51.24\342\200\257AM_1751471495132.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-02 at 11.54.25\342\200\257AM_1751471676003.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-02 at 12.03.46\342\200\257PM_1751472235849.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-02 at 12.08.53\342\200\257PM_1751472544462.png"
+ create mode 100644 expo-setup-steps.md
+ create mode 100644 manual-expo-test/App.js
+ create mode 100644 manual-expo-test/app.json
+ create mode 100644 manual-expo-test/package.json
+ create mode 100644 mobile-setup-guide.md
+ create mode 100644 simple-mobile-app.js

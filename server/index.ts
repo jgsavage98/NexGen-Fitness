@@ -83,9 +83,9 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  // Use localhost for local development, 0.0.0.0 for Replit
-  const isLocalDevelopment = process.env.NODE_ENV === 'development' && !process.env.REPLIT_DOMAINS;
-  const host = isLocalDevelopment ? 'localhost' : '0.0.0.0';
+  // Use localhost for local Mac development, 0.0.0.0 for Replit
+  const isLocalMac = process.platform === 'darwin' && process.env.NODE_ENV === 'development';
+  const host = isLocalMac ? 'localhost' : '0.0.0.0';
   
   server.listen({
     port,
