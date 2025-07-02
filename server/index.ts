@@ -83,9 +83,9 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  // Use specific network interface for local Mac development, 0.0.0.0 for Replit
+  // Use 0.0.0.0 for local Mac development to accept all interfaces, 0.0.0.0 for Replit
   const isLocalMac = process.platform === 'darwin' && process.env.NODE_ENV === 'development';
-  const host = isLocalMac ? '192.168.68.67' : '0.0.0.0';
+  const host = '0.0.0.0'; // Bind to all interfaces for both Mac and Replit
   
   // Remove reusePort for macOS compatibility
   const listenOptions = isLocalMac 
