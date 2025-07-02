@@ -17,9 +17,8 @@ cd NexGenFitnessApp
 cp -r ../mobile/src ./
 cp ../mobile/App.tsx ./
 
-# Create API configuration
-mkdir -p src/config
-echo 'export const API_BASE_URL = "http://localhost:5000";' > src/config/api.ts
+# The API configuration is already set up to connect to your Mac's IP address
+# Your mobile app will connect to: http://192.168.68.67:5000
 ```
 
 ### Step 3: Install Dependencies

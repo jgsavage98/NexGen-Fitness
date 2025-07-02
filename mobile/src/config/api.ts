@@ -1,7 +1,9 @@
 // API configuration for the mobile app
 // Points to the same backend as the web app
-export const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:5000' 
+const isDev = process.env.NODE_ENV === 'development';
+
+export const API_BASE_URL = isDev 
+  ? 'http://192.168.68.67:5000' 
   : 'https://your-production-domain.com';
 
 export const API_ENDPOINTS = {
