@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NexGen Fitness Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .loading { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; font-size: 16px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>NexGen Fitness Backend Connection Test</h1>
+    
+    <div id="status" class="status loading">Testing connection...</div>
+    
+    <button onclick="testConnection()">Test Connection Again</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const API_BASE_URL = 'https://e2507793-01db-4a23-af7f-67f74c84824a-00-2d4tmxoczhs6p.janeway.replit.dev';
+        
+        async function testConnection() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = 'Testing connection to Replit backend...';
+            resultsDiv.innerHTML = '';
+            
+            try {
+                console.log('Testing connection to:', API_BASE_URL);
+                
+                const response = await fetch(`${API_BASE_URL}/api/auth/available-users`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = `SUCCESS: Connected to backend! Found ${data.length} users`;
+                
+                resultsDiv.innerHTML = `
+                    <h3>Users Found (${data.length}):</h3>
+                    ${data.slice(0, 10).map(user => `
+                        <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 3px;">
+                            <strong>${user.firstName} ${user.lastName}</strong><br>
+                            <em>${user.email}</em><br>
+                            <small>Role: ${user.id.includes('coach') ? 'Trainer' : 'Client'}</small>
+                        </div>
+                    `).join('')}
+                    <div style="background: #d4edda; padding: 15px; margin: 15px 0; border-radius: 5px; color: #155724;">
+                        <strong>✅ Success!</strong> Your connection to the NexGen Fitness backend is working perfectly.
+                        This confirms that mobile development can access your fitness database.
+                    </div>
+                `;
+                
+            } catch (err) {
+                console.error('Connection error:', err);
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `FAILED: ${err.message}`;
+                resultsDiv.innerHTML = `<p>Error details: ${err.message}</p>`;
+            }
+        }
+        
+        // Test connection on page load
+        testConnection();
+    </script>
+</body>
+</html>
