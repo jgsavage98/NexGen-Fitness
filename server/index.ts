@@ -93,7 +93,10 @@ app.use((req, res, next) => {
     : { port, host, reusePort: true };
   
   server.listen(listenOptions, () => {
-    log(`serving on port ${port}`);
+    log(`serving on http://${host}:${port}`);
+    if (isLocalMac) {
+      log(`iOS Simulator URL: http://192.168.68.67:${port}`);
+    }
     
     // Start weekly check-in scheduler
     weeklyCheckinScheduler.start();
