@@ -1,88 +1,50 @@
-# NexGen-Fitness Mobile App Setup Guide
+# NexGen-Fitness Mobile Development Solutions
 
-## Quick Setup Instructions
+## Issue Diagnosed
+- Metro bundler connectivity issues in current environment
+- Both iOS simulator and iPhone Expo Go app failing with same network error
+- Port 8081 is accessible but Metro bundler isn't serving properly
 
-Since you're encountering Ruby/CocoaPods issues with React Native CLI, use Expo for a much simpler setup:
+## Solution Options
 
-### Step 1: Create Expo Project
+### Option 1: Web-Based Mobile View (Immediate Solution)
+Create a mobile-responsive web version that provides the same experience:
+
 ```bash
-# From your NexGen-Fitness directory
-npx create-expo-app@latest NexGenFitnessApp --template blank-typescript
-cd NexGenFitnessApp
+# Add mobile view to existing web app
+# Navigate to web app in Safari on iPhone
+# Add to Home Screen for native-like experience
 ```
 
-### Step 2: Copy Your App Code
-```bash
-# Copy your existing mobile app code
-cp -r ../mobile/src ./
-cp ../mobile/App.tsx ./
+### Option 2: Expo Web (Alternative)
+Use Expo's web capabilities to create a Progressive Web App:
 
-# The API configuration is already set up to connect to your Mac's IP address
-# Your mobile app will connect to: http://192.168.68.67:5000
+```bash
+# In your Expo project
+npx expo install react-native-web react-dom
+npx expo start --web
 ```
 
-### Step 3: Install Dependencies
+### Option 3: Local Development Environment
+If you need true native development, consider:
+
 ```bash
-# Install navigation and other dependencies for Expo
-npx expo install @react-navigation/native @react-navigation/bottom-tabs @react-navigation/native-stack
-npx expo install expo-image-picker expo-secure-store @react-native-async-storage/async-storage
-npx expo install react-native-screens react-native-safe-area-context
+# On your local Mac (not Replit)
+git clone https://github.com/jgsavage98/NexGen-Fitness
+cd NexGen-Fitness
+npm install
+npx create-expo-app@latest NexGenFitnessMobile
+# Copy mobile code and continue development locally
 ```
 
-### Step 4: Run the App
-```bash
-# Start your backend server (Terminal 1)
-cd ../
-npm run dev
+## Recommended Immediate Action
+Since your web app already works perfectly, let's enhance it with mobile-optimized views that provide the same functionality as the planned mobile app.
 
-# Start Expo (Terminal 2 - from NexGenFitnessApp directory)
-npx expo start
+This approach:
+- ✅ Uses your existing working backend
+- ✅ Bypasses Metro bundler issues
+- ✅ Provides immediate mobile access
+- ✅ Can be added to iPhone home screen as PWA
+- ✅ Maintains all existing functionality
 
-# Press 'i' to open iOS simulator
-# Or scan QR code with Expo Go app on your phone
-```
-
-## Alternative: Fix React Native CLI Issues
-
-If you prefer to stick with React Native CLI, try these fixes:
-
-### Fix Ruby/CocoaPods
-```bash
-# Update Ruby gems and CocoaPods
-sudo gem update --system
-sudo gem install cocoapods
-sudo gem install activesupport -v 7.0.0
-
-# From your NexGenFitnessMobile/ios directory
-pod cache clean --all
-pod deintegrate
-pod setup
-pod install --repo-update
-```
-
-### Install Xcode Command Line Tools
-```bash
-xcode-select --install
-sudo xcodebuild -license accept
-sudo xcodebuild -runFirstLaunch
-```
-
-## Recommended: Use Expo
-
-Expo is much simpler and avoids all the Ruby/CocoaPods/Xcode setup complexity. It's perfect for your NexGen-Fitness app and will get you running immediately.
-
-Your app will have:
-- Dashboard with macro targets
-- Real-time chat with Coach Chassidy
-- Photo upload for nutrition tracking
-- Progress monitoring
-- Full backend integration
-
-## Next Steps
-
-1. Run the Expo setup commands above
-2. Your NexGen-Fitness mobile app will connect to your existing backend
-3. Test login, chat, photo upload, and progress tracking features
-4. Deploy to app stores when ready
-
-The Expo approach will have you running in minutes instead of hours debugging environment issues.
+Would you like me to implement the mobile-optimized web views for immediate mobile access?
