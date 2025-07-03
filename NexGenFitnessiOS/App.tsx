@@ -13,6 +13,7 @@ import {
   FlatList,
   RefreshControl,
 } from 'react-native';
+import WebAppMigration from './WebAppMigration';
 
 interface User {
   id: string;
