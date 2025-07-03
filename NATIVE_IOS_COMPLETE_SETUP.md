@@ -49,21 +49,24 @@ npx react-native run-ios --device
 
 ## What You'll Get
 
-### Native iOS App Features:
-- **Professional iOS interface** optimized for iPhone 15
-- **Direct Replit connection** testing
-- **Real-time status updates** 
-- **User data display** from your fitness database
-- **Native iOS alerts and interactions**
-- **TypeScript support** for robust development
+### Complete NexGen Fitness Mobile App:
+- **Full-featured fitness app** with native iOS interface
+- **User authentication** - Select from 5 authentic users (Angie, John, Coach Chassidy, Chrissy, Jonah)
+- **Dashboard** - Overview of macros, progress, and chat activity
+- **Macro Tracking** - View nutrition entries with calories, protein, carbs, fat, hunger, and energy levels
+- **Progress Tracking** - Weight entries with visual progress indicators
+- **AI Coach Chat** - Real-time messaging with Coach Chassidy (Rachel Freiman persona)
+- **Settings** - Account management and logout functionality
+- **Pull-to-refresh** - Live data updates from Replit backend
 
-### App Interface:
-1. **NexGen Fitness title** at top
-2. **Replit URL input field** for your deployment URL
-3. **Test Connection button** 
-4. **Real-time status display**
-5. **User list** showing all 5 fitness users
-6. **Success confirmation** when connected
+### App Screens:
+1. **Login Screen** - Enter Replit URL and select user
+2. **Dashboard** - Main overview with navigation cards
+3. **Macros** - Detailed nutrition tracking view
+4. **Progress** - Weight entries and trend analysis
+5. **Chat** - Individual coaching messages from AI
+6. **Settings** - Account details and logout
+7. **Bottom Navigation** - Easy switching between screens
 
 ## Development Benefits
 
