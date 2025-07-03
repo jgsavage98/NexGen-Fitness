@@ -12,7 +12,7 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-import CompleteMigration from './CompleteMigration';
+import FinalMigration from './FinalMigration';
 
 export default function App() {
   const [apiUrl, setApiUrl] = useState('');
@@ -74,7 +74,7 @@ export default function App() {
     );
   }
 
-  return <CompleteMigration apiUrl={apiUrl} onBack={handleBack} />;
+  return <FinalMigration apiUrl={apiUrl} onBack={handleBack} />;
 }
 
 const styles = StyleSheet.create({
