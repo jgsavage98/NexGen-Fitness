@@ -15,20 +15,11 @@ import {
 import FinalMigration from './FinalMigration';
 
 export default function App() {
-  const [apiUrl, setApiUrl] = useState('');
-  const [showApiInput, setShowApiInput] = useState(true);
-
-  const handleApiSubmit = () => {
-    if (!apiUrl.trim()) {
-      Alert.alert('Error', 'Please enter a valid API URL');
-      return;
-    }
-    setShowApiInput(false);
-  };
+  const [apiUrl] = useState('https://ai-companion-jgsavage98.replit.app');
+  const [showApiInput, setShowApiInput] = useState(false);
 
   const handleBack = () => {
     setShowApiInput(true);
-    setApiUrl('');
   };
 
   if (showApiInput) {
@@ -42,18 +33,10 @@ export default function App() {
           </View>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Enter your Replit app URL:</Text>
-            <TextInput
-              style={styles.input}
-              value={apiUrl}
-              onChangeText={setApiUrl}
-              placeholder="https://your-app.replit.app"
-              placeholderTextColor="#666"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <TouchableOpacity style={styles.submitButton} onPress={handleApiSubmit}>
-              <Text style={styles.submitButtonText}>Connect to App</Text>
+            <Text style={styles.label}>Connected to Production Server:</Text>
+            <Text style={styles.urlText}>{apiUrl}</Text>
+            <TouchableOpacity style={styles.submitButton} onPress={() => setShowApiInput(false)}>
+              <Text style={styles.submitButtonText}>Launch Fitness App</Text>
             </TouchableOpacity>
           </View>
           
@@ -109,6 +92,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     marginBottom: 8,
+  },
+  urlText: {
+    fontSize: 14,
+    color: '#4CAF50',
+    backgroundColor: '#2a2a2a',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    textAlign: 'center',
   },
   input: {
     backgroundColor: '#2a2a2a',
