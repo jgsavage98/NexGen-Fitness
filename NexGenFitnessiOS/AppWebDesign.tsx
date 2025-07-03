@@ -12,7 +12,7 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-import WebAppMigration from './WebAppMigration';
+import FixedWebAppMigration from './FixedWebAppMigration';
 
 export default function App() {
   const [apiUrl, setApiUrl] = useState('');
@@ -74,7 +74,7 @@ export default function App() {
     );
   }
 
-  return <WebAppMigration apiUrl={apiUrl} onBack={handleBack} />;
+  return <FixedWebAppMigration apiUrl={apiUrl} onBack={handleBack} />;
 }
 
 const styles = StyleSheet.create({

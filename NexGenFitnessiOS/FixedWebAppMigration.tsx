@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,6 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-// Using text-based icons instead of vector icons for compatibility
 
 // Types matching your web app
 interface User {
@@ -50,12 +49,12 @@ interface Workout {
 
 type TabType = 'dashboard' | 'nutrition' | 'workout' | 'chat' | 'progress';
 
-interface WebAppMigrationProps {
+interface FixedWebAppMigrationProps {
   apiUrl: string;
   onBack: () => void;
 }
 
-const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => {
+const FixedWebAppMigration: React.FC<FixedWebAppMigrationProps> = ({ apiUrl, onBack }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -74,7 +73,7 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
       firstName: 'Angie',
       lastName: 'Varrecchio',
       email: 'angienola@yahoo.com',
-      profileImageUrl: '/angie-profile.png',
+      profileImageUrl: 'https://via.placeholder.com/50/4ade80/ffffff?text=A',
       timezone: 'America/New_York',
     },
     {
@@ -82,7 +81,7 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
       firstName: 'John',
       lastName: 'Savage',
       email: 'jgsavage98@gmail.com',
-      profileImageUrl: '/john-profile.png',
+      profileImageUrl: 'https://via.placeholder.com/50/3b82f6/ffffff?text=J',
       timezone: 'America/New_York',
     },
     {
@@ -90,7 +89,7 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
       firstName: 'Coach',
       lastName: 'Chassidy',
       email: 'coach@mindstrongfitness.com',
-      profileImageUrl: '/CE Bio Image.jpeg',
+      profileImageUrl: 'https://via.placeholder.com/50/f59e0b/ffffff?text=C',
       timezone: 'America/New_York',
     },
     {
@@ -98,7 +97,7 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
       firstName: 'Chrissy',
       lastName: 'Metz',
       email: 'chrissy@email.com',
-      profileImageUrl: '/chrissy-profile.png',
+      profileImageUrl: 'https://via.placeholder.com/50/ef4444/ffffff?text=CM',
       timezone: 'America/New_York',
     },
     {
@@ -106,65 +105,10 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
       firstName: 'Jonah',
       lastName: 'Hill',
       email: 'jonah@email.com',
-      profileImageUrl: '/jonah-profile.png',
+      profileImageUrl: 'https://via.placeholder.com/50/8b5cf6/ffffff?text=JH',
       timezone: 'America/New_York',
     },
   ];
-
-  const loadUserData = async (user: User) => {
-    try {
-      // Load macro targets (matching your web app API)
-      const targetResponse = await fetch(`${apiUrl}/api/macro-targets?date=${getTodayString()}`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (targetResponse.ok) {
-        const targets = await targetResponse.json();
-        setMacroTargets({
-          calories: targets.calories || (user.id.includes('angie') ? 1650 : user.id.includes('john') ? 2137 : 1800),
-          protein: targets.protein || (user.id.includes('angie') ? 140 : user.id.includes('john') ? 198 : 160),
-          carbs: targets.carbs || (user.id.includes('angie') ? 150 : user.id.includes('john') ? 154 : 170),
-          fat: targets.fat || (user.id.includes('angie') ? 65 : user.id.includes('john') ? 81 : 70),
-        });
-      }
-
-      // Load daily macros
-      const macroResponse = await fetch(`${apiUrl}/api/daily-macros?date=${getTodayString()}`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (macroResponse.ok) {
-        const macros = await macroResponse.json();
-        setDailyMacros(macros);
-      }
-
-      // Load workout
-      const workoutResponse = await fetch(`${apiUrl}/api/workout/today`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (workoutResponse.ok) {
-        const workoutData = await workoutResponse.json();
-        setWorkout(workoutData);
-      }
-
-      // Load unread count
-      const unreadResponse = await fetch(`${apiUrl}/api/chat/unread-count`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (unreadResponse.ok) {
-        const unreadData = await unreadResponse.json();
-        setUnreadCount(unreadData.count || 0);
-      }
-
-    } catch (error) {
-      console.log('Error loading data:', error);
-      // Set defaults for demo purposes
-      setMacroTargets({
-        calories: user.id.includes('angie') ? 1650 : user.id.includes('john') ? 2137 : 1800,
-        protein: user.id.includes('angie') ? 140 : user.id.includes('john') ? 198 : 160,
-        carbs: user.id.includes('angie') ? 150 : user.id.includes('john') ? 154 : 170,
-        fat: user.id.includes('angie') ? 65 : user.id.includes('john') ? 81 : 70,
-      });
-    }
-  };
 
   const getTodayString = () => {
     return new Date().toISOString().split('T')[0];
@@ -183,6 +127,37 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
     setCurrentUser(user);
     setShowUserSelector(false);
     loadUserData(user);
+  };
+
+  const loadUserData = async (user: User) => {
+    // Set default/sample data based on user
+    setMacroTargets({
+      calories: user.id.includes('angie') ? 1650 : user.id.includes('john') ? 2137 : 1800,
+      protein: user.id.includes('angie') ? 140 : user.id.includes('john') ? 198 : 160,
+      carbs: user.id.includes('angie') ? 150 : user.id.includes('john') ? 154 : 170,
+      fat: user.id.includes('angie') ? 65 : user.id.includes('john') ? 81 : 70,
+    });
+
+    // Sample daily macros for demonstration
+    if (user.id.includes('john')) {
+      setDailyMacros({
+        extractedCalories: 1890,
+        extractedProtein: 185,
+        extractedCarbs: 145,
+        extractedFat: 75,
+        hungerLevel: 3,
+        energyLevel: 4,
+        date: getTodayString(),
+      });
+    }
+
+    setWorkout({
+      id: '1',
+      name: 'Upper Body Strength',
+      exercises: ['Push-ups', 'Pull-ups', 'Bench Press'],
+    });
+
+    setUnreadCount(user.id.includes('coach') ? 0 : 5);
   };
 
   const handleRefresh = async () => {
@@ -229,7 +204,7 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
               onPress={() => handleUserSelect(user)}
             >
               <Image 
-                source={{ uri: user.profileImageUrl || 'https://via.placeholder.com/50' }}
+                source={{ uri: user.profileImageUrl }}
                 style={styles.userAvatar}
               />
               <View style={styles.userInfo}>
@@ -249,7 +224,7 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
       <View style={styles.headerLeft}>
         <TouchableOpacity onPress={() => setShowUserSelector(true)}>
           <Image 
-            source={{ uri: currentUser?.profileImageUrl || 'https://via.placeholder.com/40' }}
+            source={{ uri: currentUser?.profileImageUrl }}
             style={styles.profileImage}
           />
         </TouchableOpacity>
@@ -266,11 +241,7 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <Text style={styles.logoutIcon}>⏻</Text>
         </TouchableOpacity>
-        <Image 
-          source={{ uri: '/ignite-logo.png' }}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Text style={styles.logoText}>IGNITE</Text>
       </View>
     </View>
   );
@@ -390,7 +361,7 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
     >
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>Today's Workout</Text>
-        <Ionicons name="fitness-outline" size={20} color="#666" />
+        <Text style={styles.iconText}>💪</Text>
       </View>
       <Text style={styles.workoutName}>
         {workout?.name || 'No workout assigned'}
@@ -419,7 +390,7 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
       >
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>Progress</Text>
-          <Ionicons name="trending-up-outline" size={20} color="#666" />
+          <Text style={styles.iconText}>📈</Text>
         </View>
         <Text style={styles.cardDescription}>View your weight and measurement progress</Text>
       </TouchableOpacity>
@@ -448,29 +419,61 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
       case 'nutrition':
         return (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>Nutrition Upload</Text>
+            <Text style={styles.tabTitle}>📸 Nutrition Upload</Text>
             <Text style={styles.tabDescription}>Take a photo of your meal to track macros</Text>
+            <TouchableOpacity 
+              style={styles.featureButton}
+              onPress={() => setActiveTab('dashboard')}
+            >
+              <Text style={styles.featureButtonText}>Back to Dashboard</Text>
+            </TouchableOpacity>
           </View>
         );
       case 'workout':
         return (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>Today's Workout</Text>
+            <Text style={styles.tabTitle}>💪 Today's Workout</Text>
             <Text style={styles.tabDescription}>{workout?.name || 'No workout assigned'}</Text>
+            {workout && workout.exercises.map((exercise, index) => (
+              <Text key={index} style={styles.exerciseItem}>• {exercise}</Text>
+            ))}
+            <TouchableOpacity 
+              style={styles.featureButton}
+              onPress={() => setActiveTab('dashboard')}
+            >
+              <Text style={styles.featureButtonText}>Back to Dashboard</Text>
+            </TouchableOpacity>
           </View>
         );
       case 'chat':
         return (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>Coach Chat</Text>
+            <Text style={styles.tabTitle}>💬 Coach Chat</Text>
             <Text style={styles.tabDescription}>Messages with Coach Chassidy</Text>
+            {unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadText}>{unreadCount} unread messages</Text>
+              </View>
+            )}
+            <TouchableOpacity 
+              style={styles.featureButton}
+              onPress={() => setActiveTab('dashboard')}
+            >
+              <Text style={styles.featureButtonText}>Back to Dashboard</Text>
+            </TouchableOpacity>
           </View>
         );
       case 'progress':
         return (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>Progress Tracking</Text>
+            <Text style={styles.tabTitle}>📈 Progress Tracking</Text>
             <Text style={styles.tabDescription}>Your weight and measurement history</Text>
+            <TouchableOpacity 
+              style={styles.featureButton}
+              onPress={() => setActiveTab('dashboard')}
+            >
+              <Text style={styles.featureButtonText}>Back to Dashboard</Text>
+            </TouchableOpacity>
           </View>
         );
       default:
@@ -481,22 +484,18 @@ const WebAppMigration: React.FC<WebAppMigrationProps> = ({ apiUrl, onBack }) => 
   const renderTabNavigation = () => (
     <View style={styles.tabBar}>
       {[
-        { key: 'dashboard', icon: 'home-outline', label: 'Dashboard' },
-        { key: 'nutrition', icon: 'camera-outline', label: 'Nutrition' },
-        { key: 'workout', icon: 'fitness-outline', label: 'Workout' },
-        { key: 'chat', icon: 'chatbubble-outline', label: 'Chat' },
-        { key: 'progress', icon: 'trending-up-outline', label: 'Progress' },
+        { key: 'dashboard', icon: '🏠', label: 'Dashboard' },
+        { key: 'nutrition', icon: '📸', label: 'Nutrition' },
+        { key: 'workout', icon: '💪', label: 'Workout' },
+        { key: 'chat', icon: '💬', label: 'Chat' },
+        { key: 'progress', icon: '📈', label: 'Progress' },
       ].map((tab) => (
         <TouchableOpacity
           key={tab.key}
           style={[styles.tabItem, activeTab === tab.key && styles.tabItemActive]}
           onPress={() => setActiveTab(tab.key as TabType)}
         >
-          <Ionicons 
-            name={tab.icon as any} 
-            size={20} 
-            color={activeTab === tab.key ? '#3b82f6' : '#666'} 
-          />
+          <Text style={styles.tabIcon}>{tab.icon}</Text>
           <Text style={[
             styles.tabLabel, 
             activeTab === tab.key && styles.tabLabelActive
@@ -546,6 +545,10 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: 16,
   },
+  backIcon: {
+    fontSize: 24,
+    color: '#fff',
+  },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -580,6 +583,10 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontSize: 14,
+    color: '#666',
+  },
+  chevronIcon: {
+    fontSize: 20,
     color: '#666',
   },
   header: {
@@ -618,9 +625,14 @@ const styles = StyleSheet.create({
   logoutButton: {
     marginRight: 12,
   },
-  logo: {
-    width: 60,
-    height: 24,
+  logoutIcon: {
+    fontSize: 18,
+    color: '#666',
+  },
+  logoText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#3b82f6',
   },
   content: {
     flex: 1,
@@ -660,6 +672,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#fff',
+  },
+  iconText: {
+    fontSize: 20,
   },
   macroContent: {
     marginTop: 8,
@@ -748,11 +763,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     marginBottom: 8,
+    textAlign: 'center',
   },
   tabDescription: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    marginBottom: 20,
+  },
+  exerciseItem: {
+    fontSize: 16,
+    color: '#ccc',
+    marginBottom: 8,
+  },
+  featureButton: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  featureButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  unreadBadge: {
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  unreadText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   tabBar: {
     flexDirection: 'row',
@@ -768,10 +814,13 @@ const styles = StyleSheet.create({
   tabItemActive: {
     // Active tab styling
   },
+  tabIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+  },
   tabLabel: {
     fontSize: 12,
     color: '#666',
-    marginTop: 4,
   },
   tabLabelActive: {
     color: '#3b82f6',
@@ -794,4 +843,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default WebAppMigration;
+export default FixedWebAppMigration;
