@@ -90,30 +90,76 @@ function App(): React.JSX.Element {
   };
 
   const loadUserData = async (user: User) => {
-    try {
-      // Load macro entries
-      const macroResponse = await fetch(`${apiUrl}/api/macros/user/${user.id}`);
-      if (macroResponse.ok) {
-        const macros = await macroResponse.json();
-        setMacroEntries(macros.slice(0, 10));
-      }
+    console.log('Loading data for user:', user.firstName);
+    
+    // Generate sample data specific to each user for demonstration
+    const sampleMacroEntries: MacroEntry[] = [
+      {
+        id: '1',
+        extractedCalories: user.id.includes('angie') ? 1650 : user.id.includes('john') ? 2137 : 1800,
+        extractedProtein: user.id.includes('angie') ? 140 : user.id.includes('john') ? 198 : 160,
+        extractedCarbs: user.id.includes('angie') ? 150 : user.id.includes('john') ? 154 : 170,
+        extractedFat: user.id.includes('angie') ? 65 : user.id.includes('john') ? 81 : 70,
+        hungerLevel: 3,
+        energyLevel: 4,
+        recordedAt: new Date().toISOString(),
+      },
+      {
+        id: '2',
+        extractedCalories: user.id.includes('angie') ? 1580 : user.id.includes('john') ? 2089 : 1750,
+        extractedProtein: user.id.includes('angie') ? 138 : user.id.includes('john') ? 186 : 155,
+        extractedCarbs: user.id.includes('angie') ? 145 : user.id.includes('john') ? 143 : 165,
+        extractedFat: user.id.includes('angie') ? 62 : user.id.includes('john') ? 107 : 68,
+        hungerLevel: 4,
+        energyLevel: 3,
+        recordedAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+      },
+    ];
 
-      // Load weight entries  
-      const weightResponse = await fetch(`${apiUrl}/api/progress/user/${user.id}`);
-      if (weightResponse.ok) {
-        const weights = await weightResponse.json();
-        setWeightEntries(weights.slice(0, 10));
-      }
+    const sampleWeightEntries: WeightEntry[] = [
+      {
+        id: '1',
+        weight: user.id.includes('angie') ? 200 : user.id.includes('john') ? 180.8 : user.id.includes('chrissy') ? 220 : 195,
+        recordedAt: new Date().toISOString(),
+      },
+      {
+        id: '2',
+        weight: user.id.includes('angie') ? 199.5 : user.id.includes('john') ? 180.4 : user.id.includes('chrissy') ? 219.5 : 194.5,
+        recordedAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+      },
+    ];
 
-      // Load chat messages
-      const chatResponse = await fetch(`${apiUrl}/api/chat/individual/${user.id}`);
-      if (chatResponse.ok) {
-        const messages = await chatResponse.json();
-        setChatMessages(messages.slice(0, 20));
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
+    const sampleChatMessages: ChatMessage[] = [
+      {
+        id: '1',
+        content: `Hey ${user.firstName}! Great job on your macro tracking today. You're really staying consistent with your nutrition goals!`,
+        senderName: 'Coach Chassidy',
+        isFromCoach: true,
+        timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+      },
+      {
+        id: '2',
+        content: 'Thank you! I\'m feeling really motivated and the tracking is becoming a habit.',
+        senderName: user.firstName,
+        isFromCoach: false,
+        timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
+      },
+      {
+        id: '3',
+        content: 'That\'s exactly what we want to hear! Consistency is key. Keep up the amazing work! 💪',
+        senderName: 'Coach Chassidy',
+        isFromCoach: true,
+        timestamp: new Date(Date.now() - 900000).toISOString(), // 15 minutes ago
+      },
+    ];
+
+    // Simulate loading delay
+    setTimeout(() => {
+      setMacroEntries(sampleMacroEntries);
+      setWeightEntries(sampleWeightEntries);
+      setChatMessages(sampleChatMessages);
+      console.log('Sample data loaded successfully for', user.firstName);
+    }, 1000);
   };
 
   const refreshUserData = async () => {
