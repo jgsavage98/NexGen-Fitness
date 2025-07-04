@@ -16,13 +16,13 @@ import {
 
 interface User {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  profile_image_url?: string;
+  profileImageUrl?: string;
   timezone?: string;
-  program_start_date?: string;
-  is_trainer?: boolean;
+  programStartDate?: string;
+  isTrainer?: boolean;
 }
 
 interface MacroTarget {
@@ -77,28 +77,23 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
   // User and app state
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [showUserSelector, setShowUserSelector] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [authToken, setAuthToken] = useState<string>('');
+
+  // Data states
+  const [macroTargets, setMacroTargets] = useState<MacroTarget | null>(null);
+  const [dailyMacros, setDailyMacros] = useState<DailyMacros[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Tab navigation
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-
-  // Data state
-  const [macroTargets, setMacroTargets] = useState<MacroTarget | null>(null);
-  const [dailyMacros, setDailyMacros] = useState<DailyMacros | null>(null);
-  const [workout, setWorkout] = useState<Workout | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  // Chat state
-  const [activeChatType, setActiveChatType] = useState<ChatType>('individual');
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  // Chat states
+  const [chatType, setChatType] = useState<ChatType>('individual');
   const [newMessage, setNewMessage] = useState('');
-
-  // Trainer dashboard state
   const [clients, setClients] = useState<User[]>([]);
-
-  const scrollViewRef = useRef<ScrollView>(null);
+  const [selectedClient, setSelectedClient] = useState<User | null>(null);
 
   useEffect(() => {
     loadAvailableUsers();
@@ -106,88 +101,76 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
 
   const loadAvailableUsers = async () => {
     try {
+      setLoading(true);
       const response = await fetch(`${apiUrl}/api/auth/available-users`);
       if (response.ok) {
         const users = await response.json();
         console.log('Loaded users:', users);
         setAvailableUsers(users);
+      } else {
+        console.error('Failed to load users from API');
       }
     } catch (error) {
       console.error('Error loading users:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUserSelect = (user: User) => {
-    console.log('Selected user:', user);
     setCurrentUser(user);
     setShowUserSelector(false);
-    
-    // Determine tab layout based on user type
-    if (user.id === 'coach_chassidy') {
-      setActiveTab('trainer');
-      loadTrainerData(user);
-    } else {
-      setActiveTab('dashboard');
-      loadUserData(user);
-    }
+    loadUserData(user);
   };
 
   const loadUserData = async (user: User) => {
-    setLoading(true);
     try {
+      setLoading(true);
+      
+      // Set auth token (simulate login)
+      const token = `Bearer mock-${user.id}-token`;
+      setAuthToken(token);
+
       const headers = {
+        'Authorization': token,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user.id}`,
       };
 
-      console.log('Loading data for user:', user.id);
-
-      // Load macro targets
-      try {
-        const macroResponse = await fetch(`${apiUrl}/api/macro-targets`, { headers });
-        if (macroResponse.ok) {
-          const macroData = await macroResponse.json();
-          setMacroTargets(macroData);
-          console.log('Loaded macro targets:', macroData);
+      if (user.isTrainer) {
+        await loadTrainerData(user);
+      } else {
+        // Load macro targets
+        try {
+          const macroResponse = await fetch(`${apiUrl}/api/macro-targets`, { headers });
+          if (macroResponse.ok) {
+            const macroData = await macroResponse.json();
+            setMacroTargets(macroData);
+          }
+        } catch (error) {
+          console.log('Error loading macro targets:', error);
         }
-      } catch (error) {
-        console.error('Error loading macro targets:', error);
-      }
 
-      // Load daily macros
-      try {
-        const dailyResponse = await fetch(`${apiUrl}/api/daily-macros`, { headers });
-        if (dailyResponse.ok) {
-          const dailyData = await dailyResponse.json();
-          setDailyMacros(dailyData);
-          console.log('Loaded daily macros:', dailyData);
+        // Load daily macros
+        try {
+          const dailyResponse = await fetch(`${apiUrl}/api/daily-macros`, { headers });
+          if (dailyResponse.ok) {
+            const dailyData = await dailyResponse.json();
+            setDailyMacros(dailyData);
+          }
+        } catch (error) {
+          console.log('Error loading daily macros:', error);
         }
-      } catch (error) {
-        console.error('Error loading daily macros:', error);
-      }
 
-      // Load workout
-      try {
-        const workoutResponse = await fetch(`${apiUrl}/api/workout/today`, { headers });
-        if (workoutResponse.ok) {
-          const workoutData = await workoutResponse.json();
-          setWorkout(workoutData);
-          console.log('Loaded workout:', workoutData);
+        // Load workouts
+        try {
+          const workoutResponse = await fetch(`${apiUrl}/api/workout/today`, { headers });
+          if (workoutResponse.ok) {
+            const workoutData = await workoutResponse.json();
+            setWorkouts([workoutData]);
+          }
+        } catch (error) {
+          console.log('Error loading workouts:', error);
         }
-      } catch (error) {
-        console.error('Error loading workout:', error);
-      }
-
-      // Load unread count
-      try {
-        const unreadResponse = await fetch(`${apiUrl}/api/chat/unread-count`, { headers });
-        if (unreadResponse.ok) {
-          const unreadData = await unreadResponse.json();
-          setUnreadCount(unreadData.count || 0);
-          console.log('Loaded unread count:', unreadData.count);
-        }
-      } catch (error) {
-        console.error('Error loading unread count:', error);
       }
 
       // Load chat messages
@@ -201,140 +184,65 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
   };
 
   const loadTrainerData = async (user: User) => {
-    setLoading(true);
     try {
       const headers = {
+        'Authorization': `Bearer mock-${user.id}-token`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user.id}`,
       };
 
-      console.log('Loading trainer data for:', user.id);
-
-      // Load all users to show as clients
-      try {
-        const clientsResponse = await fetch(`${apiUrl}/api/auth/available-users`, { headers });
-        if (clientsResponse.ok) {
-          const allUsers = await clientsResponse.json();
-          const clientUsers = allUsers.filter((u: User) => u.id !== 'coach_chassidy');
-          setClients(clientUsers);
-          console.log('Loaded clients:', clientUsers);
-        }
-      } catch (error) {
-        console.error('Error loading clients:', error);
+      // Load all users for trainer
+      const allUsers = availableUsers.filter((u: User) => !u.isTrainer);
+      setClients(allUsers);
+      
+      if (allUsers.length > 0) {
+        setSelectedClient(allUsers[0]);
       }
-
-      // Load chat messages for trainer
-      await loadChatMessages(user, headers);
-
     } catch (error) {
       console.error('Error loading trainer data:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const loadChatMessages = async (user: User, headers: any) => {
     try {
-      console.log('Loading chat messages for chatType:', activeChatType);
-      
-      const response = await fetch(`${apiUrl}/api/chat/messages?chatType=${activeChatType}&limit=50`, { headers });
-      if (response.ok) {
-        const messages = await response.json();
-        console.log('Raw API response for chat messages:', messages);
-        
-        // Transform messages to expected format
-        const transformedMessages = messages.map((msg: any) => ({
-          id: msg.id?.toString() || Math.random().toString(),
-          message: msg.message || msg.content || '',
-          is_ai: msg.is_ai || msg.isFromCoach || false,
-          chat_type: msg.chat_type || activeChatType,
-          created_at: msg.created_at || msg.timestamp || new Date().toISOString(),
-          user_id: msg.user_id || msg.userId || user.id,
-          metadata: msg.metadata || {},
-          senderName: msg.is_ai ? 'Coach Chassidy' : `${user.first_name} ${user.last_name}`
-        }));
-        
-        setChatMessages(transformedMessages);
-        console.log('Transformed chat messages:', transformedMessages);
+      let url = '';
+      if (chatType === 'individual') {
+        url = `${apiUrl}/api/chat/messages`;
       } else {
-        console.error('Failed to load chat messages, status:', response.status);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
+        url = `${apiUrl}/api/chat/group-messages`;
+      }
+
+      const chatResponse = await fetch(url, { headers });
+      if (chatResponse.ok) {
+        const chatData = await chatResponse.json();
+        console.log(`Loaded ${chatType} chat messages:`, chatData.length);
+        setChatMessages(chatData);
       }
     } catch (error) {
-      console.error('Error loading chat messages:', error);
+      console.log(`Error loading ${chatType} chat messages:`, error);
     }
-  };
-
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !currentUser) return;
-
-    try {
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${currentUser.id}`,
-      };
-
-      console.log('Sending message:', { content: newMessage, chatType: activeChatType });
-
-      const response = await fetch(`${apiUrl}/api/chat/messages`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          content: newMessage,
-          message: newMessage,
-          chatType: activeChatType,
-          userId: currentUser.id,
-        }),
-      });
-
-      if (response.ok) {
-        setNewMessage('');
-        await loadChatMessages(currentUser, headers);
-        console.log('Message sent successfully');
-      } else {
-        console.error('Failed to send message, status:', response.status);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
-
-  const onRefresh = async () => {
-    if (!currentUser) return;
-    setRefreshing(true);
-    if (currentUser.id === 'coach_chassidy') {
-      await loadTrainerData(currentUser);
-    } else {
-      await loadUserData(currentUser);
-    }
-    setRefreshing(false);
   };
 
   const getProfileImageUrl = (user: User) => {
-    if (!user.profile_image_url) return null;
+    if (!user?.profileImageUrl) return '';
     
-    let imageUrl = user.profile_image_url;
-    
-    // Handle different URL formats from database
-    if (imageUrl.startsWith('/')) {
-      imageUrl = imageUrl.slice(1);
+    // Handle different URL formats
+    if (user.profileImageUrl.startsWith('http')) {
+      return user.profileImageUrl;
+    } else if (user.profileImageUrl.startsWith('/')) {
+      return `${apiUrl}${user.profileImageUrl}`;
+    } else {
+      return `${apiUrl}/screenshots/${user.profileImageUrl}`;
     }
-    
-    const fullUrl = `${apiUrl}/${imageUrl}`;
-    console.log('Profile image URL for', user.first_name, ':', fullUrl);
-    return fullUrl;
   };
 
   const renderUserSelector = () => (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-      <View style={styles.modalHeader}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.modalTitle}>Select User Account</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Select User</Text>
+        <Text style={styles.subtitle}>Choose an account to continue</Text>
       </View>
+      
       <ScrollView style={styles.userList}>
         {availableUsers.map((user) => (
           <TouchableOpacity
@@ -343,28 +251,28 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
             onPress={() => handleUserSelect(user)}
           >
             <View style={styles.userInfo}>
-              {user.profile_image_url ? (
+              {user.profileImageUrl ? (
                 <Image
                   source={{ uri: getProfileImageUrl(user) }}
                   style={styles.userAvatar}
                   onError={(error) => {
-                    console.log('Error loading profile image for', user.first_name, ':', error.nativeEvent.error);
+                    console.log('Error loading profile image for', user.firstName, ':', error.nativeEvent.error);
                   }}
                   onLoad={() => {
-                    console.log('Successfully loaded profile image for', user.first_name);
+                    console.log('Successfully loaded profile image for', user.firstName);
                   }}
                 />
               ) : (
                 <View style={styles.userAvatarPlaceholder}>
                   <Text style={styles.userAvatarText}>
-                    {user.first_name[0]}{user.last_name[0]}
+                    {user.firstName?.[0]}{user.lastName?.[0]}
                   </Text>
                 </View>
               )}
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>
-                  {user.first_name} {user.last_name}
-                  {user.is_trainer && ' (Trainer)'}
+                  {user.firstName} {user.lastName}
+                  {user.isTrainer && ' (Trainer)'}
                 </Text>
                 <Text style={styles.userEmail}>{user.email}</Text>
               </View>
@@ -379,7 +287,7 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity onPress={() => setShowUserSelector(true)} style={styles.profileSection}>
-        {currentUser?.profile_image_url ? (
+        {currentUser?.profileImageUrl ? (
           <Image
             source={{ uri: getProfileImageUrl(currentUser) }}
             style={styles.profileImage}
@@ -390,16 +298,16 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
         ) : (
           <View style={styles.profileImagePlaceholder}>
             <Text style={styles.profileImageText}>
-              {currentUser?.first_name[0]}{currentUser?.last_name[0]}
+              {currentUser?.firstName?.[0]}{currentUser?.lastName?.[0]}
             </Text>
           </View>
         )}
         <View style={styles.profileInfo}>
           <Text style={styles.profileName}>
-            {currentUser?.first_name} {currentUser?.last_name}
+            {currentUser?.firstName} {currentUser?.lastName}
           </Text>
           <Text style={styles.profileRole}>
-            {currentUser?.is_trainer ? 'Trainer Dashboard' : 'Client Dashboard'}
+            {currentUser?.isTrainer ? 'Trainer Dashboard' : 'Client Dashboard'}
           </Text>
         </View>
       </TouchableOpacity>
@@ -408,351 +316,308 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
 
   const renderTrainerDashboard = () => (
     <ScrollView 
-      style={styles.tabContent}
+      style={styles.content}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
+        <RefreshControl refreshing={refreshing} onRefresh={() => {}} />
       }
     >
-      <Text style={styles.tabTitle}>👨‍💼 Trainer Dashboard</Text>
+      <Text style={styles.sectionTitle}>Coach Chassidy Dashboard</Text>
       
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Coach Chassidy's Control Panel</Text>
-        <Text style={styles.cardDescription}>
-          Managing {clients.length} active clients with AI-powered coaching
-        </Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>My Clients ({clients.length})</Text>
+      <View style={styles.trainerSection}>
+        <Text style={styles.trainerSectionTitle}>Client Overview</Text>
         {clients.map((client) => (
-          <View key={client.id} style={styles.clientItem}>
-            {client.profile_image_url ? (
+          <View key={client.id} style={styles.clientCard}>
+            {client.profileImageUrl ? (
               <Image
                 source={{ uri: getProfileImageUrl(client) }}
                 style={styles.clientAvatar}
-                onError={(error) => {
-                  console.log('Error loading client avatar:', error.nativeEvent.error);
-                }}
               />
             ) : (
               <View style={styles.clientAvatarPlaceholder}>
                 <Text style={styles.clientAvatarText}>
-                  {client.first_name[0]}{client.last_name[0]}
+                  {client.firstName?.[0]}{client.lastName?.[0]}
                 </Text>
               </View>
             )}
-            <View style={styles.clientInfo}>
-              <Text style={styles.clientName}>{client.first_name} {client.last_name}</Text>
-              <Text style={styles.clientEmail}>{client.email}</Text>
-            </View>
-            <View style={styles.clientStatus}>
-              <Text style={styles.clientStatusText}>Active</Text>
-            </View>
+            <Text style={styles.clientName}>
+              {client.firstName} {client.lastName}
+            </Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>🎯 Coach Tools</Text>
-        <TouchableOpacity style={styles.toolButton}>
-          <Text style={styles.toolButtonText}>📊 Weekly Check-ins</Text>
-          <Text style={styles.toolButtonDesc}>Automated progress reviews</Text>
+      <View style={styles.trainerSection}>
+        <Text style={styles.trainerSectionTitle}>Chat Management</Text>
+        <TouchableOpacity 
+          style={styles.chatTypeButton}
+          onPress={() => {
+            setChatType('individual');
+            setActiveTab('chat');
+          }}
+        >
+          <Text style={styles.chatTypeButtonText}>Individual Chats</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.toolButton}>
-          <Text style={styles.toolButtonText}>⚙️ AI Settings</Text>
-          <Text style={styles.toolButtonDesc}>Customize automation & responses</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.toolButton}>
-          <Text style={styles.toolButtonText}>📈 Client Progress</Text>
-          <Text style={styles.toolButtonDesc}>View all client metrics</Text>
+        <TouchableOpacity 
+          style={styles.chatTypeButton}
+          onPress={() => {
+            setChatType('group');
+            setActiveTab('chat');
+          }}
+        >
+          <Text style={styles.chatTypeButtonText}>Group Chat</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 
-  const renderDashboard = () => {
-    if (currentUser?.id === 'coach_chassidy') {
-      return renderTrainerDashboard();
-    }
+  const renderDashboard = () => (
+    <ScrollView 
+      style={styles.content}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={() => {}} />
+      }
+    >
+      <Text style={styles.sectionTitle}>Dashboard</Text>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Today's Progress</Text>
+        <Text style={styles.cardContent}>
+          Macros: {dailyMacros.length > 0 ? 'Logged' : 'Not logged today'}
+        </Text>
+        <Text style={styles.cardContent}>
+          Workout: {workouts.length > 0 ? 'Completed' : 'Pending'}
+        </Text>
+      </View>
 
-    return (
-      <ScrollView 
-        style={styles.tabContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
-        }
-      >
-        <Text style={styles.tabTitle}>🏠 Dashboard</Text>
-        
-        {/* Macro Progress Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Today's Macros</Text>
-          {macroTargets ? (
-            <View style={styles.macroSection}>
-              <View style={styles.macroRow}>
-                <Text style={styles.macroLabel}>Calories</Text>
-                <Text style={styles.macroValue}>
-                  {dailyMacros?.extractedCalories || 0} / {macroTargets.calories}
-                </Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View style={[
-                  styles.progressFill,
-                  { 
-                    width: `${Math.min(100, (dailyMacros?.extractedCalories || 0) / macroTargets.calories * 100)}%`,
-                    backgroundColor: '#4CAF50'
-                  }
-                ]} />
-              </View>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Current Goals</Text>
+        {macroTargets ? (
+          <>
+            <Text style={styles.cardContent}>Calories: {macroTargets.calories}</Text>
+            <Text style={styles.cardContent}>Protein: {macroTargets.protein}g</Text>
+            <Text style={styles.cardContent}>Carbs: {macroTargets.carbs}g</Text>
+            <Text style={styles.cardContent}>Fat: {macroTargets.fat}g</Text>
+          </>
+        ) : (
+          <Text style={styles.cardContent}>No macro targets set</Text>
+        )}
+      </View>
+    </ScrollView>
+  );
 
-              <View style={styles.macroRow}>
-                <Text style={styles.macroLabel}>Protein</Text>
-                <Text style={styles.macroValue}>
-                  {dailyMacros?.extractedProtein || 0}g / {macroTargets.protein}g
-                </Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View style={[
-                  styles.progressFill,
-                  { 
-                    width: `${Math.min(100, (dailyMacros?.extractedProtein || 0) / macroTargets.protein * 100)}%`,
-                    backgroundColor: '#2196F3'
-                  }
-                ]} />
-              </View>
-
-              <View style={styles.macroRow}>
-                <Text style={styles.macroLabel}>Carbs</Text>
-                <Text style={styles.macroValue}>
-                  {dailyMacros?.extractedCarbs || 0}g / {macroTargets.carbs}g
-                </Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View style={[
-                  styles.progressFill,
-                  { 
-                    width: `${Math.min(100, (dailyMacros?.extractedCarbs || 0) / macroTargets.carbs * 100)}%`,
-                    backgroundColor: '#FF9800'
-                  }
-                ]} />
-              </View>
-
-              <View style={styles.macroRow}>
-                <Text style={styles.macroLabel}>Fat</Text>
-                <Text style={styles.macroValue}>
-                  {dailyMacros?.extractedFat || 0}g / {macroTargets.fat}g
-                </Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View style={[
-                  styles.progressFill,
-                  { 
-                    width: `${Math.min(100, (dailyMacros?.extractedFat || 0) / macroTargets.fat * 100)}%`,
-                    backgroundColor: '#9C27B0'
-                  }
-                ]} />
-              </View>
+  const renderNutrition = () => (
+    <ScrollView style={styles.content}>
+      <Text style={styles.sectionTitle}>Nutrition</Text>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Daily Macros</Text>
+        {dailyMacros.length > 0 ? (
+          dailyMacros.map((macro, index) => (
+            <View key={index} style={styles.macroEntry}>
+              <Text style={styles.cardContent}>Calories: {macro.extractedCalories}</Text>
+              <Text style={styles.cardContent}>Protein: {macro.extractedProtein}g</Text>
+              <Text style={styles.cardContent}>Carbs: {macro.extractedCarbs}g</Text>
+              <Text style={styles.cardContent}>Fat: {macro.extractedFat}g</Text>
             </View>
-          ) : (
-            <Text style={styles.noDataText}>No macro targets set</Text>
-          )}
-        </View>
+          ))
+        ) : (
+          <Text style={styles.cardContent}>No macros logged today</Text>
+        )}
+      </View>
+    </ScrollView>
+  );
 
-        {/* Workout Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Today's Workout</Text>
-          <Text style={styles.workoutName}>{workout?.name || 'No workout assigned'}</Text>
-        </View>
-      </ScrollView>
-    );
+  const renderWorkout = () => (
+    <ScrollView style={styles.content}>
+      <Text style={styles.sectionTitle}>Workout</Text>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Today's Workout</Text>
+        {workouts.length > 0 ? (
+          workouts.map((workout, index) => (
+            <View key={index}>
+              <Text style={styles.cardContent}>Name: {workout.name}</Text>
+              <Text style={styles.cardContent}>Exercises: {workout.exercises?.length || 0}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.cardContent}>No workout scheduled</Text>
+        )}
+      </View>
+    </ScrollView>
+  );
+
+  const sendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    try {
+      const headers = {
+        'Authorization': authToken,
+        'Content-Type': 'application/json',
+      };
+
+      const url = chatType === 'individual' 
+        ? `${apiUrl}/api/chat/messages`
+        : `${apiUrl}/api/chat/group-messages`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          message: newMessage,
+          chatType: chatType,
+        }),
+      });
+
+      if (response.ok) {
+        setNewMessage('');
+        // Reload messages
+        await loadChatMessages(currentUser!, headers);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
-  const renderChatMessages = () => {
-    return (
-      <View style={styles.chatContainer}>
-        {/* Chat Type Selector */}
+  const renderChat = () => (
+    <View style={styles.chatContainer}>
+      <View style={styles.chatHeader}>
+        <Text style={styles.sectionTitle}>
+          {chatType === 'individual' ? 'Coach Chat' : 'Group Chat'}
+        </Text>
         <View style={styles.chatTypeSelector}>
           <TouchableOpacity
-            style={[
-              styles.chatTypeButton,
-              activeChatType === 'individual' && styles.chatTypeButtonActive
-            ]}
+            style={[styles.chatTypeTab, chatType === 'individual' && styles.activeTab]}
             onPress={() => {
-              setActiveChatType('individual');
-              if (currentUser) {
-                const headers = {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${currentUser.id}`,
-                };
-                loadChatMessages(currentUser, headers);
-              }
+              setChatType('individual');
+              if (currentUser) loadChatMessages(currentUser, { 'Authorization': authToken });
             }}
           >
-            <Text style={[
-              styles.chatTypeText,
-              activeChatType === 'individual' && styles.chatTypeTextActive
-            ]}>
-              Individual Coach
+            <Text style={[styles.chatTypeTabText, chatType === 'individual' && styles.activeTabText]}>
+              Individual
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.chatTypeButton,
-              activeChatType === 'group' && styles.chatTypeButtonActive
-            ]}
+            style={[styles.chatTypeTab, chatType === 'group' && styles.activeTab]}
             onPress={() => {
-              setActiveChatType('group');
-              if (currentUser) {
-                const headers = {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${currentUser.id}`,
-                };
-                loadChatMessages(currentUser, headers);
-              }
+              setChatType('group');
+              if (currentUser) loadChatMessages(currentUser, { 'Authorization': authToken });
             }}
           >
-            <Text style={[
-              styles.chatTypeText,
-              activeChatType === 'group' && styles.chatTypeTextActive
-            ]}>
-              Group Chat
+            <Text style={[styles.chatTypeTabText, chatType === 'group' && styles.activeTabText]}>
+              Group
             </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Messages */}
-        <ScrollView style={styles.messagesContainer} ref={scrollViewRef}>
-          {chatMessages.length > 0 ? (
-            chatMessages.map((message, index) => (
-              <View key={`${message.id}-${index}`} style={styles.messageItem}>
-                <View style={styles.messageHeader}>
-                  <Text style={styles.messageSender}>
-                    {message.is_ai ? 'Coach Chassidy' : message.senderName || `${currentUser?.first_name} ${currentUser?.last_name}`}
-                  </Text>
-                  <Text style={styles.messageTime}>
-                    {new Date(message.created_at).toLocaleTimeString()}
-                  </Text>
-                </View>
-                <Text style={styles.messageContent}>{message.message}</Text>
-              </View>
-            ))
-          ) : (
-            <View style={styles.emptyMessagesContainer}>
-              <Text style={styles.emptyMessagesText}>
-                No messages in {activeChatType} chat yet
-              </Text>
-              <TouchableOpacity 
-                style={styles.refreshButton}
-                onPress={() => {
-                  if (currentUser) {
-                    const headers = {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${currentUser.id}`,
-                    };
-                    loadChatMessages(currentUser, headers);
-                  }
-                }}
-              >
-                <Text style={styles.refreshButtonText}>Refresh Messages</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </ScrollView>
-
-        {/* Message Input */}
-        <View style={styles.messageInputContainer}>
-          <TextInput
-            style={styles.messageInput}
-            value={newMessage}
-            onChangeText={setNewMessage}
-            placeholder={`Message ${activeChatType} chat...`}
-            placeholderTextColor="#666"
-            multiline
-          />
-          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-            <Text style={styles.sendButtonText}>Send</Text>
           </TouchableOpacity>
         </View>
       </View>
-    );
-  };
+
+      <FlatList
+        data={chatMessages}
+        style={styles.messagesList}
+        renderItem={({ item }) => (
+          <View style={[styles.message, item.is_ai ? styles.aiMessage : styles.userMessage]}>
+            <Text style={styles.senderName}>
+              {item.is_ai ? 'Coach Chassidy' : currentUser?.firstName || 'You'}
+            </Text>
+            <Text style={styles.messageText}>{item.message}</Text>
+            <Text style={styles.timestamp}>
+              {new Date(item.created_at).toLocaleTimeString()}
+            </Text>
+          </View>
+        )}
+        keyExtractor={(item) => item.id}
+        inverted
+      />
+
+      <View style={styles.messageInput}>
+        <TextInput
+          style={styles.textInput}
+          value={newMessage}
+          onChangeText={setNewMessage}
+          placeholder="Type a message..."
+          placeholderTextColor="#666"
+          multiline
+        />
+        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+          <Text style={styles.sendButtonText}>Send</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderProgress = () => (
+    <ScrollView style={styles.content}>
+      <Text style={styles.sectionTitle}>Progress</Text>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Weight Progress</Text>
+        <Text style={styles.cardContent}>Coming soon...</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Macro Adherence</Text>
+        <Text style={styles.cardContent}>
+          Days logged: {dailyMacros.length}
+        </Text>
+      </View>
+    </ScrollView>
+  );
 
   const renderTabContent = () => {
+    if (currentUser?.isTrainer && activeTab === 'trainer') {
+      return renderTrainerDashboard();
+    }
+
     switch (activeTab) {
       case 'dashboard':
-      case 'trainer':
         return renderDashboard();
-      case 'chat':
-        return renderChatMessages();
       case 'nutrition':
-        return (
-          <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>📸 Nutrition Upload</Text>
-            <Text style={styles.tabDescription}>Take a photo of your meal to track macros</Text>
-          </View>
-        );
+        return renderNutrition();
       case 'workout':
-        return (
-          <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>💪 Today's Workout</Text>
-            <Text style={styles.tabDescription}>{workout?.name || 'No workout assigned'}</Text>
-          </View>
-        );
+        return renderWorkout();
+      case 'chat':
+        return renderChat();
       case 'progress':
-        return (
-          <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>📈 Progress Tracking</Text>
-            <Text style={styles.tabDescription}>Your weight and measurement history</Text>
-          </View>
-        );
+        return renderProgress();
       default:
         return renderDashboard();
     }
   };
 
-  const getTabsForUser = () => {
-    if (currentUser?.id === 'coach_chassidy') {
-      return [
-        { key: 'trainer', icon: '👨‍💼', label: 'Dashboard' },
-        { key: 'chat', icon: '💬', label: 'Chat' },
-      ];
-    }
-    
-    return [
-      { key: 'dashboard', icon: '🏠', label: 'Dashboard' },
-      { key: 'nutrition', icon: '📸', label: 'Nutrition' },
-      { key: 'workout', icon: '💪', label: 'Workout' },
-      { key: 'chat', icon: '💬', label: 'Chat' },
-      { key: 'progress', icon: '📈', label: 'Progress' },
-    ];
+  const renderBottomNavigation = () => {
+    const tabs = currentUser?.isTrainer 
+      ? [
+          { key: 'dashboard', label: 'Dashboard', icon: '📊' },
+          { key: 'chat', label: 'Chat', icon: '💬' },
+          { key: 'trainer', label: 'Trainer', icon: '👨‍🏫' },
+        ]
+      : [
+          { key: 'dashboard', label: 'Dashboard', icon: '📊' },
+          { key: 'nutrition', label: 'Nutrition', icon: '🍎' },
+          { key: 'workout', label: 'Workout', icon: '💪' },
+          { key: 'chat', label: 'Chat', icon: '💬' },
+          { key: 'progress', label: 'Progress', icon: '📈' },
+        ];
+
+    return (
+      <View style={styles.bottomNav}>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.navItem, activeTab === tab.key && styles.activeNavItem]}
+            onPress={() => setActiveTab(tab.key as TabType)}
+          >
+            <Text style={styles.navIcon}>{tab.icon}</Text>
+            <Text style={[styles.navLabel, activeTab === tab.key && styles.activeNavLabel]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
   };
 
-  const renderTabNavigation = () => (
-    <View style={styles.tabBar}>
-      {getTabsForUser().map((tab) => (
-        <TouchableOpacity
-          key={tab.key}
-          style={[styles.tabItem, activeTab === tab.key && styles.tabItemActive]}
-          onPress={() => setActiveTab(tab.key as TabType)}
-        >
-          <Text style={styles.tabIcon}>{tab.icon}</Text>
-          <Text style={[
-            styles.tabLabel, 
-            activeTab === tab.key && styles.tabLabelActive
-          ]}>
-            {tab.label}
-          </Text>
-          {tab.key === 'chat' && unreadCount > 0 && (
-            <View style={styles.tabBadge}>
-              <Text style={styles.tabBadgeText}>{unreadCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
-  if (!currentUser) {
+  if (showUserSelector) {
     return renderUserSelector();
   }
 
@@ -761,45 +626,106 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
       <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
       {renderHeader()}
       {renderTabContent()}
-      {renderTabNavigation()}
+      {renderBottomNavigation()}
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',
   },
-  modalHeader: {
+  header: {
+    backgroundColor: '#2a2a2a',
+    padding: 20,
+    paddingTop: 10,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#ccc',
+  },
+  profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
-  backButton: {
-    marginRight: 16,
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
   },
-  backIcon: {
-    fontSize: 24,
+  profileImagePlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#4a4a4a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  profileImageText: {
     color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  modalTitle: {
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
   },
+  profileRole: {
+    fontSize: 14,
+    color: '#ccc',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 20,
+  },
+  card: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
+  },
+  cardContent: {
+    fontSize: 14,
+    color: '#ccc',
+    marginBottom: 5,
+  },
   userList: {
     flex: 1,
+    padding: 20,
   },
   userItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    backgroundColor: '#2a2a2a',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
   },
   userInfo: {
     flexDirection: 'row',
@@ -810,20 +736,20 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 12,
+    marginRight: 15,
   },
   userAvatarPlaceholder: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#666',
+    backgroundColor: '#4a4a4a',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 15,
   },
   userAvatarText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   userDetails: {
@@ -833,343 +759,188 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   userEmail: {
     fontSize: 14,
-    color: '#999',
+    color: '#ccc',
   },
   chevron: {
-    fontSize: 20,
-    color: '#666',
-  },
-  header: {
-    backgroundColor: '#2a2a2a',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  profileImagePlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#666',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  profileImageText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  profileRole: {
-    fontSize: 12,
-    color: '#999',
-  },
-  tabContent: {
-    flex: 1,
-    padding: 16,
-  },
-  tabTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-  },
-  tabDescription: {
-    fontSize: 16,
-    color: '#999',
-    marginBottom: 16,
-  },
-  card: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 12,
+    color: '#ccc',
   },
-  cardDescription: {
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 8,
+  macroEntry: {
+    marginBottom: 10,
   },
-  macroSection: {
-    flex: 1,
+  trainerSection: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
   },
-  macroRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  macroLabel: {
-    fontSize: 14,
-    color: '#999',
-  },
-  macroValue: {
-    fontSize: 14,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#444',
-    borderRadius: 4,
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  workoutName: {
+  trainerSectionTitle: {
     fontSize: 16,
+    fontWeight: 'bold',
     color: '#fff',
+    marginBottom: 10,
   },
-  noDataText: {
-    fontSize: 14,
-    color: '#999',
-    fontStyle: 'italic',
-  },
-  clientItem: {
+  clientCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#444',
+    marginBottom: 10,
   },
   clientAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginRight: 12,
+    marginRight: 10,
   },
   clientAvatarPlaceholder: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#666',
+    backgroundColor: '#4a4a4a',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   clientAvatarText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
-  },
-  clientInfo: {
-    flex: 1,
   },
   clientName: {
     fontSize: 14,
-    fontWeight: 'bold',
     color: '#fff',
   },
-  clientEmail: {
-    fontSize: 12,
-    color: '#999',
-  },
-  clientStatus: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  clientStatusText: {
-    fontSize: 10,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  toolButton: {
-    backgroundColor: '#333',
-    padding: 12,
+  chatTypeButton: {
+    backgroundColor: '#4a4a4a',
     borderRadius: 8,
+    padding: 12,
     marginBottom: 8,
   },
-  toolButtonText: {
+  chatTypeButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  toolButtonDesc: {
-    color: '#999',
-    fontSize: 12,
+    textAlign: 'center',
   },
   chatContainer: {
     flex: 1,
   },
+  chatHeader: {
+    padding: 20,
+    paddingBottom: 10,
+  },
   chatTypeSelector: {
     flexDirection: 'row',
-    backgroundColor: '#2a2a2a',
-    margin: 16,
-    borderRadius: 8,
-    padding: 4,
+    marginTop: 10,
   },
-  chatTypeButton: {
+  chatTypeTab: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    marginHorizontal: 5,
   },
-  chatTypeButtonActive: {
-    backgroundColor: '#4CAF50',
+  activeTab: {
+    backgroundColor: '#4a4a4a',
   },
-  chatTypeText: {
-    color: '#999',
+  chatTypeTabText: {
+    color: '#ccc',
+    textAlign: 'center',
     fontSize: 14,
+  },
+  activeTabText: {
+    color: '#fff',
     fontWeight: 'bold',
   },
-  chatTypeTextActive: {
-    color: '#fff',
-  },
-  messagesContainer: {
+  messagesList: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
-  messageItem: {
+  message: {
     backgroundColor: '#2a2a2a',
+    borderRadius: 10,
     padding: 12,
-    marginBottom: 8,
-    borderRadius: 8,
+    marginBottom: 10,
+    maxWidth: '85%',
   },
-  messageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+  aiMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#3a3a3a',
   },
-  messageSender: {
+  userMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#007AFF',
+  },
+  senderName: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#4CAF50',
+    color: '#ccc',
+    marginBottom: 5,
   },
-  messageTime: {
+  messageText: {
+    fontSize: 14,
+    color: '#fff',
+    marginBottom: 5,
+  },
+  timestamp: {
     fontSize: 10,
     color: '#999',
   },
-  messageContent: {
-    fontSize: 14,
-    color: '#fff',
-    lineHeight: 20,
-  },
-  emptyMessagesContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyMessagesText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  refreshButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  refreshButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  messageInputContainer: {
+  messageInput: {
     flexDirection: 'row',
-    padding: 16,
+    padding: 20,
     backgroundColor: '#2a2a2a',
     alignItems: 'flex-end',
   },
-  messageInput: {
+  textInput: {
     flex: 1,
-    backgroundColor: '#444',
+    backgroundColor: '#1a1a1a',
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginRight: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     color: '#fff',
+    fontSize: 14,
     maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    backgroundColor: '#007AFF',
     borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginLeft: 10,
   },
   sendButtonText: {
     color: '#fff',
+    fontSize: 14,
     fontWeight: 'bold',
   },
-  tabBar: {
+  bottomNav: {
     flexDirection: 'row',
     backgroundColor: '#2a2a2a',
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#333',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
   },
-  tabItem: {
+  navItem: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 8,
-    position: 'relative',
   },
-  tabItemActive: {
-    backgroundColor: '#333',
+  activeNavItem: {
+    backgroundColor: '#4a4a4a',
     borderRadius: 8,
-    marginHorizontal: 4,
   },
-  tabIcon: {
+  navIcon: {
     fontSize: 20,
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  tabLabel: {
-    fontSize: 10,
-    color: '#999',
+  navLabel: {
+    fontSize: 12,
+    color: '#ccc',
   },
-  tabLabelActive: {
+  activeNavLabel: {
     color: '#fff',
-  },
-  tabBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 8,
-    backgroundColor: '#f44336',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabBadgeText: {
-    color: '#fff',
-    fontSize: 10,
     fontWeight: 'bold',
   },
 });
