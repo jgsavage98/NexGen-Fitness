@@ -116,7 +116,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
 
   // Auto-load chat messages when chatType or currentUser changes
   useEffect(() => {
-    if (currentUser && activeTab === 'chat') {
+    if (currentUser) {
       const headers = {
         'Authorization': `Bearer mock-${currentUser.id}-token`,
         'Content-Type': 'application/json',
@@ -124,7 +124,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
       console.log('useEffect triggered - loading chat messages for', currentUser.firstName, 'chatType:', chatType);
       loadChatMessages(currentUser, headers);
     }
-  }, [chatType, currentUser, activeTab]);
+  }, [chatType, currentUser]);
 
   // Load available users
   const loadAvailableUsers = async () => {
