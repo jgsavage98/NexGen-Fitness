@@ -236,17 +236,36 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
   // Load chat messages
   const loadChatMessages = async (user: User, headers: any) => {
     try {
+      // Load both individual and group messages for current chat type
       let url = '';
       if (chatType === 'individual') {
-        url = `${apiUrl}/api/chat/messages`;
+        url = `${apiUrl}/api/chat/messages?chatType=individual`;
       } else {
-        url = `${apiUrl}/api/chat/group-messages`;
+        url = `${apiUrl}/api/chat/messages?chatType=group`;
       }
 
+      console.log(`Loading ${chatType} chat messages from:`, url);
       const chatResponse = await fetch(url, { headers });
+      
       if (chatResponse.ok) {
         const chatData = await chatResponse.json();
-        setChatMessages(chatData);
+        console.log(`Loaded ${chatData.length} ${chatType} messages:`, chatData);
+        
+        // Process messages to ensure proper format
+        const processedMessages = chatData.map((msg: any) => ({
+          id: msg.id,
+          message: msg.message || msg.content,
+          is_ai: msg.is_ai || msg.isFromCoach || false,
+          chat_type: msg.chat_type || chatType,
+          created_at: msg.created_at || msg.timestamp,
+          user_id: msg.user_id || msg.userId,
+          metadata: msg.metadata,
+          senderName: msg.senderName || (msg.is_ai ? 'Coach Chassidy' : user.firstName)
+        }));
+        
+        setChatMessages(processedMessages);
+      } else {
+        console.error(`Failed to load ${chatType} chat messages:`, chatResponse.status);
       }
     } catch (error) {
       console.log(`Error loading ${chatType} chat messages:`, error);
@@ -639,7 +658,17 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
       <View style={styles.chatTypeSelector}>
         <TouchableOpacity
           style={[styles.chatTypeTab, chatType === 'individual' && styles.activeChatTypeTab]}
-          onPress={() => setChatType('individual')}
+          onPress={() => {
+            setChatType('individual');
+            // Reload messages when switching chat type
+            if (currentUser) {
+              const headers = {
+                'Authorization': `Bearer mock-${currentUser.id}-token`,
+                'Content-Type': 'application/json',
+              };
+              setTimeout(() => loadChatMessages(currentUser, headers), 100);
+            }
+          }}
         >
           <Text style={[styles.chatTypeText, chatType === 'individual' && styles.activeChatTypeText]}>
             Individual
@@ -647,7 +676,17 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.chatTypeTab, chatType === 'group' && styles.activeChatTypeTab]}
-          onPress={() => setChatType('group')}
+          onPress={() => {
+            setChatType('group');
+            // Reload messages when switching chat type
+            if (currentUser) {
+              const headers = {
+                'Authorization': `Bearer mock-${currentUser.id}-token`,
+                'Content-Type': 'application/json',
+              };
+              setTimeout(() => loadChatMessages(currentUser, headers), 100);
+            }
+          }}
         >
           <Text style={[styles.chatTypeText, chatType === 'group' && styles.activeChatTypeText]}>
             Group
@@ -745,17 +784,17 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
   const renderBottomNav = () => {
     const tabs = currentUser?.isTrainer 
       ? [
-          { key: 'dashboard', label: '🏠 Dashboard' },
-          { key: 'chat', label: '💬 Chat' },
-          { key: 'settings', label: '⚙️ Settings' }
+          { key: 'dashboard', icon: '🏠', label: 'Dashboard' },
+          { key: 'chat', icon: '💬', label: 'Chat' },
+          { key: 'settings', icon: '⚙️', label: 'Settings' }
         ]
       : [
-          { key: 'dashboard', label: '🏠 Dashboard' },
-          { key: 'nutrition', label: '🍎 Nutrition' },
-          { key: 'workout', label: '💪 Workout' },
-          { key: 'chat', label: '💬 Chat' },
-          { key: 'progress', label: '📈 Progress' },
-          { key: 'settings', label: '⚙️ Settings' }
+          { key: 'dashboard', icon: '🏠', label: 'Dashboard' },
+          { key: 'nutrition', icon: '🍎', label: 'Nutrition' },
+          { key: 'workout', icon: '💪', label: 'Workout' },
+          { key: 'chat', icon: '💬', label: 'Chat' },
+          { key: 'progress', icon: '📈', label: 'Progress' },
+          { key: 'settings', icon: '⚙️', label: 'Settings' }
         ];
 
     return (
@@ -766,9 +805,22 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
               <TouchableOpacity
                 key={tab.key}
                 style={[styles.tab, activeTab === tab.key && styles.activeTab]}
-                onPress={() => setActiveTab(tab.key as TabType)}
+                onPress={() => {
+                  setActiveTab(tab.key as TabType);
+                  // Reload chat messages when switching to chat tab
+                  if (tab.key === 'chat' && currentUser) {
+                    const headers = {
+                      'Authorization': `Bearer mock-${currentUser.id}-token`,
+                      'Content-Type': 'application/json',
+                    };
+                    loadChatMessages(currentUser, headers);
+                  }
+                }}
               >
-                <Text style={[styles.tabText, activeTab === tab.key && styles.activeTabText]}>
+                <Text style={[styles.tabIcon, activeTab === tab.key && styles.activeTabIcon]}>
+                  {tab.icon}
+                </Text>
+                <Text style={[styles.tabLabel, activeTab === tab.key && styles.activeTabLabel]}>
                   {tab.label}
                 </Text>
                 {tab.key === 'chat' && unreadCount > 0 && (
@@ -1224,21 +1276,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   tab: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 20,
-    marginHorizontal: 4,
+    borderRadius: 16,
+    marginHorizontal: 2,
     position: 'relative',
+    alignItems: 'center',
+    minWidth: 70,
   },
   activeTab: {
     backgroundColor: '#4CAF50',
   },
-  tabText: {
-    color: '#888',
-    fontSize: 12,
-    fontWeight: '500',
+  tabIcon: {
+    fontSize: 16,
+    marginBottom: 2,
   },
-  activeTabText: {
+  activeTabIcon: {
+    fontSize: 16,
+  },
+  tabLabel: {
+    color: '#888',
+    fontSize: 10,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  activeTabLabel: {
     color: '#fff',
   },
   tabBadge: {
