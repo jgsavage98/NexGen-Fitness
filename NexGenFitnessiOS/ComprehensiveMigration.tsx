@@ -110,12 +110,43 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
   const [hungerLevel, setHungerLevel] = useState('3');
   const [energyLevel, setEnergyLevel] = useState('3');
 
+  // React Native compatible base64 encoding
+  const base64Encode = (str: string): string => {
+    // Simple base64 encoding for React Native
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let result = '';
+    let i = 0;
+    
+    while (i < str.length) {
+      const a = str.charCodeAt(i++);
+      const b = i < str.length ? str.charCodeAt(i++) : 0;
+      const c = i < str.length ? str.charCodeAt(i++) : 0;
+      
+      const bitmap = (a << 16) | (b << 8) | c;
+      
+      result += chars.charAt((bitmap >> 18) & 63);
+      result += chars.charAt((bitmap >> 12) & 63);
+      result += chars.charAt((bitmap >> 6) & 63);
+      result += chars.charAt(bitmap & 63);
+    }
+    
+    // Add padding
+    const padding = str.length % 3;
+    if (padding === 1) {
+      result = result.slice(0, -2) + '==';
+    } else if (padding === 2) {
+      result = result.slice(0, -1) + '=';
+    }
+    
+    return result;
+  };
+
   // Get authentication token for API calls
   const getAuthToken = (userId: string): string => {
     // Create base64-encoded token in format expected by production API
     // Format: base64(userId:)
     const tokenData = `${userId}:`;
-    const base64Token = Buffer.from(tokenData).toString('base64');
+    const base64Token = base64Encode(tokenData);
     
     console.log(`Generating auth token for ${userId}:`);
     console.log(`Token data: "${tokenData}"`);
