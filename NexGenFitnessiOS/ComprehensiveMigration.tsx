@@ -114,6 +114,18 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
     loadAvailableUsers();
   }, []);
 
+  // Auto-load chat messages when chatType or currentUser changes
+  useEffect(() => {
+    if (currentUser && activeTab === 'chat') {
+      const headers = {
+        'Authorization': `Bearer mock-${currentUser.id}-token`,
+        'Content-Type': 'application/json',
+      };
+      console.log('useEffect triggered - loading chat messages for', currentUser.firstName, 'chatType:', chatType);
+      loadChatMessages(currentUser, headers);
+    }
+  }, [chatType, currentUser, activeTab]);
+
   // Load available users
   const loadAvailableUsers = async () => {
     try {
@@ -209,6 +221,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
       }
 
       // Load chat messages and unread count
+      console.log('Loading chat messages with headers:', headers);
       await loadChatMessages(user, headers);
       await loadUnreadCount(headers);
 
@@ -237,15 +250,20 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
   const loadChatMessages = async (user: User, headers: any) => {
     try {
       // Load both individual and group messages for current chat type
-      let url = '';
-      if (chatType === 'individual') {
-        url = `${apiUrl}/api/chat/messages?chatType=individual`;
-      } else {
-        url = `${apiUrl}/api/chat/messages?chatType=group`;
-      }
+      const url = `${apiUrl}/api/chat/messages?chatType=${chatType}&limit=50`;
 
       console.log(`Loading ${chatType} chat messages from:`, url);
-      const chatResponse = await fetch(url, { headers });
+      console.log('Request headers:', headers);
+      
+      const chatResponse = await fetch(url, { 
+        method: 'GET',
+        headers: {
+          ...headers,
+          'Accept': 'application/json',
+        }
+      });
+      
+      console.log(`Chat response status: ${chatResponse.status}`);
       
       if (chatResponse.ok) {
         const chatData = await chatResponse.json();
@@ -265,10 +283,13 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
         
         setChatMessages(processedMessages);
       } else {
-        console.error(`Failed to load ${chatType} chat messages:`, chatResponse.status);
+        const errorText = await chatResponse.text();
+        console.error(`Failed to load ${chatType} chat messages:`, chatResponse.status, errorText);
+        Alert.alert('Error', `Failed to load ${chatType} chat messages: ${chatResponse.status}`);
       }
     } catch (error) {
-      console.log(`Error loading ${chatType} chat messages:`, error);
+      console.error(`Error loading ${chatType} chat messages:`, error);
+      Alert.alert('Error', `Failed to load ${chatType} chat messages`);
     }
   };
 
@@ -695,15 +716,26 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
       </View>
 
       <ScrollView style={styles.chatMessages}>
-        {chatMessages.map((message) => (
-          <View key={message.id} style={styles.messageRow}>
-            <Text style={styles.messageSender}>
-              {message.senderName || (message.is_ai ? 'Coach Chassidy' : 'You')}
+        {chatMessages.length > 0 ? (
+          chatMessages.map((message) => (
+            <View key={message.id} style={styles.messageRow}>
+              <Text style={styles.messageSender}>
+                {message.senderName || (message.is_ai ? 'Coach Chassidy' : 'You')}
+              </Text>
+              <Text style={styles.messageText}>{message.message}</Text>
+              <Text style={styles.messageTime}>{formatTime(message.created_at)}</Text>
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyMessageContainer}>
+            <Text style={styles.emptyText}>
+              {chatType === 'individual' 
+                ? 'No individual messages yet. Start a conversation!'
+                : 'No group messages yet. Join the discussion!'
+              }
             </Text>
-            <Text style={styles.messageText}>{message.message}</Text>
-            <Text style={styles.messageTime}>{formatTime(message.created_at)}</Text>
           </View>
-        ))}
+        )}
       </ScrollView>
 
       <View style={styles.messageInput}>
@@ -1318,5 +1350,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  emptyMessageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
   },
 });
