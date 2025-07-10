@@ -110,6 +110,20 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
   const [hungerLevel, setHungerLevel] = useState('3');
   const [energyLevel, setEnergyLevel] = useState('3');
 
+  // Get authentication token for API calls
+  const getAuthToken = (userId: string): string => {
+    // Map user IDs to their corresponding auth tokens used by the production API
+    const authTokenMap: { [key: string]: string } = {
+      '2xw8uz6udre': 'Bearer johnauth',           // John Savage
+      'coach_chassidy': 'Bearer coachchassidy',  // Coach Chassidy
+      'chrissy_id': 'Bearer chrissyauth',        // Chrissy Metz
+      'jonah_id': 'Bearer jonahauth',            // Jonah Hill
+      'angie_id': 'Bearer angieauth',            // Angie Varrecchio
+    };
+    
+    return authTokenMap[userId] || `Bearer ${userId}auth`;
+  };
+
   useEffect(() => {
     loadAvailableUsers();
   }, []);
@@ -118,7 +132,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
   useEffect(() => {
     if (currentUser) {
       const headers = {
-        'Authorization': `Bearer mock-${currentUser.id}-token`,
+        'Authorization': getAuthToken(currentUser.id),
         'Content-Type': 'application/json',
       };
       console.log('useEffect triggered - loading chat messages for', currentUser.firstName, 'chatType:', chatType);
@@ -168,7 +182,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
       setLoading(true);
       
       const headers = {
-        'Authorization': `Bearer mock-${user.id}-token`,
+        'Authorization': getAuthToken(user.id),
         'Content-Type': 'application/json',
       };
 
@@ -312,7 +326,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
 
     try {
       const headers = {
-        'Authorization': `Bearer mock-${currentUser?.id}-token`,
+        'Authorization': getAuthToken(currentUser?.id || ''),
         'Content-Type': 'application/json',
       };
 
@@ -346,7 +360,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
 
     try {
       const headers = {
-        'Authorization': `Bearer mock-${currentUser?.id}-token`,
+        'Authorization': getAuthToken(currentUser?.id || ''),
         'Content-Type': 'application/json',
       };
 
