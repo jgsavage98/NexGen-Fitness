@@ -112,16 +112,17 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
 
   // Get authentication token for API calls
   const getAuthToken = (userId: string): string => {
-    // Map user IDs to their corresponding auth tokens used by the production API
-    const authTokenMap: { [key: string]: string } = {
-      '2xw8uz6udre': 'Bearer johnauth',           // John Savage
-      'coach_chassidy': 'Bearer coachchassidy',  // Coach Chassidy
-      'chrissy_id': 'Bearer chrissyauth',        // Chrissy Metz
-      'jonah_id': 'Bearer jonahauth',            // Jonah Hill
-      'angie_id': 'Bearer angieauth',            // Angie Varrecchio
-    };
+    // Create base64-encoded token in format expected by production API
+    // Format: base64(userId:)
+    const tokenData = `${userId}:`;
+    const base64Token = Buffer.from(tokenData).toString('base64');
     
-    return authTokenMap[userId] || `Bearer ${userId}auth`;
+    console.log(`Generating auth token for ${userId}:`);
+    console.log(`Token data: "${tokenData}"`);
+    console.log(`Base64 token: "${base64Token}"`);
+    console.log(`Full header: "Bearer ${base64Token}"`);
+    
+    return `Bearer ${base64Token}`;
   };
 
   useEffect(() => {
@@ -266,8 +267,15 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
       // Load both individual and group messages for current chat type
       const url = `${apiUrl}/api/chat/messages?chatType=${chatType}&limit=50`;
 
+      console.log(`=== CHAT MESSAGE LOADING DEBUG ===`);
       console.log(`Loading ${chatType} chat messages from:`, url);
       console.log('Request headers:', headers);
+      console.log('Full apiUrl:', apiUrl);
+      console.log('User:', user.firstName, user.id);
+      console.log('Current chatType:', chatType);
+      
+      console.log('About to make fetch request...');
+      const startTime = Date.now();
       
       const chatResponse = await fetch(url, { 
         method: 'GET',
@@ -277,11 +285,14 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
         }
       });
       
+      const endTime = Date.now();
+      console.log(`Fetch completed in ${endTime - startTime}ms`);
       console.log(`Chat response status: ${chatResponse.status}`);
+      console.log(`Chat response headers:`, Object.fromEntries(chatResponse.headers.entries()));
       
       if (chatResponse.ok) {
         const chatData = await chatResponse.json();
-        console.log(`Loaded ${chatData.length} ${chatType} messages:`, chatData);
+        console.log(`SUCCESS: Loaded ${chatData.length} ${chatType} messages:`, chatData);
         
         // Process messages to ensure proper format
         const processedMessages = chatData.map((msg: any) => ({
@@ -296,14 +307,21 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
         }));
         
         setChatMessages(processedMessages);
+        console.log(`=== CHAT LOADING SUCCESS ===`);
       } else {
         const errorText = await chatResponse.text();
-        console.error(`Failed to load ${chatType} chat messages:`, chatResponse.status, errorText);
-        Alert.alert('Error', `Failed to load ${chatType} chat messages: ${chatResponse.status}`);
+        console.error(`FAILED: Chat response not OK`);
+        console.error(`Status: ${chatResponse.status}`);
+        console.error(`Status Text: ${chatResponse.statusText}`);
+        console.error(`Error body:`, errorText);
+        Alert.alert('Error', `Failed to load ${chatType} chat messages: ${chatResponse.status} - ${errorText}`);
       }
     } catch (error) {
-      console.error(`Error loading ${chatType} chat messages:`, error);
-      Alert.alert('Error', `Failed to load ${chatType} chat messages`);
+      console.error(`=== CHAT LOADING ERROR ===`);
+      console.error(`Error type:`, error.constructor.name);
+      console.error(`Error message:`, error.message);
+      console.error(`Full error:`, error);
+      Alert.alert('Error', `Failed to load ${chatType} chat messages: ${error.message || 'Network error'}`);
     }
   };
 
