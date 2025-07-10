@@ -22,6 +22,7 @@ interface User {
   profileImageUrl?: string;
   timezone?: string;
   programStartDate?: string;
+  trainerId?: string;
   isTrainer?: boolean;
 }
 
@@ -104,9 +105,25 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
       setLoading(true);
       const response = await fetch(`${apiUrl}/api/auth/available-users`);
       if (response.ok) {
-        const users = await response.json();
-        console.log('Loaded users:', users);
-        setAvailableUsers(users);
+        const rawUsers = await response.json();
+        console.log('Raw users from API:', rawUsers);
+        
+        // Process users to add isTrainer flag and fix profile images
+        const processedUsers = rawUsers.map((user: any) => ({
+          id: user.id,
+          firstName: user.first_name || user.firstName,
+          lastName: user.last_name || user.lastName,
+          email: user.email,
+          profileImageUrl: user.profile_image_url || user.profileImageUrl || '',
+          timezone: user.timezone || 'America/New_York',
+          programStartDate: user.program_start_date || user.programStartDate,
+          trainerId: user.trainer_id || user.trainerId,
+          // A user is a trainer if their id equals their trainerId (self-assigned)
+          isTrainer: user.id === (user.trainer_id || user.trainerId)
+        }));
+        
+        console.log('Processed users with trainer flags:', processedUsers);
+        setAvailableUsers(processedUsers);
       } else {
         console.error('Failed to load users from API');
       }
@@ -190,13 +207,16 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
         'Content-Type': 'application/json',
       };
 
-      // Load all users for trainer
-      const allUsers = availableUsers.filter((u: User) => !u.isTrainer);
-      setClients(allUsers);
+      // Load all users for trainer dashboard
+      const clientUsers = availableUsers.filter((u: User) => !u.isTrainer);
+      setClients(clientUsers);
       
-      if (allUsers.length > 0) {
-        setSelectedClient(allUsers[0]);
+      if (clientUsers.length > 0) {
+        setSelectedClient(clientUsers[0]);
       }
+      
+      console.log('Loaded trainer clients:', clientUsers);
+      console.log('Trainer dashboard for:', user.firstName, user.lastName, 'isTrainer:', user.isTrainer);
     } catch (error) {
       console.error('Error loading trainer data:', error);
     }
@@ -225,9 +245,15 @@ export default function FinalMigration({ apiUrl, onBack }: FinalMigrationProps) 
   const getProfileImageUrl = (user: User) => {
     if (!user?.profileImageUrl) return '';
     
-    // Handle different URL formats
+    // Handle different URL formats from database
     if (user.profileImageUrl.startsWith('http')) {
       return user.profileImageUrl;
+    } else if (user.profileImageUrl.startsWith('/attached_assets/')) {
+      return `${apiUrl}${user.profileImageUrl}`;
+    } else if (user.profileImageUrl.startsWith('/screenshots/')) {
+      return `${apiUrl}${user.profileImageUrl}`;
+    } else if (user.profileImageUrl.startsWith('screenshots/')) {
+      return `${apiUrl}/${user.profileImageUrl}`;
     } else if (user.profileImageUrl.startsWith('/')) {
       return `${apiUrl}${user.profileImageUrl}`;
     } else {
