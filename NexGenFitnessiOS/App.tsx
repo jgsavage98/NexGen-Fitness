@@ -4,7 +4,7 @@ import {
   StatusBar,
   StyleSheet,
 } from 'react-native';
-import FinalMigration from './FinalMigration';
+import ComprehensiveMigration from './ComprehensiveMigration';
 
 function App(): React.JSX.Element {
   const apiUrl = 'https://ai-companion-jgsavage98.replit.app';
@@ -20,7 +20,7 @@ function App(): React.JSX.Element {
         barStyle="light-content"
         backgroundColor="#1a1a1a"
       />
-      <FinalMigration apiUrl={apiUrl} onBack={handleBack} />
+      <ComprehensiveMigration apiUrl={apiUrl} onBack={handleBack} />
     </SafeAreaView>
   );
 }

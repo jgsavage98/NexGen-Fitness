@@ -66,8 +66,9 @@ interface Workout {
   exercises: any[];
 }
 
-type TabType = 'dashboard' | 'nutrition' | 'workout' | 'chat' | 'progress' | 'trainer';
+type TabType = 'dashboard' | 'nutrition' | 'workout' | 'chat' | 'progress' | 'trainer' | 'settings';
 type ChatType = 'individual' | 'group';
+type ScreenType = 'userSelector' | 'main';
 
 interface FinalMigrationProps {
   apiUrl: string;
