@@ -73,6 +73,57 @@
   }
 }
 
+/* iOS Capacitor Mobile Optimizations */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Mobile and iOS optimizations */
+@media (max-width: 768px) {
+  /* Prevent iOS bounce scrolling on body */
+  html, body {
+    overflow-x: hidden;
+    height: 100vh;
+    position: relative;
+  }
+  
+  /* Enable smooth scrolling for content areas */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent tap highlight on iOS */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Allow text selection for inputs and content */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  
+  /* iOS button styling */
+  button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  
+  /* Prevent text selection on UI elements */
+  .tab-navigation, .header, .navigation {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 @layer utilities {
   .font-inter {
     font-family: 'Inter', sans-serif;

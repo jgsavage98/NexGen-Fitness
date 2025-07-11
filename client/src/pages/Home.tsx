@@ -129,63 +129,68 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-dark">
-      <div className="max-w-md mx-auto bg-dark min-h-screen relative">
-        {/* Header */}
-        <header className="px-6 py-4 bg-surface">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setCurrentView('profile-settings')}
-                className="flex-shrink-0 rounded-full hover:ring-2 hover:ring-primary-500 transition-all"
-              >
-                <img 
-                  src={(user as any)?.profileImageUrl || "/john-profile.png"} 
-                  alt="User profile" 
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              </button>
-              <div>
-                <div className="font-semibold">
-                  {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Welcome!'}
-                </div>
-                <div className="text-sm text-gray-400">
-                  {hasProgramStarted((user as any)?.programStartDate) 
-                    ? formatJourneyDay((user as any)?.programStartDate, (user as any)?.timezone)
-                    : "Ready to begin your journey"
-                  }
+    <div className="min-h-screen bg-dark overflow-hidden">
+      {/* Mobile App Container */}
+      <div className="max-w-md mx-auto bg-dark min-h-screen flex flex-col relative">
+        {/* Fixed Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-700 safe-area-inset-top">
+          <div className="max-w-md mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setCurrentView('profile-settings')}
+                  className="flex-shrink-0 rounded-full hover:ring-2 hover:ring-primary-500 transition-all"
+                >
+                  <img 
+                    src={(user as any)?.profileImageUrl || "/john-profile.png"} 
+                    alt="User profile" 
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                </button>
+                <div>
+                  <div className="font-semibold text-white">
+                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Welcome!'}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {hasProgramStarted((user as any)?.programStartDate) 
+                      ? formatJourneyDay((user as any)?.programStartDate, (user as any)?.timezone)
+                      : "Ready to begin your journey"
+                    }
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => logoutMutation.mutate()}
-                disabled={logoutMutation.isPending}
-                className="text-gray-400 hover:text-white"
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-              <img 
-                src="/ignite-logo.png" 
-                alt="Ignite" 
-                className="h-24 w-auto"
-              />
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+                <img 
+                  src="/ignite-logo.png" 
+                  alt="Ignite" 
+                  className="h-20 w-auto"
+                />
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Content */}
-        <div className="pb-20">
-          {currentView === 'profile-settings' ? (
-            <ProfileSettings onBack={() => setCurrentView('tabs')} />
-          ) : (
-            renderTabContent()
-          )}
-        </div>
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto pt-20 pb-20 safe-area-inset-bottom">
+          <div className="max-w-md mx-auto">
+            {currentView === 'profile-settings' ? (
+              <ProfileSettings onBack={() => setCurrentView('tabs')} />
+            ) : (
+              renderTabContent()
+            )}
+          </div>
+        </main>
 
-        {/* Tab Navigation - only show when not in profile settings */}
+        {/* Fixed Bottom Navigation */}
         {currentView === 'tabs' && (
           <TabNavigation 
             activeTab={activeTab} 
