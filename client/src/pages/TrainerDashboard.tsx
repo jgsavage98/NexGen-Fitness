@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -16,6 +15,7 @@ import ClientProgressTimeSeries from "@/components/ClientProgressTimeSeries";
 import UnifiedChatTab from "@/components/UnifiedChatTab";
 import ExerciseManagement from "@/components/ExerciseManagement";
 import AISettings from "@/pages/AISettings";
+import TrainerTabNavigation, { TrainerTabType } from "@/components/TrainerTabNavigation";
 import { calculateJourneyDay } from "@/lib/dateUtils";
 
 
@@ -73,6 +73,7 @@ interface PendingChatMessage {
 }
 
 export default function TrainerDashboard() {
+  const [activeTab, setActiveTab] = useState<TrainerTabType>('overview');
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [trainerNotes, setTrainerNotes] = useState("");
@@ -740,51 +741,27 @@ export default function TrainerDashboard() {
 
       {/* Main Content - Adjusted for fixed header */}
       <div className="pt-32 pb-nav max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-          <TabsList className="bg-surface border border-gray-700 grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 h-auto gap-1 p-1">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
-              <TrendingUp className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="hidden sm:inline">Overview</span>
-              <span className="sm:hidden text-xs">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="macro-reviews" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
-              <Settings className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="hidden sm:inline">Macro Reviews ({pendingChanges.length})</span>
-              <span className="sm:hidden text-xs">Reviews ({pendingChanges.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="chat" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
-              <MessageSquare className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="hidden sm:inline">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0) + (groupChatUnread?.count || 0)})</span>
-              <span className="sm:hidden text-xs">Chat ({clients.reduce((total, client) => total + (client.unansweredCount || 0), 0) + (groupChatUnread?.count || 0)})</span>
-            </TabsTrigger>
-            <TabsTrigger value="exercises" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
-              <Dumbbell className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="hidden sm:inline">Exercises</span>
-              <span className="sm:hidden text-xs">Exercises</span>
-            </TabsTrigger>
-            <TabsTrigger value="client-progress" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
-              <BarChart3 className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="hidden sm:inline">Client Progress</span>
-              <span className="sm:hidden text-xs">Progress</span>
-            </TabsTrigger>
-            <TabsTrigger value="client-setup" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
-              <User className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="hidden sm:inline">Client Setup</span>
-              <span className="sm:hidden text-xs">Setup</span>
-            </TabsTrigger>
-            <TabsTrigger value="client-history" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
-              <Calendar className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="hidden sm:inline">Upload History</span>
-              <span className="sm:hidden text-xs">History</span>
-            </TabsTrigger>
-            <TabsTrigger value="ai-settings" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
-              <Brain className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="hidden sm:inline">AI Settings</span>
-              <span className="sm:hidden text-xs">AI</span>
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-4 sm:space-y-6">
+          {renderTabContent()}
+        </div>
+      </div>
 
-          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+      {/* Footer Navigation */}
+      <TrainerTabNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        pendingReviewsCount={pendingChanges.length}
+        chatUnreadCount={clients.reduce((total, client) => total + (client.unansweredCount || 0), 0) + (groupChatUnread?.count || 0)}
+      />
+    </div>
+  );
+
+  // Tab content rendering function
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="space-y-4 sm:space-y-6">
             {/* Quick Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               <Card className="bg-surface border-gray-700">
@@ -1034,9 +1011,12 @@ export default function TrainerDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
+        );
 
-          <TabsContent value="macro-reviews" className="space-y-4 sm:space-y-6">
+      case 'macro-reviews':
+        return (
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
               <h2 className="text-lg sm:text-xl font-bold text-white">Pending Macro Adjustments</h2>
               <Badge variant="outline" className="text-yellow-400 border-yellow-400 text-xs">
@@ -1058,17 +1038,23 @@ export default function TrainerDashboard() {
                 ))}
               </div>
             )}
-          </TabsContent>
+          </div>
+        );
 
-          <TabsContent value="chat" className="space-y-6">
+      case 'chat':
+        return (
+          <div className="space-y-6">
             <UnifiedChatTab />
-          </TabsContent>
+          </div>
+        );
 
 
 
 
 
-          <TabsContent value="client-progress" className="space-y-6">
+      case 'client-progress':
+        return (
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">Client Progress & Macro Analytics</h2>
               <div className="flex space-x-2">
@@ -1151,9 +1137,12 @@ export default function TrainerDashboard() {
                 })}
               </div>
             )}
-          </TabsContent>
+          </div>
+        );
 
-          <TabsContent value="client-setup" className="space-y-6">
+      case 'client-setup':
+        return (
+          <div className="space-y-6">
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-white mb-4">Client Setup Information</h3>
@@ -1301,18 +1290,26 @@ export default function TrainerDashboard() {
                 </Card>
               )}
             </div>
-          </TabsContent>
+          </div>
+        );
 
-          {/* Exercises Tab */}
-          <TabsContent value="exercises" className="space-y-6">
+      case 'exercises':
+        return (
+          <div className="space-y-6">
             <ExerciseManagement />
-          </TabsContent>
+          </div>
+        );
 
-          <TabsContent value="ai-settings" className="space-y-6">
+      case 'ai-settings':
+        return (
+          <div className="space-y-6">
             <AISettings />
-          </TabsContent>
+          </div>
+        );
 
-          <TabsContent value="client-history" className="space-y-6">
+      case 'client-history':
+        return (
+          <div className="space-y-6">
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-white mb-4">Client Upload History</h3>
@@ -1364,9 +1361,53 @@ export default function TrainerDashboard() {
                 <ClientUploadHistory clientId={selectedClient} />
               )}
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex-1 bg-background">
+      {/* Fixed Header */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-background border-b border-gray-700">
+        <div className="safe-area-inset-top"></div>
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center">
+                <span className="text-white font-semibold text-lg">CE</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">Coach Chassidy</h1>
+                <p className="text-gray-400 text-sm">Trainer Dashboard</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="text-right">
+                <p className="text-white text-sm">{clients.length} Active Clients</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="pt-24 pb-nav">
+        <div className="p-4 space-y-6">
+          {renderTabContent()}
+        </div>
       </div>
+
+      {/* Fixed Footer Navigation */}
+      <TrainerTabNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        pendingReviewsCount={pendingChanges.length}
+        chatUnreadCount={chatUnreadCount}
+      />
     </div>
   );
 }
