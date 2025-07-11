@@ -315,3 +315,25 @@ textarea {
 .pb-nav {
   padding-bottom: calc(5rem + env(safe-area-inset-bottom));
 }
+
+/* Enhanced keyboard handling for chat interface */
+.chat-container {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for better mobile keyboard support */
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-input-container {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface);
+  z-index: 10;
+}
+
+/* Prevent keyboard from pushing content up */
+@supports (-webkit-touch-callout: none) {
+  .chat-container {
+    height: -webkit-fill-available;
+  }
+}

@@ -190,6 +190,17 @@ export default function ChatTab() {
     }
   };
 
+  const handleFocus = () => {
+    // Scroll to bottom when input is focused to prevent keyboard obstruction
+    setTimeout(() => {
+      scrollToBottom();
+      // Ensure input is visible above keyboard
+      if (textareaRef.current) {
+        textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 300);
+  };
+
 
 
 
@@ -205,9 +216,9 @@ export default function ChatTab() {
   };
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Chat Type Selection - Moved to Top */}
-      <div className="px-6 py-3 bg-surface border-b border-gray-700">
+    <div className="chat-container">
+      {/* Chat Type Selection - Fixed at Top */}
+      <div className="px-6 py-3 bg-surface border-b border-gray-700 sticky top-0 z-10">
         <Tabs value={chatType} onValueChange={(value) => setChatType(value as 'individual' | 'group')} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-dark">
             <TabsTrigger value="individual" className="flex items-center space-x-2 data-[state=active]:bg-primary-500">
@@ -258,7 +269,7 @@ export default function ChatTab() {
       </div>
 
       {/* Chat Messages */}
-      <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin overflow-x-hidden pb-safe">
+      <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin overflow-x-hidden pb-4 min-h-0">
         {messages.length === 0 && (
           <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
             <div className="flex items-start space-x-3">
@@ -378,7 +389,7 @@ export default function ChatTab() {
 
 
       {/* Chat Input - Enhanced for mobile keyboard handling */}
-      <div className="px-6 py-4 bg-surface border-t border-gray-700 pb-safe">
+      <div className="chat-input-container px-6 py-4 border-t border-gray-700 pb-safe">
         <div className="flex items-end space-x-3">
           <div className="flex-1 relative">
             <Textarea
@@ -386,11 +397,16 @@ export default function ChatTab() {
               value={newMessage}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyPress}
+              onFocus={handleFocus}
               placeholder="Type your message..."
               className="w-full p-3 bg-dark border-gray-600 rounded-2xl pr-12 text-white placeholder-gray-400 resize-none min-h-[48px] max-h-32"
               disabled={sendMessageMutation.isPending}
               rows={1}
-              style={{ fontSize: '16px' }} // Prevents zoom on iOS
+              style={{ 
+                fontSize: '16px', // Prevents zoom on iOS
+                WebkitUserSelect: 'text',
+                userSelect: 'text'
+              }}
             />
             <button
               onClick={handleSendMessage}
