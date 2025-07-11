@@ -133,7 +133,9 @@ export default function Home() {
       {/* Mobile App Container */}
       <div className="max-w-md mx-auto bg-dark min-h-screen flex flex-col relative">
         {/* Fixed Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-700 safe-area-inset-top">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-700">
+          {/* Top safe area spacer */}
+          <div className="bg-surface safe-area-inset-top"></div>
           <div className="max-w-md mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -180,7 +182,7 @@ export default function Home() {
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto pt-20 pb-20 safe-area-inset-bottom">
+        <main className="flex-1 overflow-y-auto pt-24 pb-20 safe-area-inset-bottom">
           <div className="max-w-md mx-auto">
             {currentView === 'profile-settings' ? (
               <ProfileSettings onBack={() => setCurrentView('tabs')} />
