@@ -485,7 +485,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
     }
   };
 
-  // Format time
+  // Format time to match web app style (e.g., "Jun 18 at 10:42 PM")
   const formatTime = (dateString: string) => {
     try {
       if (!dateString) return 'Unknown time';
@@ -498,7 +498,14 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
         return 'Invalid Date';
       }
       
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      // Format like "Jun 18 at 10:42 PM"
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = monthNames[date.getMonth()];
+      const day = date.getDate();
+      const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      return `${month} ${day} at ${time}`;
     } catch (error) {
       console.log('Error formatting time:', error, 'dateString:', dateString);
       return 'Invalid Date';
@@ -772,7 +779,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
             // Reload messages when switching chat type
             if (currentUser) {
               const headers = {
-                'Authorization': `Bearer mock-${currentUser.id}-token`,
+                'Authorization': getAuthToken(currentUser.id),
                 'Content-Type': 'application/json',
               };
               setTimeout(() => loadChatMessages(currentUser, headers), 100);
@@ -790,7 +797,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
             // Reload messages when switching chat type
             if (currentUser) {
               const headers = {
-                'Authorization': `Bearer mock-${currentUser.id}-token`,
+                'Authorization': getAuthToken(currentUser.id),
                 'Content-Type': 'application/json',
               };
               setTimeout(() => loadChatMessages(currentUser, headers), 100);
@@ -805,15 +812,56 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
 
       <ScrollView style={styles.chatMessages}>
         {chatMessages.length > 0 ? (
-          chatMessages.map((message) => (
-            <View key={message.id} style={styles.messageRow}>
-              <Text style={styles.messageSender}>
-                {message.senderName || (message.is_ai ? 'Coach Chassidy' : 'You')}
-              </Text>
-              <Text style={styles.messageText}>{message.message}</Text>
-              <Text style={styles.messageTime}>{formatTime(message.created_at)}</Text>
-            </View>
-          ))
+          chatMessages.map((message) => {
+            const isFromCurrentUser = message.user_id === currentUser?.id;
+            const isFromCoach = message.user_id === 'mdh4w6d9uvr' || message.is_ai;
+            const senderName = isFromCoach ? 'Coach Chassidy' : message.senderName || currentUser?.firstName || 'You';
+            
+            // Get profile image
+            const profileImage = isFromCoach 
+              ? `${apiUrl}/screenshots/CE Bio Image.jpeg` 
+              : getProfileImageUrl(currentUser || {} as User);
+            
+            return (
+              <View key={message.id} style={[
+                styles.messageContainer,
+                isFromCurrentUser && styles.messageContainerRight
+              ]}>
+                {!isFromCurrentUser && (
+                  <View style={styles.messageWithAvatar}>
+                    <Image
+                      source={{ uri: profileImage }}
+                      style={styles.messageAvatar}
+                    />
+                    <View style={styles.messageContent}>
+                      <View style={styles.messageHeader}>
+                        <Text style={styles.messageSender}>{senderName}</Text>
+                      </View>
+                      <View style={styles.messageBubble}>
+                        <Text style={styles.messageText}>{message.message}</Text>
+                        <Text style={styles.messageTime}>{formatTime(message.created_at)}</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+                
+                {isFromCurrentUser && (
+                  <View style={styles.messageWithAvatarRight}>
+                    <View style={styles.messageContentRight}>
+                      <View style={styles.messageBubbleRight}>
+                        <Text style={styles.messageTextRight}>{message.message}</Text>
+                        <Text style={styles.messageTimeRight}>{formatTime(message.created_at)}</Text>
+                      </View>
+                    </View>
+                    <Image
+                      source={{ uri: profileImage }}
+                      style={styles.messageAvatar}
+                    />
+                  </View>
+                )}
+              </View>
+            );
+          })
         ) : (
           <View style={styles.emptyMessageContainer}>
             <Text style={styles.emptyText}>
@@ -1444,5 +1492,77 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
+  },
+  // New chat message styles
+  messageContainer: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  messageContainerRight: {
+    alignItems: 'flex-end',
+  },
+  messageWithAvatar: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  messageWithAvatarRight: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
+  },
+  messageAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  messageContent: {
+    flex: 1,
+    maxWidth: '80%',
+  },
+  messageContentRight: {
+    maxWidth: '80%',
+    marginRight: 12,
+  },
+  messageHeader: {
+    marginBottom: 4,
+  },
+  messageSender: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  messageBubble: {
+    backgroundColor: '#3a3a3a',
+    padding: 12,
+    borderRadius: 16,
+    borderTopLeftRadius: 4,
+  },
+  messageBubbleRight: {
+    backgroundColor: '#4CAF50',
+    padding: 12,
+    borderRadius: 16,
+    borderTopRightRadius: 4,
+  },
+  messageText: {
+    color: '#fff',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  messageTextRight: {
+    color: '#fff',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  messageTime: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  messageTimeRight: {
+    color: '#ddd',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
