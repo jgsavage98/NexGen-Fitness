@@ -1,0 +1,34 @@
+{
+  "name": "nexgen-fitness-ios",
+  "version": "1.0.0",
+  "description": "AI-Powered Fitness & Nutrition Coaching iOS App",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Using remote web app - no build needed'",
+    "sync": "npx cap sync",
+    "open": "npx cap open ios",
+    "run": "npx cap run ios",
+    "copy": "npx cap copy",
+    "update": "npx cap update"
+  },
+  "keywords": [
+    "fitness",
+    "nutrition",
+    "ai",
+    "coaching",
+    "ios",
+    "capacitor"
+  ],
+  "author": "NexGen Fitness",
+  "license": "MIT",
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@capacitor/keyboard": "^6.0.0"
+  }
+}
