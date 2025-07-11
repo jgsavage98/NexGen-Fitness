@@ -182,7 +182,7 @@ export default function Home() {
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto pt-24 pb-20 safe-area-inset-bottom">
+        <main className="flex-1 overflow-y-auto pt-24 pb-nav">
           <div className="max-w-md mx-auto">
             {currentView === 'profile-settings' ? (
               <ProfileSettings onBack={() => setCurrentView('tabs')} />

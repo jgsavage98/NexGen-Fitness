@@ -305,3 +305,13 @@ textarea {
   height: 100vh;
   height: 100dvh; /* Dynamic viewport height */
 }
+
+/* Bottom navigation padding utility */
+.pb-nav {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+}
+
+/* Bottom navigation spacing */
+.pb-nav {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}

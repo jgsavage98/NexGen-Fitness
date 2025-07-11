@@ -18,9 +18,9 @@ export default function TabNavigation({ activeTab, onTabChange, isPendingApprova
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-700 z-50 safe-area-inset-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-700 z-50">
       <div className="max-w-md mx-auto">
-        <div className="flex">
+        <div className="flex pb-safe">
           {tabs.map((tab) => {
             const IconComponent = tab.icon;
             const isActive = activeTab === tab.id;
@@ -31,7 +31,7 @@ export default function TabNavigation({ activeTab, onTabChange, isPendingApprova
                 key={tab.id}
                 onClick={() => !isDisabled && onTabChange(tab.id)}
                 disabled={isDisabled}
-                className={`flex-1 py-3 px-2 text-center relative transition-all duration-200 ${
+                className={`flex-1 py-4 px-2 text-center relative transition-all duration-200 ${
                   isActive 
                     ? 'text-primary bg-primary/10' 
                     : isDisabled 

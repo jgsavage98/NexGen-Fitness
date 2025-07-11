@@ -739,7 +739,7 @@ export default function TrainerDashboard() {
       </div>
 
       {/* Main Content - Adjusted for fixed header */}
-      <div className="pt-32 max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <div className="pt-32 pb-nav max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
           <TabsList className="bg-surface border border-gray-700 grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 h-auto gap-1 p-1">
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
