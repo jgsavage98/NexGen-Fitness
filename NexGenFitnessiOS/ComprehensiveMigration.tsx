@@ -326,16 +326,21 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
         console.log(`SUCCESS: Loaded ${chatData.length} ${chatType} messages:`, chatData);
         
         // Process messages to ensure proper format
-        const processedMessages = chatData.map((msg: any) => ({
-          id: msg.id,
-          message: msg.message || msg.content,
-          is_ai: msg.is_ai || msg.isFromCoach || false,
-          chat_type: msg.chat_type || chatType,
-          created_at: msg.created_at || msg.timestamp,
-          user_id: msg.user_id || msg.userId,
-          metadata: msg.metadata,
-          senderName: msg.senderName || (msg.is_ai ? 'Coach Chassidy' : user.firstName)
-        }));
+        const processedMessages = chatData.map((msg: any) => {
+          const isAI = msg.is_ai || msg.isFromCoach || false;
+          const isCoachMessage = msg.user_id === 'mdh4w6d9uvr' || msg.userId === 'mdh4w6d9uvr' || isAI;
+          
+          return {
+            id: msg.id,
+            message: msg.message || msg.content,
+            is_ai: isAI,
+            chat_type: msg.chat_type || chatType,
+            created_at: msg.created_at || msg.timestamp,
+            user_id: msg.user_id || msg.userId,
+            metadata: msg.metadata,
+            senderName: isCoachMessage ? 'Coach Chassidy' : (msg.senderName || user.firstName)
+          };
+        });
         
         setChatMessages(processedMessages);
         console.log(`=== CHAT LOADING SUCCESS ===`);
@@ -463,20 +468,40 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
   // Format date
   const formatDate = (dateString: string) => {
     try {
+      if (!dateString) return 'Unknown date';
+      
       const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.log('Invalid date string:', dateString);
+        return 'Invalid Date';
+      }
+      
       return date.toLocaleDateString();
-    } catch {
-      return dateString;
+    } catch (error) {
+      console.log('Error formatting date:', error, 'dateString:', dateString);
+      return 'Invalid Date';
     }
   };
 
   // Format time
   const formatTime = (dateString: string) => {
     try {
+      if (!dateString) return 'Unknown time';
+      
       const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.log('Invalid date string:', dateString);
+        return 'Invalid Date';
+      }
+      
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return dateString;
+    } catch (error) {
+      console.log('Error formatting time:', error, 'dateString:', dateString);
+      return 'Invalid Date';
     }
   };
 
@@ -905,7 +930,7 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
                   // Reload chat messages when switching to chat tab
                   if (tab.key === 'chat' && currentUser) {
                     const headers = {
-                      'Authorization': `Bearer mock-${currentUser.id}-token`,
+                      'Authorization': getAuthToken(currentUser.id),
                       'Content-Type': 'application/json',
                     };
                     loadChatMessages(currentUser, headers);
