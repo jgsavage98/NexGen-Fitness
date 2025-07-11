@@ -323,7 +323,29 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
       
       if (chatResponse.ok) {
         const chatData = await chatResponse.json();
-        console.log(`SUCCESS: Loaded ${chatData.length} ${chatType} messages:`, chatData);
+        console.log(`SUCCESS: Loaded ${chatData.length} ${chatType} messages`);
+        
+        // Enhanced logging for first few messages
+        if (chatData.length > 0) {
+          console.log('First 3 messages raw data:');
+          chatData.slice(0, 3).forEach((msg: any, index: number) => {
+            console.log(`Message ${index + 1}:`, {
+              id: msg.id,
+              message: msg.message ? msg.message.substring(0, 50) + '...' : 'NO MESSAGE',
+              user_id: msg.user_id,
+              is_ai: msg.is_ai,
+              created_at: msg.created_at,
+              chat_type: msg.chat_type
+            });
+          });
+        } else {
+          console.log('❌ NO MESSAGES RETURNED - This is the issue!');
+          console.log('Debugging parameters:');
+          console.log('- Chat Type:', chatType);
+          console.log('- User ID:', user.id);
+          console.log('- API URL:', apiUrl);
+          console.log('- Authorization header:', headers.Authorization);
+        }
         
         // Process messages to ensure proper format
         const processedMessages = chatData.map((msg: any) => {
@@ -343,7 +365,12 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
         });
         
         setChatMessages(processedMessages);
-        console.log(`=== CHAT LOADING SUCCESS ===`);
+        console.log(`=== CHAT LOADING SUCCESS: ${processedMessages.length} messages loaded ===`);
+        
+        // Show alert if no messages loaded for debugging
+        if (processedMessages.length === 0) {
+          Alert.alert('Debug Info', `No ${chatType} messages found for user ${user.firstName} (${user.id})`);
+        }
       } else {
         const errorText = await chatResponse.text();
         console.error(`FAILED: Chat response not OK`);
@@ -769,46 +796,59 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
   );
 
   // Render chat tab
-  const renderChat = () => (
-    <View style={styles.chatContainer}>
-      <View style={styles.chatTypeSelector}>
-        <TouchableOpacity
-          style={[styles.chatTypeTab, chatType === 'individual' && styles.activeChatTypeTab]}
-          onPress={() => {
-            setChatType('individual');
-            // Reload messages when switching chat type
-            if (currentUser) {
-              const headers = {
-                'Authorization': getAuthToken(currentUser.id),
-                'Content-Type': 'application/json',
-              };
-              setTimeout(() => loadChatMessages(currentUser, headers), 100);
-            }
-          }}
-        >
-          <Text style={[styles.chatTypeText, chatType === 'individual' && styles.activeChatTypeText]}>
-            Individual
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.chatTypeTab, chatType === 'group' && styles.activeChatTypeTab]}
-          onPress={() => {
-            setChatType('group');
-            // Reload messages when switching chat type
-            if (currentUser) {
-              const headers = {
-                'Authorization': getAuthToken(currentUser.id),
-                'Content-Type': 'application/json',
-              };
-              setTimeout(() => loadChatMessages(currentUser, headers), 100);
-            }
-          }}
-        >
-          <Text style={[styles.chatTypeText, chatType === 'group' && styles.activeChatTypeText]}>
-            Group
-          </Text>
-        </TouchableOpacity>
-      </View>
+  const renderChat = () => {
+    // Load chat messages when chat tab is first opened
+    React.useEffect(() => {
+      if (activeTab === 'chat' && currentUser) {
+        console.log('=== CHAT TAB OPENED - LOADING MESSAGES ===');
+        const headers = {
+          'Authorization': getAuthToken(currentUser.id),
+          'Content-Type': 'application/json',
+        };
+        loadChatMessages(currentUser, headers);
+      }
+    }, [activeTab, currentUser, chatType]);
+
+    return (
+      <View style={styles.chatContainer}>
+        <View style={styles.chatTypeSelector}>
+          <TouchableOpacity
+            style={[styles.chatTypeTab, chatType === 'individual' && styles.activeChatTypeTab]}
+            onPress={() => {
+              setChatType('individual');
+              // Reload messages when switching chat type
+              if (currentUser) {
+                const headers = {
+                  'Authorization': getAuthToken(currentUser.id),
+                  'Content-Type': 'application/json',
+                };
+                setTimeout(() => loadChatMessages(currentUser, headers), 100);
+              }
+            }}
+          >
+            <Text style={[styles.chatTypeText, chatType === 'individual' && styles.activeChatTypeText]}>
+              Individual
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.chatTypeTab, chatType === 'group' && styles.activeChatTypeTab]}
+            onPress={() => {
+              setChatType('group');
+              // Reload messages when switching chat type
+              if (currentUser) {
+                const headers = {
+                  'Authorization': getAuthToken(currentUser.id),
+                  'Content-Type': 'application/json',
+                };
+                setTimeout(() => loadChatMessages(currentUser, headers), 100);
+              }
+            }}
+          >
+            <Text style={[styles.chatTypeText, chatType === 'group' && styles.activeChatTypeText]}>
+              Group
+            </Text>
+          </TouchableOpacity>
+        </View>
 
       <ScrollView style={styles.chatMessages}>
         {chatMessages.length > 0 ? (
@@ -975,14 +1015,6 @@ export default function ComprehensiveMigration({ apiUrl, onBack }: Comprehensive
                 style={[styles.tab, activeTab === tab.key && styles.activeTab]}
                 onPress={() => {
                   setActiveTab(tab.key as TabType);
-                  // Reload chat messages when switching to chat tab
-                  if (tab.key === 'chat' && currentUser) {
-                    const headers = {
-                      'Authorization': getAuthToken(currentUser.id),
-                      'Content-Type': 'application/json',
-                    };
-                    loadChatMessages(currentUser, headers);
-                  }
                 }}
               >
                 <Text style={[styles.tabIcon, activeTab === tab.key && styles.activeTabIcon]}>
