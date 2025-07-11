@@ -206,6 +206,21 @@ export default function ChatTab() {
 
   return (
     <div className="h-screen flex flex-col">
+      {/* Chat Type Selection - Moved to Top */}
+      <div className="px-6 py-3 bg-surface border-b border-gray-700">
+        <Tabs value={chatType} onValueChange={(value) => setChatType(value as 'individual' | 'group')} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-dark">
+            <TabsTrigger value="individual" className="flex items-center space-x-2 data-[state=active]:bg-primary-500">
+              <MessageCircle className="w-4 h-4" />
+              <span>Coach Chat{individualUnreadCount > 0 ? ` (${individualUnreadCount})` : ''}</span>
+            </TabsTrigger>
+            <TabsTrigger value="group" className="flex items-center space-x-2 data-[state=active]:bg-blue-600">
+              <Users className="w-4 h-4" />
+              <span>Group Chat{groupUnreadCount > 0 ? ` (${groupUnreadCount})` : ''}</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
       {/* Chat Header */}
       <div className="px-6 py-4 bg-surface border-b border-gray-700">
@@ -243,7 +258,7 @@ export default function ChatTab() {
       </div>
 
       {/* Chat Messages */}
-      <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin overflow-x-hidden">
+      <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin overflow-x-hidden pb-safe">
         {messages.length === 0 && (
           <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
             <div className="flex items-start space-x-3">
@@ -362,8 +377,8 @@ export default function ChatTab() {
 
 
 
-      {/* Chat Input */}
-      <div className="px-6 py-4 bg-surface border-t border-gray-700">
+      {/* Chat Input - Enhanced for mobile keyboard handling */}
+      <div className="px-6 py-4 bg-surface border-t border-gray-700 pb-safe">
         <div className="flex items-end space-x-3">
           <div className="flex-1 relative">
             <Textarea
@@ -375,6 +390,7 @@ export default function ChatTab() {
               className="w-full p-3 bg-dark border-gray-600 rounded-2xl pr-12 text-white placeholder-gray-400 resize-none min-h-[48px] max-h-32"
               disabled={sendMessageMutation.isPending}
               rows={1}
+              style={{ fontSize: '16px' }} // Prevents zoom on iOS
             />
             <button
               onClick={handleSendMessage}
@@ -384,25 +400,7 @@ export default function ChatTab() {
               <i className="fas fa-paper-plane"></i>
             </button>
           </div>
-          
-
         </div>
-      </div>
-
-      {/* Chat Type Selection - Moved to Bottom */}
-      <div className="px-6 py-3 bg-surface border-t border-gray-700">
-        <Tabs value={chatType} onValueChange={(value) => setChatType(value as 'individual' | 'group')} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-dark">
-            <TabsTrigger value="individual" className="flex items-center space-x-2 data-[state=active]:bg-primary-500">
-              <MessageCircle className="w-4 h-4" />
-              <span>Coach Chat{individualUnreadCount > 0 ? ` (${individualUnreadCount})` : ''}</span>
-            </TabsTrigger>
-            <TabsTrigger value="group" className="flex items-center space-x-2 data-[state=active]:bg-blue-600">
-              <Users className="w-4 h-4" />
-              <span>Group Chat{groupUnreadCount > 0 ? ` (${groupUnreadCount})` : ''}</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
     </div>
   );

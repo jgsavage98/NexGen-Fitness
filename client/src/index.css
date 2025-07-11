@@ -276,3 +276,32 @@
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: var(--primary-500);
 }
+
+/* iOS Safe Area Support */
+.safe-area-inset-top {
+  height: env(safe-area-inset-top);
+}
+
+.safe-area-inset-bottom {
+  height: env(safe-area-inset-bottom);
+}
+
+/* Mobile keyboard handling */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent iOS zoom on input focus */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea {
+  font-size: 16px !important;
+}
+
+/* Mobile viewport units for better keyboard handling */
+.h-screen-mobile {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height */
+}

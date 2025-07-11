@@ -683,8 +683,10 @@ export default function TrainerDashboard() {
 
   return (
     <div className="min-h-screen bg-dark text-white">
-      {/* Header */}
-      <div className="border-b border-gray-700 bg-surface">
+      {/* Header - Fixed positioning with proper mobile coverage */}
+      <div className="fixed top-0 left-0 right-0 z-40 border-b border-gray-700 bg-surface">
+        {/* iOS Safe Area Spacer */}
+        <div className="safe-area-inset-top"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-3 sm:space-x-4">
@@ -736,7 +738,8 @@ export default function TrainerDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      {/* Main Content - Adjusted for fixed header */}
+      <div className="pt-32 max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
           <TabsList className="bg-surface border border-gray-700 grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 h-auto gap-1 p-1">
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary-500 text-xs sm:text-sm flex-col sm:flex-row h-auto py-2 sm:py-1.5">
