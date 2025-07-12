@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
@@ -18,14 +18,34 @@ import UserSwitcher from "@/components/UserSwitcher";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [forceAccountSelection, setForceAccountSelection] = useState(true);
 
-  // Simple auth token check on mount
+  // Clear authentication state on app startup to force account selection
   useEffect(() => {
     const storedToken = localStorage.getItem('url_auth_token');
     console.log('Auth state check:', { 
       hasStoredToken: !!storedToken,
       currentPath: window.location.pathname
     });
+    
+    // Always clear stored auth on startup to force account selection
+    localStorage.removeItem('url_auth_token');
+    localStorage.removeItem('user_id');
+    // Clear all possible cookie variations
+    const cookiesToClear = ['authToken', 'userId', 'auth_token', 'user_id'];
+    cookiesToClear.forEach(cookieName => {
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.replit.dev;`;
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.replit.app;`;
+    });
+    
+    // Force logout on startup
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    
+    // Allow normal auth flow after initial cleanup
+    setTimeout(() => {
+      setForceAccountSelection(false);
+    }, 1000);
   }, []);
 
   if (isLoading) {
@@ -33,6 +53,18 @@ function Router() {
       <div className="min-h-screen flex items-center justify-center bg-dark">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
+    );
+  }
+
+  // Force account selection for the first second after startup
+  if (forceAccountSelection) {
+    return (
+      <Switch>
+        <Route path="/coach-chassidy-bio" component={CoachBio} />
+        <Route path="/landing" component={Landing} />
+        <Route path="/" component={() => <UserSwitcher />} />
+        <Route component={() => <UserSwitcher />} />
+      </Switch>
     );
   }
 
