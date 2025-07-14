@@ -68,6 +68,43 @@ function Router() {
 }
 
 function App() {
+  // Add global error handler for unhandled promise rejections
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      // Ignore Vite HMR connection errors in development
+      if (process.env.NODE_ENV === 'development' && 
+          (event.reason?.message?.includes('vite') || 
+           event.reason?.message?.includes('WebSocket') ||
+           event.reason?.message?.includes('HMR'))) {
+        event.preventDefault();
+        return;
+      }
+      
+      // Log other errors but prevent them from being uncaught
+      console.warn('Unhandled promise rejection:', event.reason);
+      event.preventDefault();
+    };
+
+    const handleError = (event: ErrorEvent) => {
+      // Ignore Vite HMR errors
+      if (process.env.NODE_ENV === 'development' && 
+          event.message?.includes('vite')) {
+        event.preventDefault();
+        return;
+      }
+      
+      console.warn('Global error caught:', event.error);
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

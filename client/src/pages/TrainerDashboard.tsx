@@ -296,8 +296,7 @@ export default function TrainerDashboard() {
   if (showProfileSettings) {
     return (
       <ProfileSettings 
-        onClose={handleHideProfileSettings}
-        isTrainerView={true}
+        onBack={handleHideProfileSettings}
       />
     );
   }
