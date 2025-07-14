@@ -1,8 +1,75 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut, Bell, BarChart3, Heart, Zap, Target, Users, Brain } from "lucide-react";
+import ProfileSettings from "@/pages/ProfileSettings";
+import ClientUploadHistory from "@/components/ClientUploadHistory";
+import ClientProgressTimeSeries from "@/components/ClientProgressTimeSeries";
+import UnifiedChatTab from "@/components/UnifiedChatTab";
+import ExerciseManagement from "@/components/ExerciseManagement";
+import AISettings from "@/pages/AISettings";
+import TrainerTabNavigation, { TrainerTabType } from "@/components/TrainerTabNavigation";
+import { calculateJourneyDay } from "@/lib/dateUtils";
+
+interface Client {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profileImageUrl?: string;
+  goal: string;
+  weight: number;
+  goalWeight: number;
+  programStartDate: string;
+  onboardingCompleted: boolean;
+  unansweredCount?: number;
+}
+
+interface PendingMacroChange {
+  id: number;
+  userId: string;
+  date: string;
+  proposedCalories: number;
+  proposedProtein: number;
+  proposedCarbs: number;
+  proposedFat: number;
+  currentCalories: number;
+  currentProtein: number;
+  currentCarbs: number;
+  currentFat: number;
+  reasoning: string;
+  requestDate: string;
+  screenshotUrl: string;
+  user: Client;
+}
+
+interface ChatMessage {
+  id: number;
+  userId: string;
+  message: string;
+  isAI: boolean;
+  createdAt: string;
+  user: Client;
+}
 
 export default function TrainerDashboard() {
+  const [activeTab, setActiveTab] = useState<TrainerTabType>('overview');
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
+  const [trainerNotes, setTrainerNotes] = useState("");
+  const [previousPendingCount, setPreviousPendingCount] = useState(0);
+  const [activityClientFilter, setActivityClientFilter] = useState<string>("all");
+  const [activityTypeFilter, setActivityTypeFilter] = useState<string>("all");
+  
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Check if current user is authenticated
   const { data: currentUser, isLoading: userLoading } = useQuery({
@@ -34,12 +101,519 @@ export default function TrainerDashboard() {
     );
   }
 
+  // Force cache invalidation on component mount
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-macro-changes"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+  }, [queryClient]);
+
+  // Fetch all clients
+  const { data: clients = [], isLoading: clientsLoading } = useQuery<Client[]>({
+    queryKey: ["/api/trainer/clients"],
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
+  });
+
+  // Fetch pending macro changes
+  const { data: pendingChanges = [] } = useQuery<PendingMacroChange[]>({
+    queryKey: ["/api/trainer/pending-macro-changes"],
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+
+  // Fetch recent chat messages
+  const { data: recentChats = [] } = useQuery<ChatMessage[]>({
+    queryKey: ["/api/trainer/recent-chats"],
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
+  // Fetch recent uploads
+  const { data: recentUploads = [] } = useQuery({
+    queryKey: ["/api/trainer/recent-uploads"],
+    refetchInterval: 3000,
+  });
+
+  // Fetch recent weight entries
+  const { data: recentWeightEntries = [] } = useQuery({
+    queryKey: ["/api/trainer/recent-weight-entries"],
+    refetchInterval: 3000,
+  });
+
+  // Fetch group chat unread count
+  const { data: groupChatUnread = { count: 0 } } = useQuery<{ count: number }>({
+    queryKey: ["/api/trainer/group-chat-unread"],
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
+  });
+
+  // Debug logging for pending changes
+  useEffect(() => {
+    if (pendingChanges.length > 0) {
+      console.log("Pending changes data received:", pendingChanges);
+    }
+  }, [pendingChanges]);
+
+  // Notification effect for new pending macro changes
+  useEffect(() => {
+    if (pendingChanges.length > previousPendingCount && previousPendingCount > 0) {
+      const newCount = pendingChanges.length - previousPendingCount;
+      
+      toast({
+        title: "New Macro Review Required",
+        description: `${newCount} new client macro plan${newCount > 1 ? 's' : ''} need${newCount === 1 ? 's' : ''} your review`,
+        duration: 10000,
+      });
+
+      // Browser notification
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('Ignite AI - Macro Review Required', {
+            body: `${newCount} new client macro plan${newCount > 1 ? 's' : ''} need${newCount === 1 ? 's' : ''} your review`,
+            icon: '/ignite-logo.png',
+            tag: 'macro-review'
+          });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              new Notification('Ignite AI - Macro Review Required', {
+                body: `${newCount} new client macro plan${newCount > 1 ? 's' : ''} need${newCount === 1 ? 's' : ''} your review`,
+                icon: '/ignite-logo.png',
+                tag: 'macro-review'
+              });
+            }
+          });
+        }
+      }
+    }
+    
+    setPreviousPendingCount(pendingChanges.length);
+  }, [pendingChanges.length, previousPendingCount, toast]);
+
+  // Approve macro change mutation
+  const approveMacroMutation = useMutation({
+    mutationFn: async ({ changeId, notes }: { changeId: number; notes?: string }) => {
+      const response = await apiRequest("POST", `/api/trainer/approve-macro-change/${changeId}`, {
+        trainerNotes: notes
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/pending-macro-changes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-chats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-uploads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/recent-weight-entries"] });
+      toast({
+        title: "Success",
+        description: "Macro change approved successfully",
+      });
+      setTrainerNotes("");
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to approve macro change",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      localStorage.removeItem('demo_auth_token');
+      localStorage.removeItem('demo_user_id');
+      localStorage.removeItem('url_auth_token');
+      
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'connect.sid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "Logged out",
+        description: "Successfully logged out",
+      });
+      
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+    },
+    onError: (error) => {
+      toast({
+        title: "Logout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handler functions
+  const handleApproveMacroChange = (changeId: number, notes?: string) => {
+    approveMacroMutation.mutate({ changeId, notes });
+  };
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
+  const handleShowProfileSettings = () => {
+    setShowProfileSettings(true);
+  };
+
+  const handleHideProfileSettings = () => {
+    setShowProfileSettings(false);
+  };
+
+  const handleChatWithClient = (clientId: string) => {
+    setSelectedClient(clientId);
+    setActiveTab('chat');
+  };
+
+  const handleViewClientProgress = (clientId: string) => {
+    setSelectedClient(clientId);
+    setActiveTab('client-progress');
+  };
+
+  // Show profile settings modal
+  if (showProfileSettings) {
+    return (
+      <ProfileSettings 
+        onClose={handleHideProfileSettings}
+        isTrainerView={true}
+      />
+    );
+  }
+
+  // Filter activity data based on selected filters
+  const filteredRecentUploads = recentUploads.filter((upload: any) => {
+    const clientMatch = activityClientFilter === "all" || upload.userFirstName === activityClientFilter;
+    const typeMatch = activityTypeFilter === "all" || activityTypeFilter === "macros";
+    return clientMatch && typeMatch;
+  });
+
+  const filteredRecentWeightEntries = recentWeightEntries.filter((entry: any) => {
+    const clientMatch = activityClientFilter === "all" || entry.userFirstName === activityClientFilter;
+    const typeMatch = activityTypeFilter === "all" || activityTypeFilter === "weight";
+    return clientMatch && typeMatch;
+  });
+
+  const filteredRecentChats = recentChats.filter((chat: any) => {
+    const clientMatch = activityClientFilter === "all" || chat.user.firstName === activityClientFilter;
+    const typeMatch = activityTypeFilter === "all" || activityTypeFilter === "chats";
+    return clientMatch && typeMatch;
+  });
+
+  const renderOverview = () => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Trainer Dashboard</h1>
+          <p className="text-gray-400">Welcome back, Coach Chassidy</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={handleShowProfileSettings}
+            className="flex items-center space-x-2"
+          >
+            <User className="w-4 h-4" />
+            <span>Profile</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="flex items-center space-x-2"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-surface border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Total Clients</p>
+                <p className="text-2xl font-bold text-white">{clients.length}</p>
+              </div>
+              <Users className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Pending Reviews</p>
+                <p className="text-2xl font-bold text-white">{pendingChanges.length}</p>
+              </div>
+              <Bell className="w-8 h-8 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Recent Uploads</p>
+                <p className="text-2xl font-bold text-white">{recentUploads.length}</p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Group Chat</p>
+                <p className="text-2xl font-bold text-white">{groupChatUnread.count}</p>
+              </div>
+              <MessageSquare className="w-8 h-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Pending Macro Reviews */}
+      {pendingChanges.length > 0 && (
+        <Card className="bg-surface border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Bell className="w-5 h-5 text-orange-500" />
+              <span>Pending Macro Reviews</span>
+              <Badge variant="secondary">{pendingChanges.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {pendingChanges.slice(0, 3).map((change) => (
+                <div key={change.id} className="bg-gray-800 p-4 rounded-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-semibold text-white">
+                        {change.user.firstName} {change.user.lastName}
+                      </h4>
+                      <p className="text-sm text-gray-400">
+                        Requested: {new Date(change.requestDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-400">Proposed Changes</p>
+                      <p className="text-sm text-white">
+                        {change.proposedCalories} cal, {change.proposedProtein}g protein
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleApproveMacroChange(change.id)}
+                      disabled={approveMacroMutation.isPending}
+                    >
+                      Approve
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setActiveTab('macro-reviews')}
+                    >
+                      Review
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Activity */}
+      <Card className="bg-surface border-gray-700">
+        <CardHeader>
+          <CardTitle className="text-white">Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredRecentUploads.slice(0, 5).map((upload: any, index: number) => (
+              <div key={index} className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="flex-1">
+                  <p className="text-sm text-white">
+                    {upload.userFirstName} uploaded macro data
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(upload.recordedAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return renderOverview();
+      case 'macro-reviews':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-white">Macro Reviews</h2>
+            {pendingChanges.length === 0 ? (
+              <Card className="bg-surface border-gray-700">
+                <CardContent className="p-8 text-center">
+                  <p className="text-gray-400">No pending macro reviews</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingChanges.map((change) => (
+                  <Card key={change.id} className="bg-surface border-gray-700">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h4 className="font-semibold text-white text-lg">
+                            {change.user.firstName} {change.user.lastName}
+                          </h4>
+                          <p className="text-sm text-gray-400">
+                            Requested: {new Date(change.requestDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge variant="secondary">Pending</Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-sm text-gray-400 mb-2">Current Macros</p>
+                          <div className="bg-gray-800 p-3 rounded">
+                            <p className="text-sm text-white">
+                              {change.currentCalories} cal, {change.currentProtein}g protein,{' '}
+                              {change.currentCarbs}g carbs, {change.currentFat}g fat
+                            </p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-400 mb-2">Proposed Macros</p>
+                          <div className="bg-gray-800 p-3 rounded">
+                            <p className="text-sm text-white">
+                              {change.proposedCalories} cal, {change.proposedProtein}g protein,{' '}
+                              {change.proposedCarbs}g carbs, {change.proposedFat}g fat
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <Label className="text-sm text-gray-400">Reasoning</Label>
+                        <div className="bg-gray-800 p-3 rounded mt-1">
+                          <p className="text-sm text-white">{change.reasoning}</p>
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <Label htmlFor={`notes-${change.id}`} className="text-sm text-gray-400">
+                          Trainer Notes (Optional)
+                        </Label>
+                        <Textarea
+                          id={`notes-${change.id}`}
+                          value={trainerNotes}
+                          onChange={(e) => setTrainerNotes(e.target.value)}
+                          placeholder="Add any notes for the client..."
+                          className="mt-1 bg-gray-800 border-gray-600 text-white"
+                        />
+                      </div>
+
+                      <div className="flex space-x-2">
+                        <Button 
+                          onClick={() => handleApproveMacroChange(change.id, trainerNotes)}
+                          disabled={approveMacroMutation.isPending}
+                        >
+                          {approveMacroMutation.isPending ? 'Approving...' : 'Approve'}
+                        </Button>
+                        <Button variant="outline">
+                          Edit & Approve
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      case 'chat':
+        return (
+          <UnifiedChatTab 
+            selectedClient={selectedClient}
+            onClientSelect={setSelectedClient}
+          />
+        );
+      case 'client-progress':
+        return selectedClient ? (
+          <ClientProgressTimeSeries clientId={selectedClient} />
+        ) : (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-white">Client Progress</h2>
+            <Card className="bg-surface border-gray-700">
+              <CardContent className="p-8 text-center">
+                <p className="text-gray-400">Select a client to view their progress</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      case 'exercises':
+        return <ExerciseManagement />;
+      case 'ai-settings':
+        return <AISettings />;
+      default:
+        return renderOverview();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="text-center p-8">
-        <h1 className="text-2xl font-bold">Trainer Dashboard</h1>
-        <p className="text-gray-400 mt-2">Welcome, Coach Chassidy!</p>
+      {/* Main Content */}
+      <div className="pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {renderContent()}
+        </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <TrainerTabNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        pendingReviewsCount={pendingChanges.length}
+        chatUnreadCount={groupChatUnread.count}
+      />
     </div>
   );
 }
