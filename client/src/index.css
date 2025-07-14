@@ -73,6 +73,55 @@
   }
 }
 
+/* Custom utility classes for client dashboard theme */
+.bg-dark {
+  background-color: hsl(0, 0%, 7%);
+}
+
+.bg-surface {
+  background-color: hsl(0, 0%, 10%);
+}
+
+.text-white {
+  color: hsl(0, 0%, 98%);
+}
+
+.text-gray-400 {
+  color: hsl(240, 5%, 64.9%);
+}
+
+.text-gray-600 {
+  color: hsl(240, 5%, 50%);
+}
+
+.text-gray-700 {
+  color: hsl(240, 3.7%, 15.9%);
+}
+
+.border-gray-700 {
+  border-color: hsl(240, 3.7%, 15.9%);
+}
+
+.border-gray-600 {
+  border-color: hsl(240, 5%, 50%);
+}
+
+.pb-nav {
+  padding-bottom: 5rem;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-inset-top {
+  height: env(safe-area-inset-top);
+}
+
+.safe-area-inset-bottom {
+  height: env(safe-area-inset-bottom);
+}
+
 /* iOS Capacitor Mobile Optimizations */
 @supports (padding-top: env(safe-area-inset-top)) {
   .safe-area-inset-top {

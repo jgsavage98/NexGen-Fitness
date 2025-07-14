@@ -8,6 +8,7 @@ import { MessageSquare, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useWebSocket } from "../hooks/useWebSocket";
+import ClientSelector from "./ClientSelector";
 
 
 interface Client {
@@ -245,68 +246,31 @@ export default function UnifiedChatTab() {
   return (
     <div className="space-y-6">
       {/* Chat Selection */}
-      <Card>
+      <Card className="bg-surface border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <MessageSquare className="h-5 w-5" />
             Client Communications
+            <Badge variant="outline" className="ml-auto text-white border-gray-600">
+              {clients.length} client{clients.length !== 1 ? 's' : ''}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Group Chat Option */}
-            <Button
-              variant={selectedChatClient === "group-chat" ? "default" : "outline"}
-              className="h-auto p-4 flex flex-col items-start gap-2"
-              onClick={() => setSelectedChatClient("group-chat")}
-            >
-              <div className="flex items-center gap-2 w-full">
-                <Users className="h-4 w-4" />
-                <span className="font-medium">Group Chat</span>
-                {groupChatUnread.count > 0 && (
-                  <Badge variant="destructive" className="ml-auto">
-                    {groupChatUnread.count}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground text-left">
-                Community discussions and group support
-              </p>
-            </Button>
-
-            {/* Individual Client Chats */}
-            {clients.map((client) => (
-              <Button
-                key={client.id}
-                variant={selectedChatClient === client.id ? "default" : "outline"}
-                className="h-auto p-4 flex flex-col items-start gap-2"
-                onClick={() => setSelectedChatClient(client.id)}
-              >
-                <div className="flex items-center gap-2 w-full">
-                  <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                    {client.firstName[0]}
-                  </div>
-                  <span className="font-medium">{client.firstName} {client.lastName}</span>
-                  {(client.unansweredCount || 0) > 0 && (
-                    <Badge variant="destructive" className="ml-auto">
-                      {client.unansweredCount}
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground text-left">
-                  {client.goal} • {client.weight}lbs → {client.goalWeight}lbs
-                </p>
-              </Button>
-            ))}
-          </div>
+          <ClientSelector
+            clients={clients}
+            selectedClient={selectedChatClient}
+            onClientSelect={setSelectedChatClient}
+            groupChatUnread={groupChatUnread.count}
+          />
         </CardContent>
       </Card>
 
       {/* Chat Messages */}
       {selectedChatClient && (
-        <Card className="flex flex-col h-[600px]">
+        <Card className="flex flex-col h-[600px] bg-surface border-gray-700">
           <CardHeader className="flex-none">
-            <CardTitle>
+            <CardTitle className="text-white">
               {selectedChatClient === "group-chat" ? "Group Chat" : getClientName(selectedChatClient)}
             </CardTitle>
           </CardHeader>

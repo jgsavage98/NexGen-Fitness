@@ -17,6 +17,7 @@ import ExerciseManagement from "@/components/ExerciseManagement";
 import AISettings from "@/pages/AISettings";
 import TrainerTabNavigation, { TrainerTabType } from "@/components/TrainerTabNavigation";
 import { calculateJourneyDay } from "@/lib/dateUtils";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Client {
   id: string;
@@ -70,6 +71,7 @@ export default function TrainerDashboard() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Check if current user is authenticated
   const { data: currentUser, isLoading: userLoading } = useQuery({
@@ -598,21 +600,76 @@ export default function TrainerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Main Content */}
-      <div className="pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {renderContent()}
-        </div>
-      </div>
+    <div className="min-h-screen bg-dark overflow-hidden">
+      {/* Mobile App Container */}
+      <div className="max-w-md mx-auto bg-dark min-h-screen flex flex-col relative">
+        {/* Fixed Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-700">
+          {/* Top safe area spacer */}
+          <div className="bg-surface safe-area-inset-top"></div>
+          <div className="max-w-md mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowProfileSettings(!showProfileSettings)}
+                  className="flex-shrink-0 rounded-full hover:ring-2 hover:ring-primary-500 transition-all"
+                >
+                  <img 
+                    src={user?.profileImageUrl || "/CE Bio Image.jpeg"} 
+                    alt="Coach profile" 
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                </button>
+                <div>
+                  <div className="font-semibold text-white">
+                    Coach {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Chassidy'}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    Trainer Dashboard
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+                <img 
+                  src="/ignite-logo.png" 
+                  alt="Ignite" 
+                  className="h-20 w-auto"
+                />
+              </div>
+            </div>
+          </div>
+        </header>
 
-      {/* Bottom Navigation */}
-      <TrainerTabNavigation
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        pendingReviewsCount={pendingChanges.length}
-        chatUnreadCount={groupChatUnread.count}
-      />
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto pt-24 pb-nav">
+          <div className="max-w-md mx-auto">
+            {showProfileSettings ? (
+              <ProfileSettings onBack={() => setShowProfileSettings(false)} />
+            ) : (
+              renderContent()
+            )}
+          </div>
+        </main>
+
+        {/* Fixed Bottom Navigation */}
+        {!showProfileSettings && (
+          <TrainerTabNavigation
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            pendingReviewsCount={pendingChanges.length}
+            chatUnreadCount={groupChatUnread.count}
+          />
+        )}
+      </div>
     </div>
   );
 }
