@@ -626,7 +626,7 @@ export default function TrainerDashboard() {
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto pt-24 pb-nav">
+        <main className="flex-1 overflow-y-auto pt-32 pb-nav">
           <div className="max-w-md mx-auto">
             {showProfileSettings ? (
               <ProfileSettings onBack={() => setShowProfileSettings(false)} />

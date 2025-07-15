@@ -13,6 +13,12 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (July 15, 2025)
 
+### Header Obstruction Fix - COMPLETE (10:22 PM)
+- **Fixed Header Overlap Issue**: Increased main content top padding from pt-24 to pt-32 to prevent header from obstructing titles
+- **Improved Content Visibility**: Titles on Reviews, Exercises, and Progress pages now display properly without being covered by the fixed header
+- **Enhanced User Experience**: All page titles and content now have proper clearance from the header for better readability
+- **Cross-Page Consistency**: Fix applies to all trainer dashboard pages ensuring consistent content spacing
+
 ### Trainer Dashboard Header Refinement - COMPLETE (9:56 PM)
 - **Removed Redundant Profile Section**: Eliminated duplicate Coach Chassidy profile display in overview content, keeping only the header profile
 - **Clickable Profile Link**: Trainer's profile image and name in header now link to profile settings (bio) as requested
