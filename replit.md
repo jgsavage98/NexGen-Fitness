@@ -13,10 +13,17 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (July 15, 2025)
 
+### Recent Activity Enhancement with Profile Images - COMPLETE (11:25 PM)
+- **Profile Image Integration**: Added client profile images next to all activities in Recent Activity timeline
+- **Expanded Activity Limit**: Increased from 10 to 50 most recent activities for comprehensive activity history
+- **Full Message Content Display**: Chat messages now show complete message content instead of generic "sent a message" text
+- **Enhanced Visual Layout**: Improved layout with profile images, user names, and better content organization
+- **Client Image Matching**: Implemented helper function to match client profile images with activity data using client lookup
+
 ### Recent Activity Timeline Enhancement - COMPLETE (10:34 PM)
 - **Comprehensive Activity Display**: Enhanced Recent Activity section to show combined chronological timeline of all client activities
 - **Multi-Type Activity Support**: Now displays macro uploads (green), weight entries (blue), and chat messages (purple) in unified timeline
-- **Chronological Sorting**: Activities are sorted by date in descending order (newest first) showing most recent 10 activities
+- **Chronological Sorting**: Activities are sorted by date in descending order (newest first) showing most recent activities
 - **Improved Data Visualization**: Each activity type has distinctive color coding and clear messaging for better readability
 - **Empty State Handling**: Added proper empty state message when no recent activities are available
 

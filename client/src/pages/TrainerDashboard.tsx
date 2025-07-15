@@ -322,6 +322,12 @@ export default function TrainerDashboard() {
     return clientMatch && typeMatch;
   });
 
+  // Helper function to get client profile image URL
+  const getClientProfileImage = (userId: string, userFirstName: string) => {
+    const client = clients.find(c => c.id === userId || c.firstName === userFirstName);
+    return client?.profileImageUrl || "/default-avatar.png";
+  };
+
   // Combine all activities into a single timeline, sorted by date
   const combinedActivities = [
     ...filteredRecentUploads.map((upload: any) => ({
@@ -329,26 +335,32 @@ export default function TrainerDashboard() {
       data: upload,
       date: new Date(upload.recordedAt),
       user: upload.userFirstName,
+      userId: upload.userId,
       message: `${upload.userFirstName} uploaded macro data`,
-      color: 'bg-green-500'
+      color: 'bg-green-500',
+      profileImage: getClientProfileImage(upload.userId, upload.userFirstName)
     })),
     ...filteredRecentWeightEntries.map((entry: any) => ({
       type: 'weight',
       data: entry,
       date: new Date(entry.recordedAt),
       user: entry.userFirstName,
+      userId: entry.userId,
       message: `${entry.userFirstName} logged weight: ${entry.weight}lbs`,
-      color: 'bg-blue-500'
+      color: 'bg-blue-500',
+      profileImage: getClientProfileImage(entry.userId, entry.userFirstName)
     })),
     ...filteredRecentChats.map((chat: any) => ({
       type: 'chat',
       data: chat,
       date: new Date(chat.createdAt),
       user: chat.user.firstName,
-      message: `${chat.user.firstName} sent a message`,
-      color: 'bg-purple-500'
+      userId: chat.userId,
+      message: chat.message, // Show full message content
+      color: 'bg-purple-500',
+      profileImage: getClientProfileImage(chat.userId, chat.user.firstName)
     }))
-  ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10);
+  ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 50);
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -467,12 +479,38 @@ export default function TrainerDashboard() {
           <div className="space-y-4">
             {combinedActivities.length > 0 ? (
               combinedActivities.map((activity: any, index: number) => (
-                <div key={`activity-${index}`} className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg">
-                  <div className={`w-2 h-2 ${activity.color} rounded-full`}></div>
-                  <div className="flex-1">
-                    <p className="text-sm text-white">
-                      {activity.message}
+                <div key={`activity-${index}`} className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
+                  {/* Profile Image */}
+                  <img 
+                    src={activity.profileImage} 
+                    alt={`${activity.user} profile`} 
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  />
+                  
+                  {/* Activity Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <div className={`w-2 h-2 ${activity.color} rounded-full flex-shrink-0`}></div>
+                      <p className="text-sm font-medium text-white">
+                        {activity.user}
+                      </p>
+                    </div>
+                    
+                    {/* Message Content */}
+                    <p className="text-sm text-gray-300 mb-2">
+                      {activity.type === 'chat' ? (
+                        // For chat messages, show the full message content
+                        activity.message
+                      ) : activity.type === 'macro' ? (
+                        'uploaded macro data'
+                      ) : activity.type === 'weight' ? (
+                        `logged weight: ${activity.data.weight}lbs`
+                      ) : (
+                        activity.message
+                      )}
                     </p>
+                    
+                    {/* Timestamp */}
                     <p className="text-xs text-gray-400">
                       {activity.date.toLocaleString()}
                     </p>
