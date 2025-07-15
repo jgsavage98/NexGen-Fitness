@@ -13,6 +13,13 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (July 15, 2025)
 
+### Recent Activity Timeline Enhancement - COMPLETE (10:34 PM)
+- **Comprehensive Activity Display**: Enhanced Recent Activity section to show combined chronological timeline of all client activities
+- **Multi-Type Activity Support**: Now displays macro uploads (green), weight entries (blue), and chat messages (purple) in unified timeline
+- **Chronological Sorting**: Activities are sorted by date in descending order (newest first) showing most recent 10 activities
+- **Improved Data Visualization**: Each activity type has distinctive color coding and clear messaging for better readability
+- **Empty State Handling**: Added proper empty state message when no recent activities are available
+
 ### Header Obstruction Fix - COMPLETE (10:22 PM)
 - **Fixed Header Overlap Issue**: Increased main content top padding from pt-24 to pt-32 to prevent header from obstructing titles
 - **Improved Content Visibility**: Titles on Reviews, Exercises, and Progress pages now display properly without being covered by the fixed header

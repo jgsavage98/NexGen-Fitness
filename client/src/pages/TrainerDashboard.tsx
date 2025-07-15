@@ -322,6 +322,34 @@ export default function TrainerDashboard() {
     return clientMatch && typeMatch;
   });
 
+  // Combine all activities into a single timeline, sorted by date
+  const combinedActivities = [
+    ...filteredRecentUploads.map((upload: any) => ({
+      type: 'macro',
+      data: upload,
+      date: new Date(upload.recordedAt),
+      user: upload.userFirstName,
+      message: `${upload.userFirstName} uploaded macro data`,
+      color: 'bg-green-500'
+    })),
+    ...filteredRecentWeightEntries.map((entry: any) => ({
+      type: 'weight',
+      data: entry,
+      date: new Date(entry.recordedAt),
+      user: entry.userFirstName,
+      message: `${entry.userFirstName} logged weight: ${entry.weight}lbs`,
+      color: 'bg-blue-500'
+    })),
+    ...filteredRecentChats.map((chat: any) => ({
+      type: 'chat',
+      data: chat,
+      date: new Date(chat.createdAt),
+      user: chat.user.firstName,
+      message: `${chat.user.firstName} sent a message`,
+      color: 'bg-purple-500'
+    }))
+  ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10);
+
   const renderOverview = () => (
     <div className="space-y-6">
 
@@ -437,19 +465,25 @@ export default function TrainerDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredRecentUploads.slice(0, 5).map((upload: any, index: number) => (
-              <div key={index} className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-white">
-                    {upload.userFirstName} uploaded macro data
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(upload.recordedAt).toLocaleString()}
-                  </p>
+            {combinedActivities.length > 0 ? (
+              combinedActivities.map((activity: any, index: number) => (
+                <div key={`activity-${index}`} className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg">
+                  <div className={`w-2 h-2 ${activity.color} rounded-full`}></div>
+                  <div className="flex-1">
+                    <p className="text-sm text-white">
+                      {activity.message}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {activity.date.toLocaleString()}
+                    </p>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-400">No recent activity to display</p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
