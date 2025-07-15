@@ -324,31 +324,7 @@ export default function TrainerDashboard() {
 
   const renderOverview = () => (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Trainer Dashboard</h1>
-          <p className="text-gray-400">Welcome back, Coach Chassidy</p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Button 
-            variant="outline" 
-            onClick={handleShowProfileSettings}
-            className="flex items-center space-x-2"
-          >
-            <User className="w-4 h-4" />
-            <span>Profile</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleLogout}
-            className="flex items-center space-x-2"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
-          </Button>
-        </div>
-      </div>
+
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
