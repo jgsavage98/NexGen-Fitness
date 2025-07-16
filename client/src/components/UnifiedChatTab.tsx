@@ -300,12 +300,12 @@ export default function UnifiedChatTab() {
               </h2>
             )}
             <div className="flex items-center gap-2">
-              {/* Desktop collapse/expand toggle */}
+              {/* Desktop collapse/expand toggle - now visible on all sizes */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={toggleSidebarCollapse}
-                className="hidden lg:flex text-white hover:bg-gray-700"
+                className="text-white hover:bg-gray-700"
                 title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 {sidebarCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
