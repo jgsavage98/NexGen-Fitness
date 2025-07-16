@@ -13,6 +13,16 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (July 16, 2025)
 
+### Mobile-Optimized Separate Scrollable Windows - COMPLETE (12:22 PM)
+- **Separate Scrollable Areas**: Implemented independent scrollable windows for sidebar and chat history optimized for mobile devices
+- **Advanced Touch Scrolling**: Added webkit-overflow-scrolling: touch and overscroll-behavior: contain for smooth mobile scrolling
+- **Mobile-Specific CSS**: Added comprehensive mobile-scroll, touch-optimized, and chat-button utility classes
+- **iOS Optimizations**: Prevented zoom on input focus with 16px font size and enhanced touch interactions
+- **Improved Height Management**: Fixed flex layouts with min-h-0 and flex-shrink-0 for proper mobile height distribution
+- **Enhanced Message Layout**: Improved message bubbles with responsive width (85% mobile, 70% desktop) and break-words
+- **Touch-Friendly Interactions**: Added touch-action: manipulation and tap-highlight prevention for better mobile UX
+- **Scrollbar Styling**: Custom thin scrollbars with dark theme colors for better visual integration
+
 ### Modern Sidebar-Based Chat Interface - COMPLETE (11:54 AM)
 - **Sidebar-Based Layout**: Implemented modern messaging app design (Slack/Discord/Teams style) with collapsible 320px sidebar
 - **Advanced Search Functionality**: Real-time client search by name or email with instant filtering

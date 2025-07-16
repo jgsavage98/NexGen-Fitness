@@ -72,10 +72,13 @@ function App() {
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       // Ignore Vite HMR connection errors in development
-      if (process.env.NODE_ENV === 'development' && 
+      if (import.meta.env.DEV && 
           (event.reason?.message?.includes('vite') || 
            event.reason?.message?.includes('WebSocket') ||
-           event.reason?.message?.includes('HMR'))) {
+           event.reason?.message?.includes('HMR') ||
+           event.reason?.message?.includes('connecting') ||
+           event.reason?.code === 'ECONNREFUSED' ||
+           event.reason?.type === 'unhandledrejection')) {
         event.preventDefault();
         return;
       }
@@ -87,8 +90,10 @@ function App() {
 
     const handleError = (event: ErrorEvent) => {
       // Ignore Vite HMR errors
-      if (process.env.NODE_ENV === 'development' && 
-          event.message?.includes('vite')) {
+      if (import.meta.env.DEV && 
+          (event.message?.includes('vite') ||
+           event.message?.includes('WebSocket') ||
+           event.message?.includes('connecting'))) {
         event.preventDefault();
         return;
       }

@@ -285,8 +285,8 @@ export default function UnifiedChatTab() {
     <div className="flex h-[calc(100vh-8rem)] bg-dark">
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-700 bg-surface flex flex-col`}>
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-700">
+        {/* Sidebar Header - Fixed */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-700">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
@@ -309,13 +309,13 @@ export default function UnifiedChatTab() {
               placeholder="Search clients..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-dark border-gray-600 text-white placeholder-gray-400"
+              className="pl-10 bg-dark border-gray-600 text-white placeholder-gray-400 mobile-input"
             />
           </div>
         </div>
 
-        {/* Chat List */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Chat List - Scrollable */}
+        <div className="flex-1 overflow-y-auto mobile-scroll">
           {chatList.length === 0 ? (
             <div className="p-4 text-center text-gray-400">
               No clients found
@@ -326,15 +326,15 @@ export default function UnifiedChatTab() {
                 <button
                   key={chat.id}
                   onClick={() => handleChatSelect(chat.id)}
-                  className={`w-full p-3 rounded-lg text-left transition-colors ${
+                  className={`w-full p-3 rounded-lg text-left transition-colors touch-optimized chat-button ${
                     selectedChatClient === chat.id
                       ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-700'
+                      : 'text-gray-300 hover:bg-gray-700 active:bg-gray-600'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     {/* Avatar */}
-                    <div className="relative">
+                    <div className="relative flex-shrink-0">
                       {chat.profileImageUrl ? (
                         <img
                           src={chat.profileImageUrl}
@@ -361,7 +361,7 @@ export default function UnifiedChatTab() {
                       <div className="flex items-center justify-between">
                         <span className="font-medium truncate">{chat.name}</span>
                         {chat.unreadCount > 0 && (
-                          <Badge variant="destructive" className="ml-2 px-2 py-1 text-xs">
+                          <Badge variant="destructive" className="ml-2 px-2 py-1 text-xs flex-shrink-0">
                             {chat.unreadCount}
                           </Badge>
                         )}
@@ -440,8 +440,9 @@ export default function UnifiedChatTab() {
 
         {/* Messages Area */}
         {selectedChatClient ? (
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Messages Container - Scrollable */}
+            <div className="flex-1 overflow-y-auto mobile-scroll p-4 space-y-4">
               {isChatLoading ? (
                 <div className="text-center py-8 text-gray-400">
                   Loading messages...
@@ -454,10 +455,10 @@ export default function UnifiedChatTab() {
                 clientChatMessages.map((message: ChatMessage) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.isAI ? "justify-start" : "justify-end"}`}
+                    className={`flex ${message.isAI ? "justify-start" : "justify-end"} mb-4`}
                   >
                     <div
-                      className={`max-w-[70%] rounded-lg p-3 ${
+                      className={`max-w-[85%] sm:max-w-[70%] rounded-lg p-3 ${
                         message.isAI
                           ? "bg-blue-600 text-white"
                           : "bg-gray-700 text-white"
@@ -474,7 +475,7 @@ export default function UnifiedChatTab() {
                           {formatTime(message.createdAt)}
                         </span>
                       </div>
-                      <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                      <p className="text-sm whitespace-pre-wrap break-words">{message.message}</p>
                     </div>
                   </div>
                 ))
@@ -482,8 +483,8 @@ export default function UnifiedChatTab() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Message Input */}
-            <div className="p-4 border-t border-gray-700 bg-surface">
+            {/* Message Input - Fixed */}
+            <div className="flex-shrink-0 p-4 border-t border-gray-700 bg-surface">
               <div className="space-y-3">
                 <Textarea
                   placeholder="Type your message..."
@@ -495,22 +496,22 @@ export default function UnifiedChatTab() {
                       handleSendMessage();
                     }
                   }}
-                  className="resize-none bg-dark border-gray-600 text-white placeholder-gray-400"
+                  className="resize-none bg-dark border-gray-600 text-white placeholder-gray-400 mobile-input touch-optimized"
                   rows={3}
                 />
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
                   <Button
                     onClick={handleGenerateAI}
                     variant="outline"
                     disabled={isGeneratingAI || generateAIResponseMutation.isPending}
-                    className="border-gray-600 text-white hover:bg-gray-700"
+                    className="border-gray-600 text-white hover:bg-gray-700 touch-optimized"
                   >
                     {isGeneratingAI ? "Generating..." : "Generate AI Response"}
                   </Button>
                   <Button
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 touch-optimized"
                   >
                     {sendMessageMutation.isPending ? "Sending..." : "Send"}
                   </Button>
