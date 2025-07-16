@@ -23,7 +23,7 @@ import {
   progressEntries
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, gte, lte, not, sql, gt } from "drizzle-orm";
+import { eq, desc, and, or, gte, lte, not, sql, gt, ne } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -2708,12 +2708,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(chatMessages)
         .leftJoin(users, eq(chatMessages.userId, users.id))
         .where(
-          or(
-            eq(users.trainerId, 'coach_chassidy'),
-            and(
-              eq(chatMessages.userId, 'coach_chassidy'),
-              eq(chatMessages.chatType, 'group')
-            )
+          and(
+            // Only include messages from clients (exclude trainer messages)
+            ne(chatMessages.userId, 'coach_chassidy'),
+            // Only include clients that belong to coach_chassidy
+            eq(users.trainerId, 'coach_chassidy')
           )
         )
         .orderBy(desc(chatMessages.createdAt))
