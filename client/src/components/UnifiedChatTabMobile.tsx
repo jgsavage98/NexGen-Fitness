@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, Users, ChevronDown, User } from "lucide-react";
+import { MessageSquare, Users, ChevronDown, User, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useWebSocket } from "../hooks/useWebSocket";
-
 
 interface Client {
   id: string;
@@ -36,91 +35,62 @@ interface ChatMessage {
 }
 
 export default function UnifiedChatTabMobile() {
-  const [selectedChatClient, setSelectedChatClient] = useState<string>("group-chat");
-  const [newMessage, setNewMessage] = useState("");
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [chatType, setChatType] = useState<'individual' | 'group'>('individual');
+  const [message, setMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch clients
-  const { data: clients = [] } = useQuery<Client[]>({
+  const { data: clients = [], isLoading: clientsLoading } = useQuery<Client[]>({
     queryKey: ["/api/trainer/clients"],
-    refetchInterval: 10000,
-    refetchIntervalInBackground: false,
-  });
-
-  // Fetch group chat unread count
-  const { data: groupChatUnread = { count: 0 } } = useQuery<{ count: number }>({
-    queryKey: ["/api/trainer/group-chat-unread"],
-    refetchInterval: 10000,
-    refetchIntervalInBackground: false,
-  });
-
-  // Query to fetch chat messages for selected client or group chat
-  const { data: clientChatMessages = [], refetch: refetchClientChat, error: chatError, isLoading: isChatLoading } = useQuery({
-    queryKey: selectedChatClient === "group-chat" ? ["/api/trainer/group-chat"] : [`/api/trainer/client-chat/${selectedChatClient}`],
-    queryFn: async () => {
-      if (!selectedChatClient) return [];
-      console.log(`Fetching chat messages for: ${selectedChatClient}`);
-      try {
-        if (selectedChatClient === "group-chat") {
-          const response = await apiRequest("GET", "/api/trainer/group-chat");
-          if (!response.ok) {
-            throw new Error(`Failed to fetch group chat: ${response.status}`);
-          }
-          const data = await response.json();
-          console.log(`Group chat fetched: ${data.length} messages`);
-          return data;
-        } else {
-          const response = await apiRequest("GET", `/api/trainer/client-chat/${selectedChatClient}`);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch client chat: ${response.status}`);
-          }
-          const data = await response.json();
-          console.log(`Client chat fetched: ${data.length} messages`);
-          return data;
-        }
-      } catch (error) {
-        console.error("Error fetching chat messages:", error);
-        throw error;
-      }
-    },
-    enabled: !!selectedChatClient,
     refetchInterval: 3000,
-    refetchIntervalInBackground: false,
   });
 
-  // WebSocket connection for real-time updates
+  // Fetch group chat messages
+  const { data: groupMessages = [], isLoading: groupLoading } = useQuery<ChatMessage[]>({
+    queryKey: ["/api/trainer/group-chat"],
+    enabled: chatType === 'group',
+    refetchInterval: 2000,
+  });
+
+  // Fetch individual chat messages
+  const { data: clientMessages = [], isLoading: clientLoading } = useQuery<ChatMessage[]>({
+    queryKey: [`/api/trainer/client-chat/${selectedClient?.id}`],
+    enabled: chatType === 'individual' && !!selectedClient,
+    refetchInterval: 2000,
+  });
+
+  // WebSocket connection
   const { socket, isConnected } = useWebSocket({
     onMessage: useCallback((event) => {
       const data = JSON.parse(event.data);
       if (data.type === "new_group_message" || data.type === "new_individual_message") {
-        refetchClientChat();
-        queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat"] });
+        queryClient.invalidateQueries({ queryKey: [`/api/trainer/client-chat/${selectedClient?.id}`] });
       }
-    }, [refetchClientChat, queryClient]),
+    }, [queryClient, selectedClient?.id]),
   });
 
-  // Mutation to send message
+  // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { message: string }) => {
-      const endpoint = selectedChatClient === "group-chat" 
+    mutationFn: async (messageData: { message: string }) => {
+      const endpoint = chatType === 'group' 
         ? "/api/trainer/group-chat"
-        : `/api/trainer/client-chat/${selectedChatClient}`;
+        : `/api/trainer/client-chat/${selectedClient?.id}`;
       
-      const response = await apiRequest("POST", endpoint, data);
+      const response = await apiRequest("POST", endpoint, messageData);
       if (!response.ok) {
         throw new Error(`Failed to send message: ${response.status}`);
       }
       return response.json();
     },
     onSuccess: () => {
-      setNewMessage("");
-      refetchClientChat();
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
+      setMessage('');
+      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/trainer/client-chat/${selectedClient?.id}`] });
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
@@ -135,50 +105,21 @@ export default function UnifiedChatTabMobile() {
     },
   });
 
-  // Mutation to generate AI response
-  const generateAIResponseMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/trainer/generate-ai-response", {
-        chatType: selectedChatClient,
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to generate AI response: ${response.status}`);
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      refetchClientChat();
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/group-chat-unread"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/trainer/clients"] });
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    },
-    onError: (error) => {
-      console.error("Error generating AI response:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate AI response. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    sendMessageMutation.mutate({ message: newMessage.trim() });
+    if (!message.trim()) return;
+    if (chatType === 'individual' && !selectedClient) return;
+    
+    sendMessageMutation.mutate({ message: message.trim() });
   };
 
-  const handleGenerateAI = () => {
-    setIsGeneratingAI(true);
-    generateAIResponseMutation.mutate();
-    setTimeout(() => setIsGeneratingAI(false), 2000);
-  };
+  const filteredClients = clients.filter((client: Client) =>
+    client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const getClientName = (clientId: string) => {
-    const client = clients.find(c => c.id === clientId);
-    return client ? `${client.firstName} ${client.lastName}` : "Unknown Client";
-  };
+  const currentMessages = chatType === 'group' ? groupMessages : clientMessages;
+  const isLoading = chatType === 'group' ? groupLoading : clientLoading;
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -190,236 +131,165 @@ export default function UnifiedChatTabMobile() {
     });
   };
 
-  // Get current chat info for header display
-  const getCurrentChatInfo = () => {
-    if (selectedChatClient === "group-chat") {
-      return {
-        name: "Group Chat",
-        subtitle: `${clients.length} members`,
-        avatar: null,
-        type: "group",
-        unreadCount: groupChatUnread.count
-      };
-    } else {
-      const client = clients.find(c => c.id === selectedChatClient);
-      if (client) {
-        return {
-          name: `${client.firstName} ${client.lastName}`,
-          subtitle: client.email,
-          avatar: client.profileImageUrl,
-          type: "individual",
-          unreadCount: client.unansweredCount || 0
-        };
-      }
-    }
-    return null;
+  const getClientName = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    return client ? `${client.firstName} ${client.lastName}` : "Unknown Client";
   };
-
-  const currentChatInfo = getCurrentChatInfo();
-
-  // Create options for the select dropdown
-  const chatOptions = [
-    {
-      value: "group-chat",
-      label: "Group Chat",
-      subtitle: `${clients.length} members`,
-      avatar: null,
-      unreadCount: groupChatUnread.count
-    },
-    ...clients.map(client => ({
-      value: client.id,
-      label: `${client.firstName} ${client.lastName}`,
-      subtitle: client.email,
-      avatar: client.profileImageUrl,
-      unreadCount: client.unansweredCount || 0
-    }))
-  ];
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [clientChatMessages]);
-
-  if (chatError) {
-    return (
-      <div className="p-4 text-center text-red-600">
-        <p>Failed to load chat messages: {chatError.message}</p>
-        <Button onClick={() => refetchClientChat()} className="mt-2">
-          Retry
-        </Button>
-      </div>
-    );
-  }
+  }, [currentMessages]);
 
   return (
-    <div className="flex flex-col h-full bg-dark">
-      {/* Fixed Chat Header with Dropdown Selector */}
-      <div className="fixed top-32 left-0 right-0 z-10 flex-shrink-0 p-4 border-b border-gray-700 bg-surface">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            {/* Chat Selector Dropdown */}
-            <div className="flex-1 max-w-sm">
-              <Select value={selectedChatClient} onValueChange={setSelectedChatClient}>
-                <SelectTrigger className="w-full bg-dark border-gray-600 text-white">
-                  <SelectValue>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
-                        {currentChatInfo?.avatar ? (
-                          <img
-                            src={currentChatInfo.avatar}
-                            alt={currentChatInfo.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-white text-xs">
-                            {currentChatInfo?.type === "group" ? (
-                              <Users className="h-3 w-3" />
-                            ) : (
-                              <User className="h-3 w-3" />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium truncate">{currentChatInfo?.name}</span>
-                          {currentChatInfo?.unreadCount > 0 && (
-                            <Badge variant="destructive" className="text-xs min-w-[16px] h-4 flex items-center justify-center">
-                              {currentChatInfo.unreadCount}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-400 truncate">
-                          {currentChatInfo?.subtitle}
-                        </div>
-                      </div>
-                    </div>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-dark border-gray-600">
-                  {chatOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-700">
-                      <div className="flex items-center gap-2 w-full">
-                        <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
-                          {option.avatar ? (
-                            <img
-                              src={option.avatar}
-                              alt={option.label}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="text-white text-xs">
-                              {option.value === "group-chat" ? (
-                                <Users className="h-3 w-3" />
-                              ) : (
-                                <User className="h-3 w-3" />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium truncate">{option.label}</span>
-                            {option.unreadCount > 0 && (
-                              <Badge variant="destructive" className="text-xs min-w-[16px] h-4 flex items-center justify-center">
-                                {option.unreadCount}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-400 truncate">
-                            {option.subtitle}
-                          </div>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* Chat Actions */}
-          <div className="flex items-center gap-2">
-            {selectedChatClient === "group-chat" && (
-              <Button
-                onClick={handleGenerateAI}
-                disabled={isGeneratingAI}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                {isGeneratingAI ? "Generating..." : "Generate AI"}
-              </Button>
-            )}
-          </div>
+    <div className="flex flex-col h-full bg-dark max-w-full">
+      {/* Chat Type Selector - Sticky at top */}
+      <div className="sticky top-0 z-20 bg-surface border-b border-gray-700">
+        <div className="flex">
+          <button
+            onClick={() => setChatType('individual')}
+            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+              chatType === 'individual'
+                ? 'bg-blue-600 text-white border-b-2 border-blue-500'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            Individual
+          </button>
+          <button
+            onClick={() => setChatType('group')}
+            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+              chatType === 'group'
+                ? 'bg-blue-600 text-white border-b-2 border-blue-500'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            Group
+          </button>
         </div>
       </div>
 
-      {/* Messages Area - with top margin to account for fixed header */}
-      <div className="flex-1 overflow-y-auto p-4 mobile-scroll" style={{ marginTop: '100px', marginBottom: '100px' }}>
-        {isChatLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-gray-400">Loading messages...</div>
-          </div>
-        ) : clientChatMessages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-gray-400">No messages yet. Start the conversation!</div>
+      {/* Chat Header - Sticky below type selector */}
+      <div className="sticky top-12 z-10 bg-surface border-b border-gray-700">
+        {chatType === 'individual' ? (
+          <div className="p-3">
+            <Select 
+              value={selectedClient?.id || ""} 
+              onValueChange={(value) => {
+                const client = clients.find(c => c.id === value);
+                setSelectedClient(client || null);
+              }}
+            >
+              <SelectTrigger className="w-full bg-dark border-gray-600 text-white">
+                <SelectValue placeholder="Select a client">
+                  {selectedClient && (
+                    <div className="flex items-center space-x-2">
+                      <img
+                        src={selectedClient.profileImageUrl || "/default-avatar.png"}
+                        alt={`${selectedClient.firstName} ${selectedClient.lastName}`}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                      <span className="truncate">{selectedClient.firstName} {selectedClient.lastName}</span>
+                    </div>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="bg-dark border-gray-600 max-h-64 overflow-y-auto">
+                {filteredClients.map((client) => (
+                  <SelectItem key={client.id} value={client.id} className="text-white hover:bg-gray-700">
+                    <div className="flex items-center space-x-2">
+                      <img
+                        src={client.profileImageUrl || "/default-avatar.png"}
+                        alt={`${client.firstName} ${client.lastName}`}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate">{client.firstName} {client.lastName}</div>
+                        <div className="text-xs text-gray-400 truncate">{client.email}</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         ) : (
-          <div className="space-y-4">
-            {clientChatMessages.map((message: ChatMessage) => (
-              <div
-                key={message.id}
-                className={`flex ${message.isAI ? 'justify-start' : 'justify-end'} mb-4`}
-              >
-                <div
-                  className={`max-w-[85%] md:max-w-[70%] p-3 rounded-lg break-words ${
-                    message.isAI
-                      ? 'bg-gray-700 text-white'
-                      : 'bg-blue-600 text-white'
-                  }`}
-                >
-                  <div className="text-sm mb-1">
-                    <span className="font-medium">
-                      {message.isAI ? "Coach Chassidy" : 
-                       selectedChatClient === "group-chat" ? getClientName(message.userId) : "You"}
-                    </span>
-                    <span className="text-xs text-gray-300 ml-2">
-                      {formatTime(message.createdAt)}
-                    </span>
-                  </div>
-                  <div className="whitespace-pre-wrap">
-                    {message.message}
-                  </div>
-                </div>
+          <div className="p-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-4 h-4 text-white" />
               </div>
-            ))}
-            <div ref={messagesEndRef} />
+              <div className="min-w-0">
+                <h3 className="font-medium text-white truncate">Group Chat</h3>
+                <p className="text-xs text-gray-400 truncate">{clients.length} members</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Fixed Message Input */}
-      <div className="fixed bottom-20 left-0 right-0 z-10 flex-shrink-0 p-4 border-t border-gray-700 bg-surface">
-        <div className="flex gap-2">
+      {/* Messages Area - Scrollable */}
+      <div className="flex-1 overflow-y-auto bg-dark px-3 py-2">
+        <div className="space-y-3 pb-4">
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            </div>
+          ) : currentMessages.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">
+              {chatType === 'group' ? 'No group messages yet' : 
+               selectedClient ? `No messages with ${selectedClient.firstName}` : 'Select a client to start chatting'}
+            </div>
+          ) : (
+            currentMessages.map((msg: ChatMessage) => (
+              <div key={msg.id} className={`flex ${msg.isAI ? 'justify-start' : 'justify-end'}`}>
+                <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                  msg.isAI 
+                    ? 'bg-gray-700 text-white' 
+                    : 'bg-blue-600 text-white'
+                }`}>
+                  <div className="text-xs text-gray-300 mb-1">
+                    {msg.isAI ? 'Coach Chassidy' : 
+                     chatType === 'group' ? getClientName(msg.userId) : 
+                     selectedClient?.firstName || 'You'}
+                  </div>
+                  <div className="text-sm break-words whitespace-pre-wrap">
+                    {msg.message}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {formatTime(msg.createdAt)}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Message Input - Fixed at bottom */}
+      <div className="sticky bottom-0 bg-surface border-t border-gray-700 p-3">
+        <div className="flex space-x-2 max-w-full">
           <Textarea
-            placeholder="Type your message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSendMessage();
               }
             }}
-            className="flex-1 bg-dark border-gray-600 text-white placeholder-gray-400 mobile-input min-h-[40px] max-h-[120px] resize-none"
+            placeholder="Type your message..."
+            className="flex-1 bg-dark border-gray-600 text-white placeholder-gray-400 resize-none min-h-[40px] max-h-[120px] text-sm"
             rows={1}
+            disabled={chatType === 'individual' && !selectedClient}
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sendMessageMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2"
+            disabled={!message.trim() || sendMessageMutation.isPending || (chatType === 'individual' && !selectedClient)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm flex-shrink-0"
           >
-            {sendMessageMutation.isPending ? "Sending..." : "Send"}
+            {sendMessageMutation.isPending ? '...' : 'Send'}
           </Button>
         </div>
       </div>
