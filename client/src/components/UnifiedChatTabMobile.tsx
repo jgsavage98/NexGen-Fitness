@@ -228,42 +228,44 @@ export default function UnifiedChatTabMobile() {
         )}
       </div>
 
-      {/* Messages Area - Scrollable */}
-      <div className="flex-1 overflow-y-auto bg-dark px-3 py-2">
-        <div className="space-y-3 pb-4">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-            </div>
-          ) : currentMessages.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 text-sm">
-              {chatType === 'group' ? 'No group messages yet' : 
-               selectedClient ? `No messages with ${selectedClient.firstName}` : 'Select a client to start chatting'}
-            </div>
-          ) : (
-            currentMessages.map((msg: ChatMessage) => (
-              <div key={msg.id} className={`flex ${msg.isAI ? 'justify-start' : 'justify-end'}`}>
-                <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                  msg.isAI 
-                    ? 'bg-gray-700 text-white' 
-                    : 'bg-blue-600 text-white'
-                }`}>
-                  <div className="text-xs text-gray-300 mb-1">
-                    {msg.isAI ? 'Coach Chassidy' : 
-                     chatType === 'group' ? getClientName(msg.userId) : 
-                     selectedClient?.firstName || 'You'}
-                  </div>
-                  <div className="text-sm break-words whitespace-pre-wrap">
-                    {msg.message}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {formatTime(msg.createdAt)}
+      {/* Messages Area - Scrollable Container */}
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto mobile-scroll bg-dark px-3 py-2">
+          <div className="space-y-3 pb-4">
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+              </div>
+            ) : currentMessages.length === 0 ? (
+              <div className="text-center py-8 text-gray-400 text-sm">
+                {chatType === 'group' ? 'No group messages yet' : 
+                 selectedClient ? `No messages with ${selectedClient.firstName}` : 'Select a client to start chatting'}
+              </div>
+            ) : (
+              currentMessages.map((msg: ChatMessage) => (
+                <div key={msg.id} className={`flex ${msg.isAI ? 'justify-start' : 'justify-end'}`}>
+                  <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                    msg.isAI 
+                      ? 'bg-gray-700 text-white' 
+                      : 'bg-blue-600 text-white'
+                  }`}>
+                    <div className="text-xs text-gray-300 mb-1">
+                      {msg.isAI ? 'Coach Chassidy' : 
+                       chatType === 'group' ? getClientName(msg.userId) : 
+                       selectedClient?.firstName || 'You'}
+                    </div>
+                    <div className="text-sm break-words whitespace-pre-wrap">
+                      {msg.message}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {formatTime(msg.createdAt)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
         </div>
       </div>
 
