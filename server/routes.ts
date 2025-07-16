@@ -2697,6 +2697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isAI: chatMessages.isAI,
           createdAt: chatMessages.createdAt,
           chatType: chatMessages.chatType,
+          metadata: chatMessages.metadata,
           user: {
             id: users.id,
             firstName: users.firstName,
@@ -2709,14 +2710,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .leftJoin(users, eq(chatMessages.userId, users.id))
         .where(
           and(
+            // Only include individual chat messages (not group chat)
+            eq(chatMessages.chatType, 'individual'),
             // Only include messages from clients (exclude trainer messages)
             ne(chatMessages.userId, 'coach_chassidy'),
             // Only include clients that belong to coach_chassidy
-            eq(users.trainerId, 'coach_chassidy')
+            eq(users.trainerId, 'coach_chassidy'),
+            // Exclude automated AI messages
+            ne(chatMessages.isAI, true),
+            // Exclude messages from coach to client (automated reports/check-ins)
+            sql`(${chatMessages.metadata}->>'fromCoach' IS NULL OR ${chatMessages.metadata}->>'fromCoach' != 'true')`
           )
         )
         .orderBy(desc(chatMessages.createdAt))
         .limit(parseInt(limit as string));
+      
+
       
       res.json(recentChats);
     } catch (error) {
