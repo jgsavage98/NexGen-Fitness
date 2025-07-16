@@ -41,6 +41,7 @@ export default function UnifiedChatTab() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -270,6 +271,10 @@ export default function UnifiedChatTab() {
     }
   };
 
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   if (chatError) {
     return (
       <div className="p-4 text-center text-red-600">
@@ -284,41 +289,58 @@ export default function UnifiedChatTab() {
   return (
     <div className="flex h-[calc(100vh-8rem)] bg-dark">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-700 bg-surface flex flex-col`}>
+      <div className={`${sidebarOpen ? (sidebarCollapsed ? 'w-16' : 'w-80') : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-700 bg-surface flex flex-col`}>
         {/* Sidebar Header - Fixed */}
         <div className="flex-shrink-0 p-4 border-b border-gray-700">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Chats
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden text-white hover:bg-gray-700"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            {!sidebarCollapsed && (
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Chats
+              </h2>
+            )}
+            <div className="flex items-center gap-2">
+              {/* Desktop collapse/expand toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebarCollapse}
+                className="hidden lg:flex text-white hover:bg-gray-700"
+                title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {sidebarCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+              </Button>
+              {/* Mobile close button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden text-white hover:bg-gray-700"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search clients..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-dark border-gray-600 text-white placeholder-gray-400 mobile-input"
-            />
-          </div>
+          {/* Search - Only show when not collapsed */}
+          {!sidebarCollapsed && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-dark border-gray-600 text-white placeholder-gray-400 mobile-input"
+              />
+            </div>
+          )}
         </div>
 
         {/* Chat List - Scrollable */}
         <div className="flex-1 overflow-y-auto mobile-scroll">
           {chatList.length === 0 ? (
             <div className="p-4 text-center text-gray-400">
-              No clients found
+              {sidebarCollapsed ? "" : "No clients found"}
             </div>
           ) : (
             <div className="space-y-1 p-2">
@@ -326,13 +348,14 @@ export default function UnifiedChatTab() {
                 <button
                   key={chat.id}
                   onClick={() => handleChatSelect(chat.id)}
-                  className={`w-full p-3 rounded-lg text-left transition-colors touch-optimized chat-button ${
+                  className={`w-full ${sidebarCollapsed ? 'p-2' : 'p-3'} rounded-lg text-left transition-colors touch-optimized chat-button ${
                     selectedChatClient === chat.id
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-300 hover:bg-gray-700 active:bg-gray-600'
                   }`}
+                  title={sidebarCollapsed ? chat.name : ""}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
                       {chat.profileImageUrl ? (
@@ -354,22 +377,32 @@ export default function UnifiedChatTab() {
                       {chat.isOnline && (
                         <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900" />
                       )}
+                      {/* Unread badge on avatar when collapsed */}
+                      {sidebarCollapsed && chat.unreadCount > 0 && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                          <span className="text-xs font-bold text-white">
+                            {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Chat Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium truncate">{chat.name}</span>
-                        {chat.unreadCount > 0 && (
-                          <Badge variant="destructive" className="ml-2 px-2 py-1 text-xs flex-shrink-0">
-                            {chat.unreadCount}
-                          </Badge>
-                        )}
+                    {/* Chat Info - Only show when not collapsed */}
+                    {!sidebarCollapsed && (
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium truncate">{chat.name}</span>
+                          {chat.unreadCount > 0 && (
+                            <Badge variant="destructive" className="ml-2 px-2 py-1 text-xs flex-shrink-0">
+                              {chat.unreadCount}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400 truncate mt-1">
+                          {chat.type === 'group' ? 'Group conversation' : 'Direct message'}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-400 truncate mt-1">
-                        {chat.type === 'group' ? 'Group conversation' : 'Direct message'}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </button>
               ))}
@@ -390,6 +423,17 @@ export default function UnifiedChatTab() {
                   size="sm"
                   onClick={() => setSidebarOpen(true)}
                   className="text-white hover:bg-gray-700"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              )}
+              {sidebarOpen && sidebarCollapsed && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleSidebarCollapse}
+                  className="text-white hover:bg-gray-700"
+                  title="Expand sidebar"
                 >
                   <Menu className="h-4 w-4" />
                 </Button>
