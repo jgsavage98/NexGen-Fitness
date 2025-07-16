@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MessageSquare, Users, Search, Menu, X, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useWebSocket } from "../hooks/useWebSocket";
-import ClientSelector from "./ClientSelector";
 
 
 interface Client {
@@ -39,6 +39,8 @@ export default function UnifiedChatTab() {
   const [selectedChatClient, setSelectedChatClient] = useState<string>("group-chat");
   const [newMessage, setNewMessage] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -232,6 +234,42 @@ export default function UnifiedChatTab() {
     });
   };
 
+  // Filter clients based on search query
+  const filteredClients = clients.filter(client => 
+    `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Combined chat list with group chat and clients
+  const chatList = [
+    {
+      id: "group-chat",
+      name: "Group Chat",
+      type: "group",
+      unreadCount: groupChatUnread.count,
+      lastActivity: new Date().toISOString(),
+      profileImageUrl: null,
+      isOnline: true
+    },
+    ...filteredClients.map(client => ({
+      id: client.id,
+      name: `${client.firstName} ${client.lastName}`,
+      type: "individual",
+      unreadCount: client.unansweredCount || 0,
+      lastActivity: client.programStartDate,
+      profileImageUrl: client.profileImageUrl,
+      isOnline: Math.random() > 0.5 // Simulate online status
+    }))
+  ];
+
+  const handleChatSelect = (chatId: string) => {
+    setSelectedChatClient(chatId);
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
+
   if (chatError) {
     return (
       <div className="p-4 text-center text-red-600">
@@ -244,45 +282,172 @@ export default function UnifiedChatTab() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Chat Selection */}
-      <Card className="bg-surface border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <MessageSquare className="h-5 w-5" />
-            Client Communications
-            <Badge variant="outline" className="ml-auto text-white border-gray-600">
-              {clients.length} client{clients.length !== 1 ? 's' : ''}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ClientSelector
-            clients={clients}
-            selectedClient={selectedChatClient}
-            onClientSelect={setSelectedChatClient}
-            groupChatUnread={groupChatUnread.count}
-          />
-        </CardContent>
-      </Card>
+    <div className="flex h-[calc(100vh-8rem)] bg-dark">
+      {/* Sidebar */}
+      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-700 bg-surface flex flex-col`}>
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-gray-700">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Chats
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden text-white hover:bg-gray-700"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search clients..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-dark border-gray-600 text-white placeholder-gray-400"
+            />
+          </div>
+        </div>
 
-      {/* Chat Messages */}
-      {selectedChatClient && (
-        <Card className="flex flex-col h-[600px] bg-surface border-gray-700">
-          <CardHeader className="flex-none">
-            <CardTitle className="text-white">
-              {selectedChatClient === "group-chat" ? "Group Chat" : getClientName(selectedChatClient)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col overflow-hidden">
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+        {/* Chat List */}
+        <div className="flex-1 overflow-y-auto">
+          {chatList.length === 0 ? (
+            <div className="p-4 text-center text-gray-400">
+              No clients found
+            </div>
+          ) : (
+            <div className="space-y-1 p-2">
+              {chatList.map((chat) => (
+                <button
+                  key={chat.id}
+                  onClick={() => handleChatSelect(chat.id)}
+                  className={`w-full p-3 rounded-lg text-left transition-colors ${
+                    selectedChatClient === chat.id
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Avatar */}
+                    <div className="relative">
+                      {chat.profileImageUrl ? (
+                        <img
+                          src={chat.profileImageUrl}
+                          alt={chat.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
+                          {chat.type === 'group' ? (
+                            <Users className="h-5 w-5 text-gray-300" />
+                          ) : (
+                            <User className="h-5 w-5 text-gray-300" />
+                          )}
+                        </div>
+                      )}
+                      {/* Online indicator */}
+                      {chat.isOnline && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900" />
+                      )}
+                    </div>
+
+                    {/* Chat Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium truncate">{chat.name}</span>
+                        {chat.unreadCount > 0 && (
+                          <Badge variant="destructive" className="ml-2 px-2 py-1 text-xs">
+                            {chat.unreadCount}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-400 truncate mt-1">
+                        {chat.type === 'group' ? 'Group conversation' : 'Direct message'}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <div className="p-4 border-b border-gray-700 bg-surface">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {!sidebarOpen && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSidebarOpen(true)}
+                  className="text-white hover:bg-gray-700"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {selectedChatClient && (
+                <>
+                  {/* Chat Avatar */}
+                  <div className="relative">
+                    {selectedChatClient === "group-chat" ? (
+                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                        <Users className="h-5 w-5 text-white" />
+                      </div>
+                    ) : (
+                      <>
+                        {clients.find(c => c.id === selectedChatClient)?.profileImageUrl ? (
+                          <img
+                            src={clients.find(c => c.id === selectedChatClient)?.profileImageUrl}
+                            alt={getClientName(selectedChatClient)}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
+                            <User className="h-5 w-5 text-gray-300" />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Chat Info */}
+                  <div>
+                    <h3 className="font-semibold text-white">
+                      {selectedChatClient === "group-chat" ? "Group Chat" : getClientName(selectedChatClient)}
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      {selectedChatClient === "group-chat" ? 
+                        `${clients.length} members` : 
+                        clients.find(c => c.id === selectedChatClient)?.email || 'Direct message'
+                      }
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        {selectedChatClient ? (
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {isChatLoading ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-gray-400">
                   Loading messages...
                 </div>
               ) : clientChatMessages.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-gray-400">
                   No messages yet. Start the conversation!
                 </div>
               ) : (
@@ -294,8 +459,8 @@ export default function UnifiedChatTab() {
                     <div
                       className={`max-w-[70%] rounded-lg p-3 ${
                         message.isAI
-                          ? "bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800"
-                          : "bg-gray-100 dark:bg-gray-800"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-700 text-white"
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-1">
@@ -305,7 +470,7 @@ export default function UnifiedChatTab() {
                            (message as any).user?.firstName + " " + (message as any).user?.lastName :
                            getClientName(message.userId)}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs opacity-75">
                           {formatTime(message.createdAt)}
                         </span>
                       </div>
@@ -318,40 +483,50 @@ export default function UnifiedChatTab() {
             </div>
 
             {/* Message Input */}
-            <div className="flex-none space-y-2">
-              <Textarea
-                placeholder="Type your message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                className="resize-none"
-                rows={3}
-              />
-              <div className="flex justify-between items-center">
-                <Button
-                  onClick={handleGenerateAI}
-                  variant="outline"
-                  disabled={isGeneratingAI || generateAIResponseMutation.isPending}
-                  className="flex items-center gap-2"
-                >
-                  {isGeneratingAI ? "Generating..." : "Generate AI Response"}
-                </Button>
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                >
-                  {sendMessageMutation.isPending ? "Sending..." : "Send"}
-                </Button>
+            <div className="p-4 border-t border-gray-700 bg-surface">
+              <div className="space-y-3">
+                <Textarea
+                  placeholder="Type your message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  className="resize-none bg-dark border-gray-600 text-white placeholder-gray-400"
+                  rows={3}
+                />
+                <div className="flex justify-between items-center">
+                  <Button
+                    onClick={handleGenerateAI}
+                    variant="outline"
+                    disabled={isGeneratingAI || generateAIResponseMutation.isPending}
+                    className="border-gray-600 text-white hover:bg-gray-700"
+                  >
+                    {isGeneratingAI ? "Generating..." : "Generate AI Response"}
+                  </Button>
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {sendMessageMutation.isPending ? "Sending..." : "Send"}
+                  </Button>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-gray-400">
+              <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Select a conversation to start messaging</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
