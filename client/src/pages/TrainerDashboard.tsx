@@ -319,7 +319,9 @@ export default function TrainerDashboard() {
   const filteredRecentChats = recentChats.filter((chat: any) => {
     const clientMatch = activityClientFilter === "all" || chat.user.firstName === activityClientFilter;
     const typeMatch = activityTypeFilter === "all" || activityTypeFilter === "chats";
-    return clientMatch && typeMatch;
+    // Only show messages sent TO the trainer (from clients), not messages sent BY the trainer
+    const isFromClient = chat.userId !== 'coach_chassidy';
+    return clientMatch && typeMatch && isFromClient;
   });
 
   // Helper function to get client profile image URL
