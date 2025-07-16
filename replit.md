@@ -13,6 +13,14 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (July 16, 2025)
 
+### Chat Interface Fixed Layout - COMPLETE (1:22 PM)
+- **Fixed Header Obstruction**: Fixed dropdown selector and chat header being obstructed by main header when scrolling
+- **Fixed Positioning**: Implemented fixed positioning for chat header at `top-32` to stay below main header
+- **Scrollable Chat Area**: Created dedicated scrollable container for chat messages with proper margins
+- **Fixed Input Area**: Message input now fixed at bottom with proper spacing from navigation
+- **Improved Mobile UX**: Chat selector dropdown now remains accessible and doesn't scroll with messages
+- **Layout Optimization**: Proper z-index layering and positioning for mobile interface elements
+
 ### Mobile-Optimized Separate Scrollable Windows - COMPLETE (12:22 PM)
 - **Separate Scrollable Areas**: Implemented independent scrollable windows for sidebar and chat history optimized for mobile devices
 - **Advanced Touch Scrolling**: Added webkit-overflow-scrolling: touch and overscroll-behavior: contain for smooth mobile scrolling
