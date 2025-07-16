@@ -423,6 +423,7 @@ export default function UnifiedChatTab() {
                   size="sm"
                   onClick={() => setSidebarOpen(true)}
                   className="text-white hover:bg-gray-700"
+                  title="Show sidebar"
                 >
                   <Menu className="h-4 w-4" />
                 </Button>
