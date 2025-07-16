@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Users, Search, Menu, X, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MessageSquare, Users, Search, ChevronDown, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useWebSocket } from "../hooks/useWebSocket";
@@ -39,9 +40,6 @@ export default function UnifiedChatTab() {
   const [selectedChatClient, setSelectedChatClient] = useState<string>("group-chat");
   const [newMessage, setNewMessage] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -235,45 +233,50 @@ export default function UnifiedChatTab() {
     });
   };
 
-  // Filter clients based on search query
-  const filteredClients = clients.filter(client => 
-    `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Get current chat info for header display
+  const getCurrentChatInfo = () => {
+    if (selectedChatClient === "group-chat") {
+      return {
+        name: "Group Chat",
+        subtitle: `${clients.length} members`,
+        avatar: null,
+        type: "group",
+        unreadCount: groupChatUnread.count
+      };
+    } else {
+      const client = clients.find(c => c.id === selectedChatClient);
+      if (client) {
+        return {
+          name: `${client.firstName} ${client.lastName}`,
+          subtitle: client.email,
+          avatar: client.profileImageUrl,
+          type: "individual",
+          unreadCount: client.unansweredCount || 0
+        };
+      }
+    }
+    return null;
+  };
 
-  // Combined chat list with group chat and clients
-  const chatList = [
+  const currentChatInfo = getCurrentChatInfo();
+
+  // Create options for the select dropdown
+  const chatOptions = [
     {
-      id: "group-chat",
-      name: "Group Chat",
-      type: "group",
-      unreadCount: groupChatUnread.count,
-      lastActivity: new Date().toISOString(),
-      profileImageUrl: null,
-      isOnline: true
+      value: "group-chat",
+      label: "Group Chat",
+      subtitle: `${clients.length} members`,
+      avatar: null,
+      unreadCount: groupChatUnread.count
     },
-    ...filteredClients.map(client => ({
-      id: client.id,
-      name: `${client.firstName} ${client.lastName}`,
-      type: "individual",
-      unreadCount: client.unansweredCount || 0,
-      lastActivity: client.programStartDate,
-      profileImageUrl: client.profileImageUrl,
-      isOnline: Math.random() > 0.5 // Simulate online status
+    ...clients.map(client => ({
+      value: client.id,
+      label: `${client.firstName} ${client.lastName}`,
+      subtitle: client.email,
+      avatar: client.profileImageUrl,
+      unreadCount: client.unansweredCount || 0
     }))
   ];
-
-  const handleChatSelect = (chatId: string) => {
-    setSelectedChatClient(chatId);
-    // Close sidebar on mobile after selection
-    if (window.innerWidth < 768) {
-      setSidebarOpen(false);
-    }
-  };
-
-  const toggleSidebarCollapse = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
 
   if (chatError) {
     return (
