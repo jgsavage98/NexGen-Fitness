@@ -651,9 +651,9 @@ export default function TrainerDashboard() {
       {/* Mobile App Container */}
       <div className="max-w-md mx-auto bg-dark min-h-screen flex flex-col relative">
         {/* Fixed Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-700">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-sm border-b border-gray-700">
           {/* Top safe area spacer */}
-          <div className="bg-surface safe-area-inset-top"></div>
+          <div className="bg-surface/80 backdrop-blur-sm safe-area-inset-top"></div>
           <div className="max-w-md mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
