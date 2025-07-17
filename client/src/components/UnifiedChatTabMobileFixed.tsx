@@ -29,8 +29,11 @@ interface Client {
 export default function UnifiedChatTabMobileFixed() {
   const [selectedChat, setSelectedChat] = useState<string>('group-chat');
   const [message, setMessage] = useState('');
+  const [forceUpdate, setForceUpdate] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  
+  console.log('🔄 Component render:', { selectedChat, forceUpdate, timestamp: new Date().toISOString() });
 
   // Fetch clients
   const { data: clients = [] } = useQuery<Client[]>({
@@ -45,42 +48,13 @@ export default function UnifiedChatTabMobileFixed() {
     refetchInterval: 3000,
   });
 
-  // Fetch individual chat messages - Fixed auth pattern
-  const { data: individualMessages = [], isLoading: isLoadingIndividual, error: individualError } = useQuery<ChatMessage[]>({
+  // Fetch individual chat messages - Simplified approach
+  const { data: individualMessages = [], isLoading: isLoadingIndividual, error: individualError, refetch: refetchIndividualMessages } = useQuery<ChatMessage[]>({
     queryKey: ['/api/trainer/client-chat', selectedChat],
-    queryFn: async () => {
-      if (selectedChat === 'group-chat' || !selectedChat) {
-        return [];
-      }
-      
-      console.log(`🔍 Making API call to: /api/trainer/client-chat/${selectedChat}`);
-      
-      const authToken = localStorage.getItem('url_auth_token');
-      if (!authToken) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch(`/api/trainer/client-chat/${selectedChat}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      console.log(`📡 API response status: ${response.status}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ API call failed: ${response.status} ${response.statusText}`, errorText);
-        throw new Error(`Failed to fetch individual chat messages: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log(`📥 Individual chat messages received:`, data);
-      return data;
-    },
     enabled: selectedChat !== 'group-chat' && !!selectedChat,
     refetchInterval: 3000,
+    staleTime: 0, // Force fresh data
+    cacheTime: 0, // Don't cache
   });
 
   // Send message mutation
@@ -166,6 +140,46 @@ export default function UnifiedChatTabMobileFixed() {
   const currentMessages = selectedChat === 'group-chat' ? groupMessages : individualMessages;
   const isLoading = selectedChat === 'group-chat' ? isLoadingGroup : isLoadingIndividual;
   const isGroupChat = selectedChat === 'group-chat';
+
+  // Force re-render when switching to individual chat
+  useEffect(() => {
+    if (selectedChat !== 'group-chat' && selectedChat) {
+      console.log('🔄 Forcing refetch for individual chat:', selectedChat);
+      refetchIndividualMessages();
+    }
+  }, [selectedChat, refetchIndividualMessages]);
+
+  // Force re-render when individualMessages changes
+  useEffect(() => {
+    if (individualMessages.length > 0) {
+      console.log('🔄 Individual messages changed, forcing re-render:', individualMessages.length);
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [individualMessages]);
+
+  // Debug logging for messages
+  console.log('🔍 Current state DEBUGGING:', {
+    selectedChat,
+    isGroupChat,
+    groupMessagesLength: groupMessages.length,
+    individualMessagesLength: individualMessages.length,
+    currentMessagesLength: currentMessages.length,
+    isLoading,
+    individualError: individualError?.message,
+    rawIndividualMessages: individualMessages
+  });
+  
+  if (currentMessages.length > 0) {
+    console.log('📝 Current messages:', currentMessages.map(msg => ({
+      id: msg.id,
+      message: msg.message,
+      isAI: msg.isAI,
+      userId: msg.userId,
+      metadata: msg.metadata
+    })));
+  } else {
+    console.log('❌ No current messages to display');
+  }
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -294,6 +308,10 @@ export default function UnifiedChatTabMobileFixed() {
             <div className="text-center py-8 text-gray-400 text-sm">
               {isGroupChat ? 'No group messages yet' : 
                selectedChat ? `No messages with ${getSelectedClientName()}` : 'Select a chat to start messaging'}
+              <div className="text-xs mt-2 text-red-400">
+                DEBUG: selectedChat={selectedChat}, messagesLength={currentMessages.length}, 
+                isLoading={isLoading ? 'true' : 'false'}, forceUpdate={forceUpdate}
+              </div>
             </div>
           ) : (
             currentMessages.map((msg: ChatMessage) => (
