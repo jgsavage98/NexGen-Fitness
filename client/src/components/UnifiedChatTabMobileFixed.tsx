@@ -182,7 +182,7 @@ export default function UnifiedChatTabMobileFixed() {
   return (
     <div className="h-full bg-dark flex flex-col">
       {/* Fixed Chat Selector Header */}
-      <div className="fixed top-20 left-3 right-3 bg-surface border-b border-gray-700 p-3 z-50 rounded-lg">
+      <div className="fixed top-20 left-6 right-6 bg-surface border-b border-gray-700 p-3 z-50 rounded-lg">
         <Select 
           value={selectedChat} 
           onValueChange={handleChatSelect}
@@ -249,7 +249,7 @@ export default function UnifiedChatTabMobileFixed() {
       </div>
 
       {/* Scrollable Messages Container with top padding for fixed header */}
-      <div className="flex-1 overflow-y-auto bg-dark px-3 py-4" style={{ paddingTop: '120px', paddingBottom: '80px' }}>
+      <div className="flex-1 overflow-y-auto bg-dark px-3 py-4" style={{ paddingTop: '120px', paddingBottom: '140px' }}>
         <div className="space-y-4">
           {isLoading ? (
             <div className="flex justify-center py-8">
@@ -288,7 +288,7 @@ export default function UnifiedChatTabMobileFixed() {
       </div>
 
       {/* Fixed Message Input */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-700 p-3 z-50">
+      <div className="fixed bottom-16 left-0 right-0 bg-surface border-t border-gray-700 p-3 z-50">
         <div className="flex space-x-2">
           <Textarea
             value={message}
