@@ -14,6 +14,7 @@ interface ChatMessage {
   createdAt: string;
   metadata?: {
     targetUserId?: string;
+    fromCoach?: boolean;
   };
 }
 
@@ -44,21 +45,36 @@ export default function UnifiedChatTabMobileFixed() {
     refetchInterval: 3000,
   });
 
-  // Fetch individual chat messages
-  const { data: individualMessages = [], isLoading: isLoadingIndividual } = useQuery<ChatMessage[]>({
+  // Fetch individual chat messages - Fixed auth pattern
+  const { data: individualMessages = [], isLoading: isLoadingIndividual, error: individualError } = useQuery<ChatMessage[]>({
     queryKey: ['/api/trainer/client-chat', selectedChat],
     queryFn: async () => {
+      if (selectedChat === 'group-chat' || !selectedChat) {
+        return [];
+      }
+      
       console.log(`🔍 Making API call to: /api/trainer/client-chat/${selectedChat}`);
+      
+      const authToken = localStorage.getItem('url_auth_token');
+      if (!authToken) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch(`/api/trainer/client-chat/${selectedChat}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
         },
       });
+      
       console.log(`📡 API response status: ${response.status}`);
+      
       if (!response.ok) {
-        console.error(`❌ API call failed: ${response.status} ${response.statusText}`);
-        throw new Error('Failed to fetch individual chat messages');
+        const errorText = await response.text();
+        console.error(`❌ API call failed: ${response.status} ${response.statusText}`, errorText);
+        throw new Error(`Failed to fetch individual chat messages: ${response.status}`);
       }
+      
       const data = await response.json();
       console.log(`📥 Individual chat messages received:`, data);
       return data;
@@ -70,11 +86,16 @@ export default function UnifiedChatTabMobileFixed() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { message: string; chatType: 'individual' | 'group'; clientId?: string }) => {
+      const authToken = localStorage.getItem('url_auth_token');
+      if (!authToken) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({
           message: data.message,
@@ -160,78 +181,76 @@ export default function UnifiedChatTabMobileFixed() {
 
   return (
     <div className="flex flex-col h-full bg-dark">
-      {/* Chat Selector - Fixed at top of chat area */}
-      <div className="flex-shrink-0 bg-surface border-b border-gray-700 z-20">
-        <div className="p-3">
-          <Select 
-            value={selectedChat} 
-            onValueChange={handleChatSelect}
-          >
-            <SelectTrigger className="w-full bg-dark border-gray-600 text-white">
-              <SelectValue placeholder="Select a chat">
-                {selectedChat === 'group-chat' ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <MessageCircle className="w-3 h-3 text-white" />
-                    </div>
-                    <span className="truncate">Group Chat ({clients.length} members)</span>
-                  </div>
-                ) : (
-                  (() => {
-                    const client = clients.find(c => c.id === selectedChat);
-                    return client ? (
-                      <div className="flex items-center space-x-2">
-                        <img
-                          src={client.profileImageUrl || "/default-avatar.png"}
-                          alt={`${client.firstName} ${client.lastName}`}
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
-                        <span className="truncate">{client.firstName} {client.lastName}</span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">Select a chat</span>
-                    );
-                  })()
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-dark border-gray-600 max-h-48 overflow-y-auto z-30" sideOffset={5}>
-              {/* Group Chat Option */}
-              <SelectItem value="group-chat" className="text-white hover:bg-gray-700">
+      {/* Fixed Chat Selector Header */}
+      <div className="flex-shrink-0 bg-surface border-b border-gray-700 p-3">
+        <Select 
+          value={selectedChat} 
+          onValueChange={handleChatSelect}
+        >
+          <SelectTrigger className="w-full bg-dark border-gray-600 text-white">
+            <SelectValue placeholder="Select a chat">
+              {selectedChat === 'group-chat' ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                     <MessageCircle className="w-3 h-3 text-white" />
                   </div>
+                  <span className="truncate">Group Chat ({clients.length} members)</span>
+                </div>
+              ) : (
+                (() => {
+                  const client = clients.find(c => c.id === selectedChat);
+                  return client ? (
+                    <div className="flex items-center space-x-2">
+                      <img
+                        src={client.profileImageUrl || "/default-avatar.png"}
+                        alt={`${client.firstName} ${client.lastName}`}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                      <span className="truncate">{client.firstName} {client.lastName}</span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">Select a chat</span>
+                  );
+                })()
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="bg-dark border-gray-600 max-h-48 overflow-y-auto">
+            {/* Group Chat Option */}
+            <SelectItem value="group-chat" className="text-white hover:bg-gray-700">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="w-3 h-3 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="truncate">Group Chat</div>
+                  <div className="text-xs text-gray-400 truncate">{clients.length} members</div>
+                </div>
+              </div>
+            </SelectItem>
+            {/* Individual Client Options */}
+            {clients.map((client) => (
+              <SelectItem key={client.id} value={client.id} className="text-white hover:bg-gray-700">
+                <div className="flex items-center space-x-2">
+                  <img
+                    src={client.profileImageUrl || "/default-avatar.png"}
+                    alt={`${client.firstName} ${client.lastName}`}
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
                   <div className="flex-1 min-w-0">
-                    <div className="truncate">Group Chat</div>
-                    <div className="text-xs text-gray-400 truncate">{clients.length} members</div>
+                    <div className="truncate">{client.firstName} {client.lastName}</div>
+                    <div className="text-xs text-gray-400 truncate">{client.email}</div>
                   </div>
                 </div>
               </SelectItem>
-              {/* Individual Client Options */}
-              {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id} className="text-white hover:bg-gray-700">
-                  <div className="flex items-center space-x-2">
-                    <img
-                      src={client.profileImageUrl || "/default-avatar.png"}
-                      alt={`${client.firstName} ${client.lastName}`}
-                      className="w-6 h-6 rounded-full object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate">{client.firstName} {client.lastName}</div>
-                      <div className="text-xs text-gray-400 truncate">{client.email}</div>
-                    </div>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Messages Area - Scrollable Container */}
-      <div className="flex-1 min-h-0 overflow-y-auto mobile-scroll bg-dark px-3 py-2">
-        <div className="space-y-3 pb-4">
+      {/* Scrollable Messages Container */}
+      <div className="flex-1 overflow-y-auto bg-dark px-3 py-4">
+        <div className="space-y-4">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
@@ -244,7 +263,7 @@ export default function UnifiedChatTabMobileFixed() {
           ) : (
             currentMessages.map((msg: ChatMessage) => (
               <div key={msg.id} className={`flex ${msg.isAI ? 'justify-start' : 'justify-end'}`}>
-                <div className={`max-w-[80%] rounded-lg px-3 py-2 break-words ${
+                <div className={`max-w-[85%] rounded-lg px-3 py-2 break-words ${
                   msg.isAI 
                     ? 'bg-gray-700 text-white' 
                     : 'bg-blue-600 text-white'
@@ -268,9 +287,9 @@ export default function UnifiedChatTabMobileFixed() {
         </div>
       </div>
 
-      {/* Message Input - Fixed at bottom */}
+      {/* Fixed Message Input */}
       <div className="flex-shrink-0 bg-surface border-t border-gray-700 p-3">
-        <div className="flex space-x-2 w-full">
+        <div className="flex space-x-2">
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
