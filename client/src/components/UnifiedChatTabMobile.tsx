@@ -142,9 +142,9 @@ export default function UnifiedChatTabMobile() {
   }, [currentMessages]);
 
   return (
-    <div className="flex flex-col h-full bg-dark max-w-full">
-      {/* Chat Type Selector - Sticky at top */}
-      <div className="sticky top-0 z-20 bg-surface border-b border-gray-700">
+    <div className="flex flex-col h-full bg-dark max-w-full relative">
+      {/* Fixed Chat Type Selector - Always visible at top */}
+      <div className="flex-shrink-0 bg-surface border-b border-gray-700 z-20">
         <div className="flex">
           <button
             onClick={() => setChatType('individual')}
@@ -169,8 +169,8 @@ export default function UnifiedChatTabMobile() {
         </div>
       </div>
 
-      {/* Chat Header - Sticky below type selector */}
-      <div className="sticky top-12 z-10 bg-surface border-b border-gray-700">
+      {/* Fixed Chat Header - Always visible below type selector */}
+      <div className="flex-shrink-0 bg-surface border-b border-gray-700 z-10">
         {chatType === 'individual' ? (
           <div className="p-3">
             <Select 
