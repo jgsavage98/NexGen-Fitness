@@ -893,6 +893,8 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get complete conversation including both client messages and Coach Chassidy responses
+    console.log(`🔍 DEBUG getClientChatMessages - Looking for messages for client: ${clientId}`);
+    
     const messages = await db
       .select({
         id: chatMessages.id,
@@ -921,18 +923,33 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           or(
-            eq(chatMessages.userId, clientId), // Client's messages
             and(
-              eq(chatMessages.userId, 'coach_chassidy'), // Coach Chassidy's messages
+              eq(chatMessages.userId, clientId), // Client's messages (both user and AI)
+              eq(chatMessages.chatType, 'individual')
+            ),
+            and(
+              eq(chatMessages.userId, 'coach_chassidy'), // Direct coach messages
               eq(sql`${chatMessages.metadata}->>'targetUserId'`, clientId) // targeted to this client
             )
           ),
-          eq(chatMessages.chatType, 'individual'),
           eq(chatMessages.status, 'approved')
         )
       )
       .orderBy(desc(chatMessages.createdAt))
       .limit(limit);
+    
+    console.log(`🔍 DEBUG getClientChatMessages - Found ${messages.length} messages:`, {
+      total: messages.length,
+      clientMessages: messages.filter(m => !m.isAI).length,
+      aiMessages: messages.filter(m => m.isAI).length,
+      sampleMessages: messages.slice(0, 3).map(m => ({
+        id: m.id,
+        userId: m.userId,
+        isAI: m.isAI,
+        message: m.message?.substring(0, 50) + '...',
+        status: m.status
+      }))
+    });
     
     return messages;
   }
