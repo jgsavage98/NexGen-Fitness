@@ -195,7 +195,7 @@ export default function UnifiedChatTabMobileFixed() {
   return (
     <div className="h-full bg-dark flex flex-col">
       {/* Fixed Chat Selector Header */}
-      <div className="fixed top-20 left-6 right-6 bg-surface/95 backdrop-blur-sm border-b border-gray-700 p-3 z-[60] rounded-lg shadow-lg">
+      <div className="fixed top-[85px] left-6 right-6 bg-surface/95 backdrop-blur-sm border-b border-gray-700 p-3 z-[60] rounded-lg shadow-lg">
         <Select 
           value={selectedChat} 
           onValueChange={handleChatSelect}
@@ -265,7 +265,7 @@ export default function UnifiedChatTabMobileFixed() {
       <div 
         className="flex-1 overflow-y-auto bg-dark px-3 py-4 overscroll-contain"
         style={{ 
-          paddingTop: '120px', 
+          paddingTop: '135px', 
           paddingBottom: '140px',
           WebkitOverflowScrolling: 'touch',
           scrollBehavior: 'smooth'
