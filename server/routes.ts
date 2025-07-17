@@ -2890,6 +2890,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const messages = await storage.getClientChatMessages(clientId, trainerId, parseInt(limit as string));
       
+      console.log(`🔍 API DEBUG - Client chat messages for ${clientId}:`, {
+        messagesCount: messages.length,
+        sampleMessage: messages[0] ? {
+          id: messages[0].id,
+          userId: messages[0].userId,
+          message: messages[0].message?.substring(0, 50) + '...',
+          isAI: messages[0].isAI,
+          chatType: messages[0].chatType,
+          createdAt: messages[0].createdAt,
+          userInfo: messages[0].user
+        } : null
+      });
+      
       // Mark client messages as "read" by updating metadata to indicate trainer has viewed them
       const clientMessageIds = messages
         .filter(msg => !msg.isAI && (!msg.metadata || !(msg.metadata as any)?.fromCoach))

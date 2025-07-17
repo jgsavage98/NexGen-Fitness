@@ -48,13 +48,45 @@ export default function UnifiedChatTabMobileFixed() {
     refetchInterval: 3000,
   });
 
-  // Fetch individual chat messages - Simplified approach
+  // Fetch individual chat messages - Fixed with proper URL construction
   const { data: individualMessages = [], isLoading: isLoadingIndividual, error: individualError, refetch: refetchIndividualMessages } = useQuery<ChatMessage[]>({
     queryKey: ['/api/trainer/client-chat', selectedChat],
     enabled: selectedChat !== 'group-chat' && !!selectedChat,
     refetchInterval: 3000,
     staleTime: 0, // Force fresh data
     cacheTime: 0, // Don't cache
+    queryFn: async () => {
+      if (selectedChat === 'group-chat' || !selectedChat) {
+        return [];
+      }
+      
+      console.log(`🔍 Making API call to: /api/trainer/client-chat/${selectedChat}`);
+      
+      const authToken = localStorage.getItem('url_auth_token');
+      if (!authToken) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`/api/trainer/client-chat/${selectedChat}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('🔍 Raw API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('🔍 API error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('🔍 Individual messages API response:', data);
+      
+      return data;
+    }
   });
 
   // Send message mutation
