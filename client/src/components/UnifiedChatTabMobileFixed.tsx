@@ -47,6 +47,17 @@ export default function UnifiedChatTabMobileFixed() {
   // Fetch individual chat messages
   const { data: individualMessages = [], isLoading: isLoadingIndividual } = useQuery<ChatMessage[]>({
     queryKey: ['/api/trainer/client-chat', selectedChat],
+    queryFn: async () => {
+      const response = await fetch(`/api/trainer/client-chat/${selectedChat}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch individual chat messages');
+      }
+      return response.json();
+    },
     enabled: selectedChat !== 'group-chat' && !!selectedChat,
     refetchInterval: 3000,
   });
@@ -144,7 +155,7 @@ export default function UnifiedChatTabMobileFixed() {
   return (
     <div className="flex flex-col h-full bg-dark">
       {/* Chat Selector - Fixed at top */}
-      <div className="flex-shrink-0 bg-surface border-b border-gray-700 sticky top-0 z-10">
+      <div className="flex-shrink-0 bg-surface border-b border-gray-700 sticky top-32 z-20">
         <div className="p-3">
           <Select 
             value={selectedChat} 
@@ -178,7 +189,7 @@ export default function UnifiedChatTabMobileFixed() {
                 )}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="bg-dark border-gray-600 max-h-64 overflow-y-auto">
+            <SelectContent className="bg-dark border-gray-600 max-h-48 overflow-y-auto z-30" sideOffset={5}>
               {/* Group Chat Option */}
               <SelectItem value="group-chat" className="text-white hover:bg-gray-700">
                 <div className="flex items-center space-x-2">
@@ -213,7 +224,7 @@ export default function UnifiedChatTabMobileFixed() {
       </div>
 
       {/* Messages Area - Scrollable Container */}
-      <div className="flex-1 min-h-0 overflow-y-auto mobile-scroll bg-dark px-3 py-2">
+      <div className="flex-1 min-h-0 overflow-y-auto mobile-scroll bg-dark px-3 py-2 mt-2">
         <div className="space-y-3 pb-4">
           {isLoading ? (
             <div className="flex justify-center py-8">
