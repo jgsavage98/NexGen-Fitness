@@ -55,7 +55,7 @@ export default function UnifiedChatTabFixed() {
       
       console.log(`🔍 Making API call to: /api/trainer/client-chat/${selectedChat}`);
       
-      const authToken = localStorage.getItem('authToken');
+      const authToken = localStorage.getItem('url_auth_token');
       if (!authToken) {
         throw new Error('No authentication token found');
       }
@@ -87,7 +87,7 @@ export default function UnifiedChatTabFixed() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { message: string; chatType: 'individual' | 'group'; clientId?: string }) => {
-      const authToken = localStorage.getItem('authToken');
+      const authToken = localStorage.getItem('url_auth_token');
       if (!authToken) {
         throw new Error('No authentication token found');
       }
