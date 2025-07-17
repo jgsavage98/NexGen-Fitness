@@ -2796,6 +2796,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
+      // Broadcast message via WebSocket for real-time updates
+      const wss = (global as any).wss;
+      if (wss) {
+        wss.clients.forEach((client: any) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: 'new_individual_message',
+              message: chatMessage,
+              targetUserId: clientId
+            }));
+          }
+        });
+      }
+
       res.json({
         message: "Message sent to client successfully",
         chatMessage

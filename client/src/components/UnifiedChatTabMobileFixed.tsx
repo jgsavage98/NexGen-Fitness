@@ -91,17 +91,31 @@ export default function UnifiedChatTabMobileFixed() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('/api/chat/messages', {
+      let url = '/api/chat/messages';
+      let body: any = {
+        message: data.message,
+        chatType: data.chatType,
+      };
+
+      // For individual messages from trainer, use the trainer-specific endpoint
+      if (data.chatType === 'individual' && data.clientId) {
+        url = '/api/trainer/send-message';
+        body = {
+          clientId: data.clientId,
+          message: data.message,
+        };
+      } else if (data.chatType === 'individual') {
+        // Fallback for individual messages
+        body.targetUserId = data.clientId;
+      }
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`,
         },
-        body: JSON.stringify({
-          message: data.message,
-          chatType: data.chatType,
-          ...(data.chatType === 'individual' && { targetUserId: data.clientId }),
-        }),
+        body: JSON.stringify(body),
       });
       
       if (!response.ok) {
