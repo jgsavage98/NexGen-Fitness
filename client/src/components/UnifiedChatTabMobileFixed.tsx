@@ -195,7 +195,7 @@ export default function UnifiedChatTabMobileFixed() {
   return (
     <div className="h-full bg-dark flex flex-col">
       {/* Fixed Chat Selector Header */}
-      <div className="fixed top-20 left-6 right-6 bg-surface/80 backdrop-blur-sm border-b border-gray-700 p-3 z-[60] rounded-lg shadow-lg">
+      <div className="fixed top-20 left-6 right-6 bg-surface/95 backdrop-blur-sm border-b border-gray-700 p-3 z-[60] rounded-lg shadow-lg">
         <Select 
           value={selectedChat} 
           onValueChange={handleChatSelect}
@@ -309,7 +309,7 @@ export default function UnifiedChatTabMobileFixed() {
       </div>
 
       {/* Fixed Message Input */}
-      <div className="fixed bottom-16 left-0 right-0 bg-surface/80 backdrop-blur-sm border-t border-gray-700 p-3 z-[60] shadow-lg">
+      <div className="fixed bottom-16 left-0 right-0 bg-surface/95 backdrop-blur-sm border-t border-gray-700 p-3 z-[60] shadow-lg">
         <div className="flex space-x-2">
           <Textarea
             value={message}
