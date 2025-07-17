@@ -1,18 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageCircle } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { toast } from '@/hooks/use-toast';
 
 interface ChatMessage {
   id: number;
   userId: string;
   message: string;
-  createdAt: string;
   isAI: boolean;
-  metadata?: any;
+  createdAt: string;
+  metadata?: {
+    targetUserId?: string;
+  };
 }
 
 interface Client {
@@ -30,48 +32,69 @@ export default function UnifiedChatTabMobileFixed() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  // Load clients
-  const { data: clients = [] } = useQuery({
+  // Fetch clients
+  const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ['/api/trainer/clients'],
-    enabled: true,
+    refetchInterval: 3000,
   });
 
-  // Load chat messages
-  const { data: groupMessages = [], isLoading: isLoadingGroup } = useQuery({
-    queryKey: ['/api/trainer/group-chat-messages'],
+  // Fetch group chat messages
+  const { data: groupMessages = [], isLoading: isLoadingGroup } = useQuery<ChatMessage[]>({
+    queryKey: ['/api/trainer/group-chat'],
     enabled: chatType === 'group',
+    refetchInterval: 3000,
   });
 
-  const { data: individualMessages = [], isLoading: isLoadingIndividual } = useQuery({
-    queryKey: ['/api/trainer/individual-chat-messages', selectedClient?.id],
+  // Fetch individual chat messages
+  const { data: individualMessages = [], isLoading: isLoadingIndividual } = useQuery<ChatMessage[]>({
+    queryKey: ['/api/trainer/client-chat', selectedClient?.id],
     enabled: chatType === 'individual' && !!selectedClient,
+    refetchInterval: 3000,
   });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ message, chatType, clientId }: { message: string; chatType: 'individual' | 'group'; clientId?: string }) => {
-      const endpoint = chatType === 'group' ? '/api/trainer/group-chat-messages' : '/api/trainer/individual-chat-messages';
-      return apiRequest(endpoint, {
+    mutationFn: async (data: { message: string; chatType: 'individual' | 'group'; clientId?: string }) => {
+      const response = await fetch('/api/chat/messages', {
         method: 'POST',
-        body: { message, recipientId: clientId },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify({
+          message: data.message,
+          chatType: data.chatType,
+          ...(data.chatType === 'individual' && { targetUserId: data.clientId }),
+        }),
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       setMessage('');
-      queryClient.invalidateQueries({ queryKey: ['/api/trainer/group-chat-messages'] });
-      if (selectedClient) {
-        queryClient.invalidateQueries({ queryKey: ['/api/trainer/individual-chat-messages', selectedClient.id] });
-      }
+      queryClient.invalidateQueries({ queryKey: ['/api/trainer/group-chat'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/trainer/client-chat'] });
+      toast({
+        title: "Message sent successfully",
+        description: "Your message has been delivered.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error sending message",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (!message.trim()) return;
-    
-    if (chatType === 'individual' && !selectedClient) {
-      alert('Please select a client first');
-      return;
-    }
+    if (chatType === 'individual' && !selectedClient) return;
 
     sendMessageMutation.mutate({
       message: message.trim(),
@@ -115,13 +138,13 @@ export default function UnifiedChatTabMobileFixed() {
   }, [currentMessages]);
 
   return (
-    <div className="relative h-full bg-dark max-w-full">
-      {/* Fixed Chat Type Selector - Positioned at top-32 */}
-      <div className="fixed top-32 left-0 right-0 bg-surface border-b border-gray-700 z-20">
-        <div className="flex">
+    <div className="flex flex-col h-full bg-dark">
+      {/* Chat Type Selector - Fixed at top */}
+      <div className="flex-shrink-0 bg-surface border-b border-gray-700">
+        <div className="flex w-full">
           <button
             onClick={() => setChatType('individual')}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+            className={`flex-1 py-3 px-2 text-sm font-medium transition-colors ${
               chatType === 'individual'
                 ? 'bg-blue-600 text-white border-b-2 border-blue-500'
                 : 'text-gray-300 hover:text-white hover:bg-gray-700'
@@ -131,7 +154,7 @@ export default function UnifiedChatTabMobileFixed() {
           </button>
           <button
             onClick={() => setChatType('group')}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+            className={`flex-1 py-3 px-2 text-sm font-medium transition-colors ${
               chatType === 'group'
                 ? 'bg-blue-600 text-white border-b-2 border-blue-500'
                 : 'text-gray-300 hover:text-white hover:bg-gray-700'
@@ -142,8 +165,8 @@ export default function UnifiedChatTabMobileFixed() {
         </div>
       </div>
 
-      {/* Fixed Chat Header - Positioned below type selector */}
-      <div className="fixed top-44 left-0 right-0 bg-surface border-b border-gray-700 z-10">
+      {/* Chat Header - Fixed below type selector */}
+      <div className="flex-shrink-0 bg-surface border-b border-gray-700">
         {chatType === 'individual' ? (
           <div className="p-3">
             <Select 
@@ -198,8 +221,8 @@ export default function UnifiedChatTabMobileFixed() {
         )}
       </div>
 
-      {/* Messages Area - Scrollable Container with absolute positioning */}
-      <div className="absolute top-56 bottom-20 left-0 right-0 overflow-y-auto mobile-scroll bg-dark px-3 py-2">
+      {/* Messages Area - Scrollable Container */}
+      <div className="flex-1 min-h-0 overflow-y-auto mobile-scroll bg-dark px-3 py-2">
         <div className="space-y-3 pb-4">
           {isLoading ? (
             <div className="flex justify-center py-8">
@@ -213,7 +236,7 @@ export default function UnifiedChatTabMobileFixed() {
           ) : (
             currentMessages.map((msg: ChatMessage) => (
               <div key={msg.id} className={`flex ${msg.isAI ? 'justify-start' : 'justify-end'}`}>
-                <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                <div className={`max-w-[80%] rounded-lg px-3 py-2 break-words ${
                   msg.isAI 
                     ? 'bg-gray-700 text-white' 
                     : 'bg-blue-600 text-white'
@@ -238,8 +261,8 @@ export default function UnifiedChatTabMobileFixed() {
       </div>
 
       {/* Message Input - Fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-700 p-3">
-        <div className="flex space-x-2 max-w-full">
+      <div className="flex-shrink-0 bg-surface border-t border-gray-700 p-3">
+        <div className="flex space-x-2 w-full">
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
