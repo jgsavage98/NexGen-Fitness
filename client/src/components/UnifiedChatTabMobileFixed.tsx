@@ -181,8 +181,8 @@ export default function UnifiedChatTabMobileFixed() {
 
   return (
     <div className="h-full bg-dark flex flex-col">
-      {/* Absolutely Fixed Chat Selector Header */}
-      <div className="absolute top-0 left-0 right-0 bg-surface border-b border-gray-700 p-3 z-10">
+      {/* Fixed Chat Selector Header */}
+      <div className="fixed top-0 left-0 right-0 bg-surface border-b border-gray-700 p-3 z-50">
         <Select 
           value={selectedChat} 
           onValueChange={handleChatSelect}
@@ -215,7 +215,7 @@ export default function UnifiedChatTabMobileFixed() {
               )}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent className="bg-dark border-gray-600 max-h-48 overflow-y-auto">
+          <SelectContent className="bg-dark border-gray-600 max-h-48 overflow-y-auto z-50">
             {/* Group Chat Option */}
             <SelectItem value="group-chat" className="text-white hover:bg-gray-700">
               <div className="flex items-center space-x-2">
@@ -287,8 +287,8 @@ export default function UnifiedChatTabMobileFixed() {
         </div>
       </div>
 
-      {/* Absolutely Fixed Message Input */}
-      <div className="absolute bottom-0 left-0 right-0 bg-surface border-t border-gray-700 p-3 z-10">
+      {/* Fixed Message Input */}
+      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-700 p-3 z-50">
         <div className="flex space-x-2">
           <Textarea
             value={message}
