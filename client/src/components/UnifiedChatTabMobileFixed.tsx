@@ -41,9 +41,19 @@ export default function UnifiedChatTabMobileFixed() {
     console.log('📡 WebSocket message received:', data);
     
     if (data.type === 'new_individual_message' || data.type === 'private_moderation_message') {
-      // Refresh individual chat messages when new messages arrive
-      queryClient.invalidateQueries({ queryKey: ['/api/trainer/client-chat'] });
+      // Refresh all individual chat messages when new messages arrive
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return query.queryKey[0] === '/api/trainer/client-chat';
+        }
+      });
       console.log('🔄 Invalidating individual chat queries due to new message');
+      
+      // Also invalidate specific client chat if we know the target
+      if (data.targetUserId) {
+        queryClient.invalidateQueries({ queryKey: ['/api/trainer/client-chat', data.targetUserId] });
+        console.log('🔄 Invalidating specific client chat for:', data.targetUserId);
+      }
     }
     
     if (data.type === 'new_group_message' || data.type === 'group_counter_update') {
