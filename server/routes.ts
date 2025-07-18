@@ -2797,17 +2797,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Broadcast message via WebSocket for real-time updates
-      const wss = (global as any).wss;
-      if (wss) {
+      const globalScope = global as any;
+      console.log('Global WSS exists:', !!globalScope.wss);
+      
+      if (globalScope.wss) {
+        const wss = globalScope.wss;
+        console.log('Number of connected clients:', wss.clients.size);
+        
+        const notificationData = {
+          type: 'new_individual_message',
+          message: chatMessage,
+          targetUserId: clientId
+        };
+        
+        console.log('Broadcasting WebSocket message:', notificationData);
+        
         wss.clients.forEach((client: any) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-              type: 'new_individual_message',
-              message: chatMessage,
-              targetUserId: clientId
-            }));
+          if (client.readyState === 1) { // WebSocket.OPEN
+            console.log('Sending WebSocket notification to client for user:', clientId);
+            client.send(JSON.stringify(notificationData));
           }
         });
+      } else {
+        console.log('No WebSocket server available for notifications');
       }
 
       res.json({
