@@ -347,11 +347,11 @@ export default function UnifiedChatTabMobileFixed() {
             </div>
           ) : (
             currentMessages.map((msg: ChatMessage) => (
-              <div key={msg.id} className={`flex ${msg.isAI ? 'justify-start' : 'justify-end'}`}>
+              <div key={msg.id} className={`flex ${msg.isAI ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] rounded-lg px-3 py-2 break-words ${
                   msg.isAI 
-                    ? 'bg-gray-700 text-white' 
-                    : 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-700 text-white'
                 }`}>
                   <div className="text-xs text-gray-300 mb-1">
                     {msg.isAI ? 'Coach Chassidy' : 
