@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface ChatMessage {
   id: number;
@@ -34,6 +35,26 @@ export default function UnifiedChatTabMobileFixed() {
   const queryClient = useQueryClient();
   
   console.log('🔄 Component render:', { selectedChat, forceUpdate, timestamp: new Date().toISOString() });
+
+  // WebSocket message handler for real-time updates
+  const handleWebSocketMessage = useCallback((data: any) => {
+    console.log('📡 WebSocket message received:', data);
+    
+    if (data.type === 'new_individual_message' || data.type === 'private_moderation_message') {
+      // Refresh individual chat messages when new messages arrive
+      queryClient.invalidateQueries({ queryKey: ['/api/trainer/client-chat'] });
+      console.log('🔄 Invalidating individual chat queries due to new message');
+    }
+    
+    if (data.type === 'new_group_message' || data.type === 'group_counter_update') {
+      // Refresh group chat messages when new messages arrive
+      queryClient.invalidateQueries({ queryKey: ['/api/trainer/group-chat'] });
+      console.log('🔄 Invalidating group chat queries due to new message');
+    }
+  }, [queryClient]);
+
+  // Initialize WebSocket connection
+  useWebSocket(handleWebSocketMessage);
 
   // Fetch clients
   const { data: clients = [] } = useQuery<Client[]>({
