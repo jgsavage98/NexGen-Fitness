@@ -12,7 +12,7 @@ import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut, 
 import ProfileSettings from "@/pages/ProfileSettings";
 import ClientUploadHistory from "@/components/ClientUploadHistory";
 import ClientProgressTimeSeries from "@/components/ClientProgressTimeSeries";
-import UnifiedChatTabMobileFixed from "@/components/UnifiedChatTabMobileFixed";
+import TrainerChatTab from "@/components/TrainerChatTab";
 import ExerciseManagement from "@/components/ExerciseManagement";
 import AISettings from "@/pages/AISettings";
 import TrainerTabNavigation, { TrainerTabType } from "@/components/TrainerTabNavigation";
@@ -622,7 +622,7 @@ export default function TrainerDashboard() {
         );
       case 'chat':
         return (
-          <UnifiedChatTabMobileFixed />
+          <TrainerChatTab />
         );
       case 'client-progress':
         return selectedClient ? (
