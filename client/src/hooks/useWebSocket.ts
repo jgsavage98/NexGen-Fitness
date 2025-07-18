@@ -34,6 +34,7 @@ export function useWebSocket(onMessage?: (message: WebSocketMessage) => void) {
       ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
+        console.log('🔗 WebSocket connected to:', wsUrl);
         setIsConnected(true);
         reconnectAttempts.current = 0;
       };
@@ -41,6 +42,7 @@ export function useWebSocket(onMessage?: (message: WebSocketMessage) => void) {
       ws.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log('📡 WebSocket raw message received:', data);
           if (messageHandler.current) {
             messageHandler.current(data);
           }
