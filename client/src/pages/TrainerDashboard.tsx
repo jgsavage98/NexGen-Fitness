@@ -649,16 +649,115 @@ export default function TrainerDashboard() {
           <TrainerChatTab />
         );
       case 'client-progress':
-        return selectedClient ? (
-          <ClientProgressTimeSeries clientId={selectedClient} />
-        ) : (
+        return (
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-white">Client Progress</h2>
-            <Card className="bg-surface border-gray-700">
-              <CardContent className="p-8 text-center">
-                <p className="text-gray-400">Select a client to view their progress</p>
-              </CardContent>
-            </Card>
+            
+            {clients.length === 0 ? (
+              <Card className="bg-surface border-gray-700">
+                <CardContent className="p-8 text-center">
+                  <p className="text-gray-400">No clients found</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {clients.map((client) => (
+                  <Card key={client.id} className="bg-surface border-gray-700">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={client.profileImageUrl || "/default-avatar.png"}
+                            alt={`${client.firstName} ${client.lastName}`}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">
+                              {client.firstName} {client.lastName}
+                            </h3>
+                            <p className="text-sm text-gray-400">{client.email}</p>
+                            <div className="flex items-center space-x-4 mt-1">
+                              <span className="text-sm text-gray-400">
+                                Current: {client.weight}lbs
+                              </span>
+                              <span className="text-sm text-gray-400">
+                                Goal: {client.goalWeight}lbs
+                              </span>
+                              <span className="text-sm text-gray-400">
+                                Day {calculateJourneyDay(client.programStartDate)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleViewClientProgress(client.id)}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <TrendingUp className="w-4 h-4 mr-1" />
+                            View Details
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleChatWithClient(client.id)}
+                          >
+                            <MessageSquare className="w-4 h-4 mr-1" />
+                            Chat
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Quick Progress Summary */}
+                      <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-600">
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-white">
+                            {client.goalWeight - client.weight > 0 ? '+' : ''}{client.weight - client.goalWeight}
+                          </p>
+                          <p className="text-xs text-gray-400">lbs to goal</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-green-500">
+                            {calculateJourneyDay(client.programStartDate)}
+                          </p>
+                          <p className="text-xs text-gray-400">days on program</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-blue-500">
+                            {client.onboardingCompleted ? '✓' : '○'}
+                          </p>
+                          <p className="text-xs text-gray-400">onboarding</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+            
+            {/* Detailed view for selected client */}
+            {selectedClient && (
+              <div className="mt-8">
+                <Card className="bg-surface border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center justify-between">
+                      <span>Detailed Progress View</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedClient(null)}
+                      >
+                        Close Details
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ClientProgressTimeSeries clientId={selectedClient} />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         );
       case 'exercises':
