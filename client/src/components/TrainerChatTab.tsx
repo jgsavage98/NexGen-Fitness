@@ -85,6 +85,8 @@ export default function TrainerChatTab() {
     console.log('📡 WebSocket message received:', data);
     
     if (data.type === 'new_individual_message' || data.type === 'private_moderation_message') {
+      console.log('🔄 Processing individual message WebSocket event for client:', data.targetUserId);
+      
       // Refresh all individual chat messages
       queryClient.invalidateQueries({ 
         predicate: (query) => {
@@ -94,11 +96,13 @@ export default function TrainerChatTab() {
       
       // Also invalidate specific client chat if we know the target
       if (data.targetUserId) {
+        console.log('🎯 Invalidating specific client chat:', data.targetUserId);
         queryClient.invalidateQueries({ queryKey: ['/api/trainer/client-chat', data.targetUserId] });
       }
     }
     
     if (data.type === 'new_group_message' || data.type === 'group_counter_update') {
+      console.log('🔄 Processing group message WebSocket event');
       // Refresh group chat messages
       queryClient.invalidateQueries({ queryKey: ['/api/trainer/group-chat'] });
     }
@@ -170,11 +174,18 @@ export default function TrainerChatTab() {
       }
     },
     onSuccess: () => {
-      if (chatType === 'group') {
-        queryClient.invalidateQueries({ queryKey: ['/api/trainer/group-chat'] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['/api/trainer/client-chat', selectedClient] });
-      }
+      console.log('🎉 Message sent successfully, invalidating cache...');
+      // Small delay to ensure server processing is complete
+      setTimeout(() => {
+        if (chatType === 'group') {
+          console.log('🔄 Invalidating group chat cache');
+          queryClient.invalidateQueries({ queryKey: ['/api/trainer/group-chat'] });
+        } else {
+          console.log('🔄 Invalidating individual chat cache for client:', selectedClient);
+          queryClient.invalidateQueries({ queryKey: ['/api/trainer/client-chat', selectedClient] });
+        }
+      }, 500); // 500ms delay to allow server processing
+      
       setNewMessage("");
       toast({
         title: "Success",
