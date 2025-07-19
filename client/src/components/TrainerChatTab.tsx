@@ -51,7 +51,7 @@ export default function TrainerChatTab() {
 
   // Fetch clients
   const { data: clients = [] } = useQuery<Client[]>({
-    queryKey: ['/api/trainer/clients'],
+    queryKey: ['/api/trainer/clients', Date.now()],
     refetchInterval: 3000,
     select: (data) => {
       console.log('🔍 Raw client data received:', data);
