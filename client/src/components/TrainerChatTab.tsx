@@ -176,6 +176,28 @@ export default function TrainerChatTab() {
     queryKey: ["/api/auth/user"],
   });
 
+  // Mark client messages as read when trainer views individual chat
+  const markClientMessagesAsRead = useMutation({
+    mutationFn: async (clientId: string) => {
+      const response = await apiRequest("POST", `/api/trainer/mark-client-messages-read/${clientId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      console.log('✅ Client messages marked as read, refreshing unread counts');
+      // Refresh client list to update unread counts
+      queryClient.invalidateQueries({ queryKey: ['/api/trainer/clients'] });
+    },
+  });
+
+  // Auto-mark client messages as read when viewing individual chat
+  useEffect(() => {
+    if (chatType === 'individual' && selectedClient && messages.length > 0) {
+      console.log(`🔄 Auto-marking client messages as read for client: ${selectedClient}`);
+      console.log(`🔄 API call about to be made to: /api/trainer/mark-client-messages-read/${selectedClient}`);
+      markClientMessagesAsRead.mutate(selectedClient);
+    }
+  }, [chatType, selectedClient, messages.length, markClientMessagesAsRead]);
+
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {

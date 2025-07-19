@@ -1321,6 +1321,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Trainer mark client messages as read when viewing their chat
+  app.post('/api/trainer/mark-client-messages-read/:clientId', isAuthenticated, async (req: any, res) => {
+    try {
+      const trainerId = req.user.claims.sub;
+      const { clientId } = req.params;
+      
+      console.log(`🔄 API endpoint called: /api/trainer/mark-client-messages-read/${clientId} by trainer: ${trainerId}`);
+      
+      // Only allow Coach Chassidy to use this endpoint
+      if (trainerId !== 'coach_chassidy') {
+        console.log(`❌ Access denied for trainer: ${trainerId}`);
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      console.log(`✅ Trainer ${trainerId} authorized, marking client messages as read for client: ${clientId}`);
+      
+      await storage.markClientMessagesAsReadByTrainer(clientId);
+      
+      console.log(`✅ Successfully marked messages as read for client: ${clientId}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("❌ Error marking client messages as read:", error);
+      res.status(500).json({ message: "Failed to mark client messages as read" });
+    }
+  });
+
   // Mark group chat as viewed
   app.post('/api/chat/mark-group-viewed', isAuthenticated, async (req: any, res) => {
     try {

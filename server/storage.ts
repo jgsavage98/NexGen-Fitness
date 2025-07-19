@@ -826,6 +826,43 @@ export class DatabaseStorage implements IStorage {
     return count;
   }
 
+  async markClientMessagesAsReadByTrainer(clientId: string): Promise<void> {
+    console.log(`🔄 Starting markClientMessagesAsReadByTrainer for client: ${clientId}`);
+    
+    // First, let's see what messages we're about to mark as read
+    const messagesToMark = await db
+      .select({ id: chatMessages.id, message: chatMessages.message, isRead: chatMessages.isRead })
+      .from(chatMessages)
+      .where(
+        and(
+          eq(chatMessages.userId, clientId), // Messages from this client
+          eq(chatMessages.chatType, 'individual'),
+          eq(chatMessages.isAI, false), // Only human messages from client
+          eq(chatMessages.isRead, false),
+          eq(chatMessages.status, 'approved')
+        )
+      );
+    
+    console.log(`📋 Found ${messagesToMark.length} unread client messages to mark as read:`, messagesToMark.map(m => ({ id: m.id, preview: m.message.substring(0, 50) + '...', isRead: m.isRead })));
+    
+    // Mark all unread client messages as read when trainer views the client's chat
+    const result = await db
+      .update(chatMessages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(chatMessages.userId, clientId), // Messages from this client
+          eq(chatMessages.chatType, 'individual'),
+          eq(chatMessages.isAI, false), // Only human messages from client
+          eq(chatMessages.isRead, false),
+          eq(chatMessages.status, 'approved')
+        )
+      );
+    
+    console.log(`✅ Update query executed for client ${clientId}. Result:`, result);
+    console.log(`✅ Marked ${messagesToMark.length} unread client messages as read for client ${clientId}`);
+  }
+
   async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
     if (messageIds && messageIds.length > 0) {
       // Mark specific messages as read - use a simple loop for now
