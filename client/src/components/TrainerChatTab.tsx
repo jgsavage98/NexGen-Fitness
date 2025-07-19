@@ -294,11 +294,11 @@ export default function TrainerChatTab() {
   // Individual chat only - no group chat functionality
 
   return (
-    <div className="chat-container">
-      {/* Client Selection */}
-      <div className="px-6 py-4 bg-surface border-b border-gray-700">
+    <div className="chat-container h-full flex flex-col">
+      {/* Client Selection - Fixed positioning for mobile */}
+      <div className="px-4 sm:px-6 py-3 sm:py-4 bg-surface border-b border-gray-700 sticky top-16 sm:top-20 z-30">
         <Select value={selectedClient} onValueChange={setSelectedClient}>
-            <SelectTrigger className="w-full bg-dark border-gray-600 text-white relative z-40">
+            <SelectTrigger className="w-full bg-dark border-gray-600 text-white text-sm sm:text-base touch-manipulation">
               <SelectValue placeholder="Select a client to chat with...">
                 {selectedClient && (() => {
                   const client = clients.find(c => c.id === selectedClient);
@@ -306,7 +306,12 @@ export default function TrainerChatTab() {
                 })()}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="bg-dark border-gray-600" style={{zIndex: 9999}}>
+            <SelectContent 
+              className="bg-dark border-gray-600 max-h-60 sm:max-h-80" 
+              style={{zIndex: 9999}}
+              position="popper"
+              sideOffset={8}
+            >
               {filteredClients.map((client) => {
                 const fullName = `${client.firstName} ${client.lastName}`;
                 console.log(`🔍 Dropdown rendering client: "${fullName}" unreadCount: ${client.unreadCount}`);
@@ -314,27 +319,27 @@ export default function TrainerChatTab() {
                 <SelectItem 
                   key={client.id} 
                   value={client.id} 
-                  className="text-white hover:bg-gray-700 focus:bg-gray-700"
+                  className="text-white hover:bg-gray-700 focus:bg-gray-700 py-3 touch-manipulation"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                       {client.profileImageUrl ? (
                         <img 
                           src={`/${client.profileImageUrl}`}
                           alt={fullName}
-                          className="w-6 h-6 rounded-full object-cover"
+                          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-500 flex items-center justify-center">
-                          <span className="text-white text-xs font-semibold">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs sm:text-sm font-semibold">
                             {client.firstName.charAt(0)}
                           </span>
                         </div>
                       )}
-                      <span className="text-white">{fullName}</span>
+                      <span className="text-white text-sm sm:text-base truncate">{fullName}</span>
                     </div>
                     {client.unreadCount && client.unreadCount > 0 && (
-                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0">
+                      <span className="bg-red-500 text-white text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex-shrink-0 min-w-[20px] text-center">
                         {client.unreadCount}
                       </span>
                     )}
@@ -348,26 +353,26 @@ export default function TrainerChatTab() {
 
 
 
-      {/* Chat Messages */}
-      <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin overflow-x-hidden pb-4 min-h-0">
+      {/* Chat Messages - Mobile optimized */}
+      <div className="flex-1 px-3 sm:px-6 py-3 sm:py-4 overflow-y-auto space-y-3 sm:space-y-4 scrollbar-thin overflow-x-hidden pb-safe min-h-0 touch-manipulation">
         {!selectedClient && (
-          <div className="text-center text-gray-400 py-8">
-            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-500" />
-            <p>Select a client to start an individual conversation</p>
+          <div className="text-center text-gray-400 py-6 sm:py-8">
+            <MessageCircle className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-gray-500" />
+            <p className="text-sm sm:text-base">Select a client to start an individual conversation</p>
           </div>
         )}
 
         {selectedClient && messages.length === 0 && !isLoading && (
-          <div className="text-center text-gray-400 py-8">
-            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-500" />
-            <p>No messages yet. Start the conversation!</p>
+          <div className="text-center text-gray-400 py-6 sm:py-8">
+            <MessageCircle className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-gray-500" />
+            <p className="text-sm sm:text-base">No messages yet. Start the conversation!</p>
           </div>
         )}
 
         {isLoading && (
-          <div className="text-center text-gray-400 py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
-            <p className="mt-2">Loading messages...</p>
+          <div className="text-center text-gray-400 py-6 sm:py-8">
+            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary-500 mx-auto"></div>
+            <p className="mt-2 text-sm sm:text-base">Loading messages...</p>
           </div>
         )}
 
@@ -376,57 +381,57 @@ export default function TrainerChatTab() {
           const isFromClient = !isTrainer;
           
           return (
-            <div key={message.id} className="mb-4">
+            <div key={message.id} className="mb-3 sm:mb-4">
               {isTrainer ? (
-                // Trainer messages on the right (blue bubbles)
+                // Trainer messages on the right (blue bubbles) - Mobile optimized
                 <div className="flex justify-end max-w-full">
-                  <div className="flex items-start space-x-3 max-w-[85%] sm:max-w-md">
-                    <div className="bg-primary-500 rounded-lg rounded-tr-none p-4 min-w-0">
-                      <p className="text-sm text-white break-words whitespace-pre-wrap overflow-wrap-anywhere">
+                  <div className="flex items-start space-x-2 sm:space-x-3 max-w-[90%] sm:max-w-[85%] md:max-w-md">
+                    <div className="bg-primary-500 rounded-lg rounded-tr-none p-3 sm:p-4 min-w-0">
+                      <p className="text-sm sm:text-base text-white break-words whitespace-pre-wrap overflow-wrap-anywhere leading-relaxed">
                         {message.message}
                       </p>
-                      <span className="text-xs mt-2 block text-white/70">
+                      <span className="text-xs mt-1.5 sm:mt-2 block text-white/70">
                         {formatTime(message.createdAt)}
                       </span>
                     </div>
-                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0">
                       <img 
                         src="/attached_assets/CE Bio Image_1749399911915.jpeg"
                         alt="Coach Chassidy"
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
                       />
                     </div>
                   </div>
                 </div>
               ) : (
-                // Client messages on the left (gray bubbles)
+                // Client messages on the left (gray bubbles) - Mobile optimized
                 <div className="flex justify-start max-w-full">
-                  <div className="flex items-start space-x-3 max-w-[85%] sm:max-w-md">
+                  <div className="flex items-start space-x-2 sm:space-x-3 max-w-[90%] sm:max-w-[85%] md:max-w-md">
                     {message.user?.profileImageUrl ? (
                       <img 
                         src={`/${message.user.profileImageUrl}`}
                         alt={`${message.user.firstName} ${message.user.lastName}`}
-                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-xs font-semibold">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-xs sm:text-sm font-semibold">
                           {message.user?.firstName ? message.user.firstName.charAt(0) : '?'}
                         </span>
                       </div>
                     )}
                     
-                    <div className="bg-gray-700 rounded-lg rounded-tl-none p-4 min-w-0">
+                    <div className="bg-gray-700 rounded-lg rounded-tl-none p-3 sm:p-4 min-w-0">
                       {/* Display client name for individual chat messages */}
                       {message.user && (
                         <p className="text-xs text-gray-300 mb-1 font-semibold break-words">
                           {message.user.firstName} {message.user.lastName}
                         </p>
                       )}
-                      <p className="text-sm text-white break-words whitespace-pre-wrap overflow-wrap-anywhere">
+                      <p className="text-sm sm:text-base text-white break-words whitespace-pre-wrap overflow-wrap-anywhere leading-relaxed">
                         {message.message}
                       </p>
-                      <span className="text-xs mt-2 block text-white/70">
+                      <span className="text-xs mt-1.5 sm:mt-2 block text-white/70">
                         {formatTime(message.createdAt)}
                       </span>
                     </div>
@@ -440,10 +445,10 @@ export default function TrainerChatTab() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Chat Input - Only show when client is selected */}
+      {/* Chat Input - Mobile optimized, only show when client is selected */}
       {selectedClient && (
-        <div className="chat-input-container px-6 py-4 border-t border-gray-700 pb-safe">
-          <div className="flex items-end space-x-3">
+        <div className="chat-input-container px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-700 pb-safe bg-surface">
+          <div className="flex items-end space-x-2 sm:space-x-3">
             <div className="flex-1 relative">
               <Textarea
                 ref={textareaRef}
@@ -451,21 +456,22 @@ export default function TrainerChatTab() {
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyPress}
                 placeholder="Message client..."
-                className="w-full p-3 bg-dark border-gray-600 rounded-2xl pr-12 text-white placeholder-gray-400 resize-none min-h-[48px] max-h-32"
+                className="w-full p-3 sm:p-3 bg-dark border-gray-600 rounded-2xl pr-12 text-white placeholder-gray-400 resize-none min-h-[44px] sm:min-h-[48px] max-h-32 text-sm sm:text-base touch-manipulation"
                 disabled={sendMessageMutation.isPending}
                 rows={1}
                 style={{ 
                   fontSize: '16px',
                   WebkitUserSelect: 'text',
-                  userSelect: 'text'
+                  userSelect: 'text',
+                  WebkitAppearance: 'none'
                 }}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                className="absolute right-3 bottom-3 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+                className="absolute right-2 sm:right-3 bottom-2.5 sm:bottom-3 text-gray-400 hover:text-white transition-colors disabled:opacity-50 touch-manipulation p-1"
               >
-                <i className="fas fa-paper-plane"></i>
+                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>
