@@ -2401,17 +2401,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clientsWithCount = await Promise.all(clients.map(async (client) => {
         // Count unanswered messages (client messages without trainer responses after them)
         const unansweredCount = await storage.getUnansweredMessageCount(client.id, trainerId);
-        console.log(`🔍 Client data: ${client.firstName} ${client.lastName} | ID: ${client.id} | unansweredCount: ${unansweredCount}`);
+
         return {
           ...client,
           unansweredCount
         };
       }));
       
-      console.log('📋 All clients being returned:', JSON.stringify(clientsWithCount, null, 2));
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
       res.json(clientsWithCount);
     } catch (error) {
       console.error("Error fetching trainer clients:", error);

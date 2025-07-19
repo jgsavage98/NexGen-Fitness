@@ -51,15 +51,8 @@ export default function TrainerChatTab() {
 
   // Fetch clients
   const { data: clients = [] } = useQuery<Client[]>({
-    queryKey: ['/api/trainer/clients', Date.now()],
+    queryKey: ['/api/trainer/clients'],
     refetchInterval: 3000,
-    select: (data) => {
-      console.log('🔍 Raw client data received:', data);
-      data.forEach(client => {
-        console.log(`📋 Client: ${client.firstName} ${client.lastName} | ID: ${client.id} | unansweredCount: ${client.unansweredCount}`);
-      });
-      return data;
-    }
   });
 
   // Client data loaded successfully
@@ -290,7 +283,7 @@ export default function TrainerChatTab() {
               />
           </div>
           <Select value={selectedClient} onValueChange={setSelectedClient}>
-              <SelectTrigger className="w-full bg-dark border-gray-600 text-white">
+              <SelectTrigger className="w-full bg-dark border-gray-600 text-white relative z-40">
                 <SelectValue placeholder="Select a client to chat with...">
                   {selectedClient && (() => {
                     const client = clients.find(c => c.id === selectedClient);
@@ -298,7 +291,7 @@ export default function TrainerChatTab() {
                   })()}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="bg-dark border-gray-600">
+              <SelectContent className="bg-dark border-gray-600" style={{zIndex: 9999}}>
                 {filteredClients.map((client) => (
                   <SelectItem key={client.id} value={client.id} className="text-white hover:bg-gray-700">
                     <div className="flex items-center space-x-3">
