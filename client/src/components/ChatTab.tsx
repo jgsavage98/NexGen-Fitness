@@ -2,17 +2,18 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs imports removed - only individual coach chat functionality
 import { ChatMessage } from "@/lib/types";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { MessageCircle, Users } from "lucide-react";
+import { MessageCircle, Send } from "lucide-react";
 import PDFAttachment from "@/components/PDFAttachment";
 
 export default function ChatTab() {
   const [newMessage, setNewMessage] = useState("");
-  const [chatType, setChatType] = useState<'individual' | 'group'>('individual');
+  // Group chat functionality temporarily hidden - individual chat only
+  const chatType = 'individual';
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
@@ -26,16 +27,16 @@ export default function ChatTab() {
     refetchIntervalInBackground: true,
   });
 
-  // Get group chat unread count
-  const { data: groupUnreadData } = useQuery<{ count: number }>({
-    queryKey: ['/api/chat/group-unread-count'],
-    retry: false,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
-  });
+  // Group chat functionality temporarily hidden
+  // const { data: groupUnreadData } = useQuery<{ count: number }>({
+  //   queryKey: ['/api/chat/group-unread-count'],
+  //   retry: false,
+  //   refetchInterval: 3000,
+  //   refetchIntervalInBackground: true,
+  // });
 
   const individualUnreadCount = Number(individualUnreadData?.count) || 0;
-  const groupUnreadCount = Number(groupUnreadData?.count) || 0;
+  // const groupUnreadCount = Number(groupUnreadData?.count) || 0;
 
   // WebSocket message handler for real-time updates
   const handleWebSocketMessage = (data: any) => {
@@ -46,13 +47,14 @@ export default function ChatTab() {
     
     if (data.type === 'counter_update' || data.type === 'group_counter_update') {
       // Only update counters if user is not currently viewing the relevant chat type
-      if (data.type === 'counter_update' && chatType !== 'individual') {
+      if (data.type === 'counter_update') {
         queryClient.invalidateQueries({ queryKey: ['/api/chat/individual-unread-count'] });
         queryClient.invalidateQueries({ queryKey: ['/api/chat/unread-count'] });
       }
-      if (data.type === 'group_counter_update' && chatType !== 'group') {
-        queryClient.invalidateQueries({ queryKey: ['/api/chat/group-unread-count'] });
-      }
+      // Group chat functionality temporarily hidden
+      // if (data.type === 'group_counter_update' && chatType !== 'group') {
+      //   queryClient.invalidateQueries({ queryKey: ['/api/chat/group-unread-count'] });
+      // }
     }
   };
 
@@ -142,23 +144,13 @@ export default function ChatTab() {
     scrollToBottom();
   }, [messages]);
 
-  // Mark messages as read when Chat tab opens and when switching between chat types
+  // Mark messages as read when Chat tab opens (individual chat only)
   useEffect(() => {
-    if (chatType === 'individual') {
-      markMessagesAsReadMutation.mutate();
-      // Immediately clear individual counters
-      queryClient.setQueryData(['/api/chat/individual-unread-count'], { count: 0 });
-      queryClient.setQueryData(['/api/chat/unread-count'], { count: 0 });
-    } else if (chatType === 'group') {
-      markGroupViewedMutation.mutate();
-      // Immediately clear group counters
-      queryClient.setQueryData(['/api/chat/group-unread-count'], { count: 0 });
-      queryClient.setQueryData(['/api/chat/unread-count'], (old: any) => {
-        const current = old || { count: 0 };
-        return { count: Math.max(0, current.count - groupUnreadCount) };
-      });
-    }
-  }, [chatType]);
+    markMessagesAsReadMutation.mutate();
+    // Immediately clear individual counters
+    queryClient.setQueryData(['/api/chat/individual-unread-count'], { count: 0 });
+    queryClient.setQueryData(['/api/chat/unread-count'], { count: 0 });
+  }, []);
 
   // Initial load - mark individual messages as read by default and clear counters
   useEffect(() => {
@@ -217,54 +209,29 @@ export default function ChatTab() {
 
   return (
     <div className="chat-container">
-      {/* Chat Type Selection - Fixed at Top */}
+      {/* Individual Coach Chat Header */}
       <div className="px-6 py-3 bg-surface border-b border-gray-700 sticky top-0 z-10">
-        <Tabs value={chatType} onValueChange={(value) => setChatType(value as 'individual' | 'group')} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-dark">
-            <TabsTrigger value="individual" className="flex items-center space-x-2 data-[state=active]:bg-primary-500">
-              <MessageCircle className="w-4 h-4" />
-              <span>Coach Chat{individualUnreadCount > 0 ? ` (${individualUnreadCount})` : ''}</span>
-            </TabsTrigger>
-            <TabsTrigger value="group" className="flex items-center space-x-2 data-[state=active]:bg-blue-600">
-              <Users className="w-4 h-4" />
-              <span>Group Chat{groupUnreadCount > 0 ? ` (${groupUnreadCount})` : ''}</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center space-x-2">
+          <MessageCircle className="w-5 h-5 text-primary-500" />
+          <h2 className="text-lg font-semibold text-white">Coach Chat{individualUnreadCount > 0 ? ` (${individualUnreadCount})` : ''}</h2>
+        </div>
       </div>
 
-      {/* Chat Header */}
+      {/* Coach Profile Header */}
       <div className="px-6 py-4 bg-surface border-b border-gray-700">
         <div className="flex items-center space-x-3">
-          {chatType === 'individual' ? (
-            <>
-              <img 
-                src={trainerProfile?.profileImageUrl ? `/${trainerProfile.profileImageUrl}` : "/attached_assets/CE Bio Image_1749399911915.jpeg"}
-                alt="Coach Chassidy"
-                className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
-              />
-              <div>
-                <div className="font-semibold text-white">Coach Chassidy</div>
-                <div className="text-sm text-success flex items-center">
-                  <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-                  Your Personal Coach • Available 24/7
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <div className="font-semibold text-white">Group Chat</div>
-                <div className="text-sm text-blue-400 flex items-center">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                  All Clients • Chat with everyone
-                </div>
-              </div>
-            </>
-          )}
+          <img 
+            src={trainerProfile?.profileImageUrl ? `/${trainerProfile.profileImageUrl}` : "/attached_assets/CE Bio Image_1749399911915.jpeg"}
+            alt="Coach Chassidy"
+            className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
+          />
+          <div>
+            <div className="font-semibold text-white">Coach Chassidy</div>
+            <div className="text-sm text-success flex items-center">
+              <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
+              Your Personal Coach • Available 24/7
+            </div>
+          </div>
         </div>
       </div>
 

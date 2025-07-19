@@ -2,12 +2,12 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs imports removed - only individual chat functionality
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { MessageCircle, Users, Search } from "lucide-react";
+import { MessageCircle, Search, Send } from "lucide-react";
 
 interface ChatMessage {
   id: number;
@@ -40,7 +40,7 @@ interface Client {
 }
 
 export default function TrainerChatTab() {
-  const [chatType, setChatType] = useState<'group' | 'individual'>('group');
+  const [chatType, setChatType] = useState<'group' | 'individual'>('individual');
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -57,11 +57,11 @@ export default function TrainerChatTab() {
 
   // Client data loaded successfully
 
-  // Get group chat unread count
-  const { data: groupUnreadData } = useQuery<{ count: number }>({
-    queryKey: ['/api/trainer/group-chat-unread'],
-    refetchInterval: 3000,
-  });
+  // Group chat functionality temporarily hidden
+  // const { data: groupUnreadData } = useQuery<{ count: number }>({
+  //   queryKey: ['/api/trainer/group-chat-unread'],
+  //   refetchInterval: 3000,
+  // });
 
 
 
@@ -72,7 +72,7 @@ export default function TrainerChatTab() {
     client.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const groupUnreadCount = Number(groupUnreadData?.count) || 0;
+  // const groupUnreadCount = Number(groupUnreadData?.count) || 0;
 
   // Auto-select first client when switching to individual mode and no client is selected
   useEffect(() => {
@@ -257,36 +257,22 @@ export default function TrainerChatTab() {
     });
   };
 
-  // Reset selected client when switching to group chat
-  useEffect(() => {
-    if (chatType === 'group') {
-      setSelectedClient('');
-    }
-  }, [chatType]);
+  // Individual chat only - no group chat functionality
 
   return (
     <div className="chat-container">
-      {/* Chat Type Selection - Fixed at Top */}
+      {/* Individual Chat Header */}
       <div className="px-6 py-3 bg-surface border-b border-gray-700 sticky top-0 z-10">
-        <Tabs value={chatType} onValueChange={(value) => setChatType(value as 'group' | 'individual')} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-dark">
-            <TabsTrigger value="group" className="flex items-center space-x-2 data-[state=active]:bg-blue-600">
-              <Users className="w-4 h-4" />
-              <span>Group Chat{groupUnreadCount > 0 ? ` (${groupUnreadCount})` : ''}</span>
-            </TabsTrigger>
-            <TabsTrigger value="individual" className="flex items-center space-x-2 data-[state=active]:bg-primary-500">
-              <MessageCircle className="w-4 h-4" />
-              <span>Individual Chat</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center space-x-2">
+          <MessageCircle className="w-5 h-5 text-primary-500" />
+          <h2 className="text-lg font-semibold text-white">Individual Client Chat</h2>
+        </div>
       </div>
 
-      {/* Client Selection for Individual Chat */}
-      {chatType === 'individual' && (
-        <div className="px-6 py-4 bg-surface border-b border-gray-700">
-          <div className="space-y-3">
-            <div className="relative">
+      {/* Client Selection */}
+      <div className="px-6 py-4 bg-surface border-b border-gray-700">
+        <div className="space-y-3">
+          <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
@@ -295,8 +281,8 @@ export default function TrainerChatTab() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-dark border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-primary-500"
               />
-            </div>
-            <Select value={selectedClient} onValueChange={setSelectedClient}>
+          </div>
+          <Select value={selectedClient} onValueChange={setSelectedClient}>
               <SelectTrigger className="w-full bg-dark border-gray-600 text-white">
                 <SelectValue placeholder="Select a client to chat with...">
                   {selectedClient && (() => {
@@ -349,68 +335,50 @@ export default function TrainerChatTab() {
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
-          </div>
+          </Select>
         </div>
-      )}
+      </div>
 
       {/* Chat Header */}
       <div className="px-6 py-4 bg-surface border-b border-gray-700">
         <div className="flex items-center space-x-3">
-          {chatType === 'group' ? (
-            <>
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <div className="font-semibold text-white">Group Chat</div>
-                <div className="text-sm text-blue-400 flex items-center">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                  All Clients • Manage group discussions
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              {selectedClient ? (
-                (() => {
-                  const client = clients.find(c => c.id === selectedClient);
-                  return client ? (
-                    <>
-                      {client.profileImageUrl ? (
-                        <img 
-                          src={`/${client.profileImageUrl}`}
-                          alt={`${client.firstName} ${client.lastName}`}
-                          className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center border-2 border-primary/30">
-                          <span className="text-white font-semibold">
-                            {client.firstName.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-semibold text-white">{client.firstName} {client.lastName}</div>
-                        <div className="text-sm text-primary-400 flex items-center">
-                          <div className="w-2 h-2 bg-primary-400 rounded-full mr-2"></div>
-                          Individual Chat • {client.email}
-                        </div>
-                      </div>
-                    </>
-                  ) : null;
-                })()
-              ) : (
+          {selectedClient ? (
+            (() => {
+              const client = clients.find(c => c.id === selectedClient);
+              return client ? (
                 <>
-                  <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
-                    <MessageCircle className="w-5 h-5 text-white" />
-                  </div>
+                  {client.profileImageUrl ? (
+                    <img 
+                      src={`/${client.profileImageUrl}`}
+                      alt={`${client.firstName} ${client.lastName}`}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center border-2 border-primary/30">
+                      <span className="text-white font-semibold">
+                        {client.firstName.charAt(0)}
+                      </span>
+                    </div>
+                  )}
                   <div>
-                    <div className="font-semibold text-white">Individual Chat</div>
-                    <div className="text-sm text-gray-400">Select a client to start chatting</div>
+                    <div className="font-semibold text-white">{client.firstName} {client.lastName}</div>
+                    <div className="text-sm text-primary-400 flex items-center">
+                      <div className="w-2 h-2 bg-primary-400 rounded-full mr-2"></div>
+                      Individual Chat • {client.email}
+                    </div>
                   </div>
                 </>
-              )}
+              ) : null;
+            })()
+          ) : (
+            <>
+              <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
+                <MessageCircle className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="font-semibold text-white">Individual Chat</div>
+                <div className="text-sm text-gray-400">Select a client to start chatting</div>
+              </div>
             </>
           )}
         </div>
@@ -418,14 +386,14 @@ export default function TrainerChatTab() {
 
       {/* Chat Messages */}
       <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin overflow-x-hidden pb-4 min-h-0">
-        {chatType === 'individual' && !selectedClient && (
+        {!selectedClient && (
           <div className="text-center text-gray-400 py-8">
             <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-500" />
             <p>Select a client to start an individual conversation</p>
           </div>
         )}
 
-        {(chatType === 'group' || selectedClient) && messages.length === 0 && !isLoading && (
+        {selectedClient && messages.length === 0 && !isLoading && (
           <div className="text-center text-gray-400 py-8">
             <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-500" />
             <p>No messages yet. Start the conversation!</p>
@@ -485,7 +453,8 @@ export default function TrainerChatTab() {
                     )}
                     
                     <div className="bg-gray-700 rounded-lg rounded-tl-none p-4 min-w-0">
-                      {chatType === 'group' && message.user && (
+                      {/* Display client name for individual chat messages */}
+                      {message.user && (
                         <p className="text-xs text-gray-300 mb-1 font-semibold break-words">
                           {message.user.firstName} {message.user.lastName}
                         </p>
@@ -507,8 +476,8 @@ export default function TrainerChatTab() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Chat Input */}
-      {(chatType === 'group' || selectedClient) && (
+      {/* Chat Input - Only show when client is selected */}
+      {selectedClient && (
         <div className="chat-input-container px-6 py-4 border-t border-gray-700 pb-safe">
           <div className="flex items-end space-x-3">
             <div className="flex-1 relative">
@@ -517,7 +486,7 @@ export default function TrainerChatTab() {
                 value={newMessage}
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyPress}
-                placeholder={chatType === 'group' ? "Message all clients..." : "Message client..."}
+                placeholder="Message client..."
                 className="w-full p-3 bg-dark border-gray-600 rounded-2xl pr-12 text-white placeholder-gray-400 resize-none min-h-[48px] max-h-32"
                 disabled={sendMessageMutation.isPending}
                 rows={1}
