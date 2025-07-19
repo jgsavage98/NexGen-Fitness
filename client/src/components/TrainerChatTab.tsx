@@ -52,7 +52,9 @@ export default function TrainerChatTab() {
   // Fetch clients
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ['/api/trainer/clients'],
-    refetchInterval: 3000,
+    refetchInterval: 15000, // Reduced from 3s to 15s for better performance
+    staleTime: 10000, // Cache data for 10 seconds
+    gcTime: 60000 // Keep in cache for 1 minute
   });
 
   // Debug client data
@@ -166,9 +168,9 @@ export default function TrainerChatTab() {
       }
     },
     enabled: chatType === 'group' || (chatType === 'individual' && !!selectedClient),
-    refetchInterval: 3000,
-    gcTime: 0, // Disable caching to force fresh data
-    staleTime: 0, // Treat data as immediately stale
+    refetchInterval: 10000, // Reduced from 3s to 10s for better performance
+    staleTime: 5000, // Cache data for 5 seconds
+    gcTime: 30000 // Keep in cache for 30 seconds
   });
 
   // Get trainer user data
@@ -189,14 +191,13 @@ export default function TrainerChatTab() {
     },
   });
 
-  // Auto-mark client messages as read when viewing individual chat
+  // Auto-mark client messages as read when viewing individual chat (only once per client selection)
   useEffect(() => {
     if (chatType === 'individual' && selectedClient && messages.length > 0) {
       console.log(`🔄 Auto-marking client messages as read for client: ${selectedClient}`);
-      console.log(`🔄 API call about to be made to: /api/trainer/mark-client-messages-read/${selectedClient}`);
       markClientMessagesAsRead.mutate(selectedClient);
     }
-  }, [chatType, selectedClient, messages.length, markClientMessagesAsRead]);
+  }, [chatType, selectedClient]); // Removed messages.length and markClientMessagesAsRead to prevent repeated calls
 
   // Send message mutation
   const sendMessageMutation = useMutation({
