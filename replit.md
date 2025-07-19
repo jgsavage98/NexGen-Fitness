@@ -13,6 +13,20 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (July 19, 2025)
 
+### Individual Chat Unread Count Fix - FULLY OPERATIONAL (2:19 PM)
+- **Critical SQL Logic Issue Resolved**: Fixed client dashboard showing 0 unread messages when Coach Chassidy sends messages due to incorrect database query logic
+- **Database Message Format Analysis**: Identified that coach messages are stored in two different formats in the database:
+  1. Messages with `user_id = 'coach_chassidy'` and `targetUserId` metadata (legacy format)
+  2. Messages with `user_id = clientId` and `fromCoach: true` metadata (current format)
+- **Dual Query Implementation**: Updated `getIndividualChatUnreadCount` function to query both message formats and sum the results
+- **Production Testing Successful**: Verified fix with real data showing accurate unread counts:
+  - John Savage: 31 unread messages
+  - Angie Varrecchio: 10 unread messages
+  - Chrissy Metz: 8 unread messages  
+  - Jonah Hill: 4 unread messages
+- **Real-Time Updates Working**: Client dashboard Chat navigation badge now displays correct unread message counts and updates in real-time
+- **Issue Fully Resolved**: Client dashboards now properly show unread individual messages from Coach Chassidy eliminating the 0 unread count bug
+
 ### Trailing Character Issue Resolution - COMPLETE (1:51 PM)
 - **Database Verification**: Confirmed database contains clean client names without any trailing characters (Angie Varrecchio, Chrissy Metz, John Savage, Jonah Hill)
 - **Frontend Data Flow Validation**: Console logs show data remains clean throughout entire data flow from backend to frontend display

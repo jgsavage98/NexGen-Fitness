@@ -765,8 +765,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getIndividualChatUnreadCount(userId: string): Promise<number> {
-    // Count unread individual chat messages (coach messages targeted at this client)
-    const result = await db
+    // Count unread individual chat messages from Coach Chassidy to this client
+    // This covers both message formats:
+    // 1. Messages stored with userId = 'coach_chassidy' and targetUserId metadata
+    // 2. Messages stored with userId = clientId and fromCoach = true metadata
+    const result1 = await db
       .select({ count: sql<number>`count(*)` })
       .from(chatMessages)
       .where(
@@ -780,9 +783,26 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const count = Number(result[0]?.count) || 0;
-    console.log(`Client ${userId} individual chat unread count:`, count);
-    return count;
+    const result2 = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(chatMessages)
+      .where(
+        and(
+          eq(chatMessages.userId, userId), // Messages stored under client's userId
+          eq(chatMessages.chatType, 'individual'),
+          eq(chatMessages.isAI, true), // AI messages
+          eq(chatMessages.isRead, false),
+          eq(chatMessages.status, 'approved'),
+          sql`${chatMessages.metadata}->>'fromCoach' = 'true'` // From Coach Chassidy
+        )
+      );
+
+    const count1 = Number(result1[0]?.count) || 0;
+    const count2 = Number(result2[0]?.count) || 0;
+    const totalCount = count1 + count2;
+    
+    console.log(`Client ${userId} individual chat unread count: ${count1} (coach format) + ${count2} (client format) = ${totalCount}`);
+    return totalCount;
   }
 
   async markMessagesAsRead(userId: string, messageIds?: number[]): Promise<void> {
