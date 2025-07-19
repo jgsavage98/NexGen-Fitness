@@ -821,6 +821,9 @@ export class DatabaseStorage implements IStorage {
       }
     } else {
       // Mark all unread Coach Chassidy messages targeted at this user as read
+      // This covers both message formats similar to getIndividualChatUnreadCount
+      
+      // Format 1: Messages stored with userId = 'coach_chassidy' and targetUserId metadata
       await db
         .update(chatMessages)
         .set({ isRead: true })
@@ -834,6 +837,23 @@ export class DatabaseStorage implements IStorage {
             sql`${chatMessages.metadata}->>'targetUserId' = ${userId}` // Targeted at this client
           )
         );
+
+      // Format 2: Messages stored with userId = clientId and fromCoach = true metadata
+      const result2 = await db
+        .update(chatMessages)
+        .set({ isRead: true })
+        .where(
+          and(
+            eq(chatMessages.userId, userId), // Messages stored under client's userId
+            eq(chatMessages.chatType, 'individual'),
+            eq(chatMessages.isAI, true), // AI messages
+            eq(chatMessages.isRead, false),
+            eq(chatMessages.status, 'approved'),
+            sql`${chatMessages.metadata}->>'fromCoach' = 'true'` // From Coach Chassidy (string "true")
+          )
+        );
+        
+      console.log(`Marked all unread individual messages from Coach Chassidy as read for user: ${userId}`);
     }
   }
 

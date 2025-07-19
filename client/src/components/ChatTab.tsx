@@ -146,16 +146,9 @@ export default function ChatTab() {
 
   // Mark messages as read when Chat tab opens (individual chat only)
   useEffect(() => {
+    console.log('🔄 ChatTab mounted - marking messages as read');
     markMessagesAsReadMutation.mutate();
-    // Immediately clear individual counters
-    queryClient.setQueryData(['/api/chat/individual-unread-count'], { count: 0 });
-    queryClient.setQueryData(['/api/chat/unread-count'], { count: 0 });
-  }, []);
-
-  // Initial load - mark individual messages as read by default and clear counters
-  useEffect(() => {
-    markMessagesAsReadMutation.mutate();
-    // Immediately clear counters on initial load
+    // Immediately clear individual counters for instant UI feedback
     queryClient.setQueryData(['/api/chat/individual-unread-count'], { count: 0 });
     queryClient.setQueryData(['/api/chat/unread-count'], { count: 0 });
   }, []);
