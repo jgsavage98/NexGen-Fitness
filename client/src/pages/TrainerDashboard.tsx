@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import AISettings from "@/pages/AISettings";
 import TrainerTabNavigation, { TrainerTabType } from "@/components/TrainerTabNavigation";
 import { calculateJourneyDay } from "@/lib/dateUtils";
 import { useAuth } from "@/hooks/useAuth";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 interface Client {
   id: string;
@@ -30,7 +31,7 @@ interface Client {
   goalWeight: number;
   programStartDate: string;
   onboardingCompleted: boolean;
-  unansweredCount?: number;
+  unreadCount?: number;
 }
 
 interface PendingMacroChange {
@@ -152,6 +153,29 @@ export default function TrainerDashboard() {
     refetchInterval: 2000,
     refetchIntervalInBackground: true,
   });
+
+  // Calculate total individual chat unread count from all clients
+  const totalIndividualUnreadCount = clients.reduce((total, client) => {
+    const unreadCount = client.unreadCount || 0;
+    console.log(`📱 Client ${client.firstName} ${client.lastName}: ${unreadCount} unread messages`);
+    return total + unreadCount;
+  }, 0);
+
+  console.log(`📱 Total individual chat unread count: ${totalIndividualUnreadCount}`);
+
+  // WebSocket message handler for real-time badge updates
+  const handleWebSocketMessage = useCallback((data: any) => {
+    console.log('📡 TrainerDashboard WebSocket message received:', data);
+    
+    if (data.type === 'new_individual_message' || data.type === 'private_moderation_message') {
+      console.log('🔄 Refreshing clients list for updated unread counts');
+      // Refresh client list to update unread counts in real-time
+      queryClient.invalidateQueries({ queryKey: ['/api/trainer/clients'] });
+    }
+  }, [queryClient]);
+
+  // Initialize WebSocket connection for real-time updates
+  useWebSocket(handleWebSocketMessage);
 
   // Debug logging for pending changes
   useEffect(() => {
@@ -713,7 +737,7 @@ export default function TrainerDashboard() {
             activeTab={activeTab}
             onTabChange={setActiveTab}
             pendingReviewsCount={pendingChanges.length}
-            chatUnreadCount={groupChatUnread.count}
+            chatUnreadCount={totalIndividualUnreadCount}
           />
         )}
       </div>

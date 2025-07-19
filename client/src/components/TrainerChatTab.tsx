@@ -102,6 +102,10 @@ export default function TrainerChatTab() {
     if (data.type === 'new_individual_message' || data.type === 'private_moderation_message') {
       console.log('🔄 Processing individual message WebSocket event for client:', data.targetUserId);
       
+      // Refresh client list to update unread counts in dropdown badges
+      console.log('🔄 Refreshing client list for updated unread counts');
+      queryClient.invalidateQueries({ queryKey: ['/api/trainer/clients'] });
+      
       // Refresh all individual chat messages
       queryClient.invalidateQueries({ 
         predicate: (query) => {
