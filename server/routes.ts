@@ -2881,6 +2881,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get chat messages for a specific client (trainer view)
   app.get('/api/trainer/client-chat/:clientId', isAuthenticated, async (req: any, res) => {
+    // Disable caching for debugging
+    res.set('Cache-Control', 'no-cache');
     try {
       console.log("Client chat request - user object:", req.user);
       const trainerId = req.user?.claims?.sub || req.user?.id;
@@ -2902,7 +2904,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const messages = await storage.getClientChatMessages(clientId, trainerId, parseInt(limit as string));
       
-
+      console.log(`📊 Retrieved ${messages.length} messages for client ${clientId}`);
+      console.log('📨 Message IDs:', messages.map(m => `${m.id}(${m.isAI ? 'AI' : 'user'})`).join(', '));
       
       // Mark client messages as "read" by updating metadata to indicate trainer has viewed them
       const clientMessageIds = messages

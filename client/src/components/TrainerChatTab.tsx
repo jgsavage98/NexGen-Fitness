@@ -70,6 +70,16 @@ export default function TrainerChatTab() {
 
   const groupUnreadCount = Number(groupUnreadData?.count) || 0;
 
+  // Auto-select first client when switching to individual mode and no client is selected
+  useEffect(() => {
+    console.log('🔄 ChatType/Client effect:', { chatType, selectedClient, clientsCount: clients.length });
+    if (chatType === 'individual' && !selectedClient && clients.length > 0) {
+      const firstClient = clients[0];
+      console.log('🎯 Auto-selecting first client:', firstClient.id);
+      setSelectedClient(firstClient.id);
+    }
+  }, [chatType, selectedClient, clients]);
+
   // WebSocket message handler for real-time updates
   const handleWebSocketMessage = useCallback((data: any) => {
     console.log('📡 WebSocket message received:', data);
@@ -98,6 +108,15 @@ export default function TrainerChatTab() {
   useWebSocket(handleWebSocketMessage);
 
   // Fetch messages based on chat type
+  console.log('🔍 Query state check:', { 
+    chatType, 
+    selectedClient, 
+    enabled: chatType === 'group' || (chatType === 'individual' && !!selectedClient),
+    queryKey: chatType === 'group' 
+      ? ['/api/trainer/group-chat'] 
+      : ['/api/trainer/client-chat', selectedClient]
+  });
+  
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: chatType === 'group' 
       ? ['/api/trainer/group-chat'] 
@@ -109,12 +128,24 @@ export default function TrainerChatTab() {
         return response.json();
       } else {
         console.log('🔄 Fetching individual chat messages for client:', selectedClient);
-        const response = await apiRequest("GET", `/api/trainer/client-chat/${selectedClient}`);
-        return response.json();
+        console.log('🔄 Making API request to:', `/api/trainer/client-chat/${selectedClient}`);
+        try {
+          const response = await apiRequest("GET", `/api/trainer/client-chat/${selectedClient}`);
+          console.log('🔄 API response status:', response.status, response.statusText);
+          const data = await response.json();
+          console.log('📨 Individual chat data received:', data);
+          console.log('📊 Message count:', Array.isArray(data) ? data.length : 'Not array');
+          return data;
+        } catch (error) {
+          console.error('❌ API request failed:', error);
+          throw error;
+        }
       }
     },
     enabled: chatType === 'group' || (chatType === 'individual' && !!selectedClient),
     refetchInterval: 3000,
+    gcTime: 0, // Disable caching to force fresh data
+    staleTime: 0, // Treat data as immediately stale
   });
 
   // Get trainer user data
