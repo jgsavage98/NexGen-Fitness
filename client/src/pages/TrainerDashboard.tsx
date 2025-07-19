@@ -650,84 +650,108 @@ export default function TrainerDashboard() {
         );
       case 'client-progress':
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-white">Client Progress</h2>
+          <div className="space-y-4 px-1">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg sm:text-xl font-bold text-white">Client Progress</h2>
+              <span className="text-sm text-gray-400">{clients.length} clients</span>
+            </div>
             
             {clients.length === 0 ? (
               <Card className="bg-surface border-gray-700">
-                <CardContent className="p-8 text-center">
+                <CardContent className="p-6 text-center">
                   <p className="text-gray-400">No clients found</p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {clients.map((client) => (
-                  <Card key={client.id} className="bg-surface border-gray-700">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-4">
-                          <img
-                            src={client.profileImageUrl || "/default-avatar.png"}
-                            alt={`${client.firstName} ${client.lastName}`}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                          <div>
-                            <h3 className="text-lg font-semibold text-white">
-                              {client.firstName} {client.lastName}
-                            </h3>
-                            <p className="text-sm text-gray-400">{client.email}</p>
-                            <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-400">
-                                Current: {client.weight}lbs
+                  <Card key={client.id} className="bg-surface border-gray-700 overflow-hidden">
+                    <CardContent className="p-4">
+                      {/* Client Header - Mobile Optimized */}
+                      <div className="flex items-start space-x-3 mb-3">
+                        <img
+                          src={client.profileImageUrl || "/default-avatar.png"}
+                          alt={`${client.firstName} ${client.lastName}`}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-sm sm:text-base font-semibold text-white truncate">
+                                {client.firstName} {client.lastName}
+                              </h3>
+                              <p className="text-xs text-gray-400 truncate">{client.email}</p>
+                            </div>
+                            <div className="flex space-x-1 flex-shrink-0 ml-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleViewClientProgress(client.id)}
+                                className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 h-8 touch-manipulation"
+                              >
+                                <TrendingUp className="w-3 h-3 mr-1" />
+                                Details
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleChatWithClient(client.id)}
+                                className="text-xs px-2 py-1 h-8 border-gray-600 hover:border-gray-500 touch-manipulation"
+                              >
+                                <MessageSquare className="w-3 h-3 mr-1" />
+                                Chat
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {/* Client Info - Stacked for Mobile */}
+                          <div className="mt-2 space-y-1">
+                            <div className="flex items-center space-x-3 text-xs text-gray-400">
+                              <span className="flex items-center">
+                                <Target className="w-3 h-3 mr-1" />
+                                {client.weight} → {client.goalWeight}lbs
                               </span>
-                              <span className="text-sm text-gray-400">
-                                Goal: {client.goalWeight}lbs
-                              </span>
-                              <span className="text-sm text-gray-400">
+                              <span className="flex items-center">
+                                <Calendar className="w-3 h-3 mr-1" />
                                 Day {calculateJourneyDay(client.programStartDate)}
+                              </span>
+                            </div>
+                            {/* Progress Bar */}
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-1 bg-gray-700 rounded-full h-2">
+                                <div 
+                                  className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                                  style={{
+                                    width: `${Math.min(Math.max((calculateJourneyDay(client.programStartDate) / 365) * 100, 5), 100)}%`
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-400 flex-shrink-0">
+                                {client.onboardingCompleted ? '✓' : '○'}
                               </span>
                             </div>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleViewClientProgress(client.id)}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <TrendingUp className="w-4 h-4 mr-1" />
-                            View Details
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleChatWithClient(client.id)}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            Chat
-                          </Button>
-                        </div>
                       </div>
                       
-                      {/* Quick Progress Summary */}
-                      <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-600">
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-white">
-                            {client.goalWeight - client.weight > 0 ? '+' : ''}{client.weight - client.goalWeight}
+                      {/* Quick Progress Summary - Mobile Grid */}
+                      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-600">
+                        <div className="text-center p-2 bg-gray-800/50 rounded">
+                          <p className="text-lg sm:text-xl font-bold text-white">
+                            {client.goalWeight - client.weight > 0 ? '+' : ''}{Math.abs(client.weight - client.goalWeight)}
                           </p>
-                          <p className="text-xs text-gray-400">lbs to goal</p>
+                          <p className="text-[10px] sm:text-xs text-gray-400">lbs to goal</p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-green-500">
+                        <div className="text-center p-2 bg-gray-800/50 rounded">
+                          <p className="text-lg sm:text-xl font-bold text-green-500">
                             {calculateJourneyDay(client.programStartDate)}
                           </p>
-                          <p className="text-xs text-gray-400">days on program</p>
+                          <p className="text-[10px] sm:text-xs text-gray-400">days active</p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-blue-500">
-                            {client.onboardingCompleted ? '✓' : '○'}
+                        <div className="text-center p-2 bg-gray-800/50 rounded">
+                          <p className="text-lg sm:text-xl font-bold text-blue-500">
+                            {((calculateJourneyDay(client.programStartDate) / 7)).toFixed(0)}
                           </p>
-                          <p className="text-xs text-gray-400">onboarding</p>
+                          <p className="text-[10px] sm:text-xs text-gray-400">weeks</p>
                         </div>
                       </div>
                     </CardContent>
@@ -736,24 +760,29 @@ export default function TrainerDashboard() {
               </div>
             )}
             
-            {/* Detailed view for selected client */}
+            {/* Detailed view for selected client - Mobile Optimized */}
             {selectedClient && (
-              <div className="mt-8">
+              <div className="mt-6">
                 <Card className="bg-surface border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center justify-between">
-                      <span>Detailed Progress View</span>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-white text-base sm:text-lg">
+                        Detailed Progress
+                      </CardTitle>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => setSelectedClient(null)}
+                        className="text-xs px-3 py-1 h-8 touch-manipulation"
                       >
-                        Close Details
+                        Close
                       </Button>
-                    </CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent>
-                    <ClientProgressTimeSeries clientId={selectedClient} />
+                  <CardContent className="pt-0">
+                    <div className="bg-gray-800/50 rounded-lg p-3 mb-4">
+                      <ClientProgressTimeSeries clientId={selectedClient} />
+                    </div>
                   </CardContent>
                 </Card>
               </div>
