@@ -102,6 +102,17 @@ export default function TrainerChatTab() {
     queryKey: chatType === 'group' 
       ? ['/api/trainer/group-chat'] 
       : ['/api/trainer/client-chat', selectedClient],
+    queryFn: async () => {
+      if (chatType === 'group') {
+        console.log('🔄 Fetching group chat messages');
+        const response = await apiRequest("GET", "/api/trainer/group-chat");
+        return response.json();
+      } else {
+        console.log('🔄 Fetching individual chat messages for client:', selectedClient);
+        const response = await apiRequest("GET", `/api/trainer/client-chat/${selectedClient}`);
+        return response.json();
+      }
+    },
     enabled: chatType === 'group' || (chatType === 'individual' && !!selectedClient),
     refetchInterval: 3000,
   });
