@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut, Bell, BarChart3, Heart, Zap, Target, Users, Brain } from "lucide-react";
+import { User, Calendar, MessageSquare, TrendingUp, Dumbbell, Settings, LogOut, Bell, BarChart3, Heart, Zap, Target, Users, Brain, ChevronDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ProfileSettings from "@/pages/ProfileSettings";
 import ClientUploadHistory from "@/components/ClientUploadHistory";
 import ClientProgressTimeSeries from "@/components/ClientProgressTimeSeries";
@@ -64,6 +65,7 @@ interface ChatMessage {
 export default function TrainerDashboard() {
   const [activeTab, setActiveTab] = useState<TrainerTabType>('overview');
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [selectedProgressClient, setSelectedProgressClient] = useState<string>('');
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [trainerNotes, setTrainerNotes] = useState("");
   const [previousPendingCount, setPreviousPendingCount] = useState(0);
@@ -308,15 +310,7 @@ export default function TrainerDashboard() {
     setShowProfileSettings(false);
   };
 
-  const handleChatWithClient = (clientId: string) => {
-    setSelectedClient(clientId);
-    setActiveTab('chat');
-  };
 
-  const handleViewClientProgress = (clientId: string) => {
-    setSelectedClient(clientId);
-    setActiveTab('client-progress');
-  };
 
   // Show profile settings modal
   if (showProfileSettings) {
@@ -651,141 +645,131 @@ export default function TrainerDashboard() {
       case 'client-progress':
         return (
           <div className="space-y-4 px-1">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg sm:text-xl font-bold text-white">Client Progress</h2>
-              <span className="text-sm text-gray-400">{clients.length} clients</span>
-            </div>
-            
-            {clients.length === 0 ? (
-              <Card className="bg-surface border-gray-700">
-                <CardContent className="p-6 text-center">
-                  <p className="text-gray-400">No clients found</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {clients.map((client) => (
-                  <Card key={client.id} className="bg-surface border-gray-700 overflow-hidden">
-                    <CardContent className="p-4">
-                      {/* Client Header - Mobile Optimized */}
-                      <div className="flex items-start space-x-3 mb-3">
-                        <img
-                          src={client.profileImageUrl || "/default-avatar.png"}
-                          alt={`${client.firstName} ${client.lastName}`}
-                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="text-sm sm:text-base font-semibold text-white truncate">
-                                {client.firstName} {client.lastName}
-                              </h3>
-                              <p className="text-xs text-gray-400 truncate">{client.email}</p>
+            {/* Mobile-optimized Client Selection */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg sm:text-xl font-bold text-white">Client Progress</h2>
+                <span className="text-sm text-gray-400">{clients.length} clients</span>
+              </div>
+              
+              {/* Client Dropdown - Mobile First */}
+              <div className="relative">
+                <Select value={selectedProgressClient} onValueChange={setSelectedProgressClient}>
+                  <SelectTrigger className="w-full bg-surface border-gray-600 text-white hover:border-gray-500 transition-colors min-h-[48px] touch-manipulation sticky top-16 sm:top-20 z-40">
+                    <div className="flex items-center space-x-2 sm:space-x-3 w-full">
+                      {selectedProgressClient ? (
+                        <>
+                          {(() => {
+                            const client = clients.find(c => c.id === selectedProgressClient);
+                            return client ? (
+                              <>
+                                {client.profileImageUrl ? (
+                                  <img 
+                                    src={`/${client.profileImageUrl}`}
+                                    alt={`${client.firstName} ${client.lastName}`}
+                                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-white text-xs sm:text-sm font-semibold">
+                                      {client.firstName.charAt(0)}
+                                    </span>
+                                  </div>
+                                )}
+                                <span className="text-white text-sm sm:text-base truncate">
+                                  {client.firstName} {client.lastName}
+                                </span>
+                              </>
+                            ) : null;
+                          })()}
+                        </>
+                      ) : (
+                        <>
+                          <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 flex-shrink-0" />
+                          <span className="text-gray-400 text-sm sm:text-base">Select a client to view progress</span>
+                        </>
+                      )}
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface border-gray-600 max-h-60 z-[9999] sticky top-16 sm:top-20">
+                    {clients.map((client) => {
+                      const fullName = `${client.firstName} ${client.lastName}`;
+                      return (
+                        <SelectItem 
+                          key={client.id} 
+                          value={client.id} 
+                          className="text-white hover:bg-gray-700 focus:bg-gray-700 py-3 touch-manipulation"
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                              {client.profileImageUrl ? (
+                                <img 
+                                  src={`/${client.profileImageUrl}`}
+                                  alt={fullName}
+                                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white text-xs sm:text-sm font-semibold">
+                                    {client.firstName.charAt(0)}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <span className="text-white text-sm sm:text-base truncate block">{fullName}</span>
+                                <span className="text-gray-400 text-xs truncate block">{client.email}</span>
+                              </div>
                             </div>
-                            <div className="flex space-x-1 flex-shrink-0 ml-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleViewClientProgress(client.id)}
-                                className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 h-8 touch-manipulation"
-                              >
-                                <TrendingUp className="w-3 h-3 mr-1" />
-                                Details
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleChatWithClient(client.id)}
-                                className="text-xs px-2 py-1 h-8 border-gray-600 hover:border-gray-500 touch-manipulation"
-                              >
-                                <MessageSquare className="w-3 h-3 mr-1" />
-                                Chat
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          {/* Client Info - Stacked for Mobile */}
-                          <div className="mt-2 space-y-1">
-                            <div className="flex items-center space-x-3 text-xs text-gray-400">
+                            <div className="flex items-center space-x-2 text-xs text-gray-400 flex-shrink-0">
                               <span className="flex items-center">
                                 <Target className="w-3 h-3 mr-1" />
                                 {client.weight} → {client.goalWeight}lbs
                               </span>
-                              <span className="flex items-center">
-                                <Calendar className="w-3 h-3 mr-1" />
-                                Day {calculateJourneyDay(client.programStartDate)}
-                              </span>
-                            </div>
-                            {/* Progress Bar */}
-                            <div className="flex items-center space-x-2">
-                              <div className="flex-1 bg-gray-700 rounded-full h-2">
-                                <div 
-                                  className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
-                                  style={{
-                                    width: `${Math.min(Math.max((calculateJourneyDay(client.programStartDate) / 365) * 100, 5), 100)}%`
-                                  }}
-                                />
-                              </div>
-                              <span className="text-xs text-gray-400 flex-shrink-0">
-                                {client.onboardingCompleted ? '✓' : '○'}
-                              </span>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                      
-                      {/* Quick Progress Summary - Mobile Grid */}
-                      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-600">
-                        <div className="text-center p-2 bg-gray-800/50 rounded">
-                          <p className="text-lg sm:text-xl font-bold text-white">
-                            {client.goalWeight - client.weight > 0 ? '+' : ''}{Math.abs(client.weight - client.goalWeight)}
-                          </p>
-                          <p className="text-[10px] sm:text-xs text-gray-400">lbs to goal</p>
-                        </div>
-                        <div className="text-center p-2 bg-gray-800/50 rounded">
-                          <p className="text-lg sm:text-xl font-bold text-green-500">
-                            {calculateJourneyDay(client.programStartDate)}
-                          </p>
-                          <p className="text-[10px] sm:text-xs text-gray-400">days active</p>
-                        </div>
-                        <div className="text-center p-2 bg-gray-800/50 rounded">
-                          <p className="text-lg sm:text-xl font-bold text-blue-500">
-                            {((calculateJourneyDay(client.programStartDate) / 7)).toFixed(0)}
-                          </p>
-                          <p className="text-[10px] sm:text-xs text-gray-400">weeks</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+
+            {/* Show message when no client selected */}
+            {!selectedProgressClient && (
+              <Card className="bg-surface border-gray-700">
+                <CardContent className="p-6 sm:p-8 text-center">
+                  <TrendingUp className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-500" />
+                  <p className="text-gray-400 text-sm sm:text-base">Select a client to view their detailed progress charts and analytics</p>
+                </CardContent>
+              </Card>
             )}
             
-            {/* Detailed view for selected client - Mobile Optimized */}
-            {selectedClient && (
-              <div className="mt-6">
-                <Card className="bg-surface border-gray-700">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-white text-base sm:text-lg">
-                        Detailed Progress
-                      </CardTitle>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setSelectedClient(null)}
-                        className="text-xs px-3 py-1 h-8 touch-manipulation"
-                      >
-                        Close
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="bg-gray-800/50 rounded-lg p-3 mb-4">
-                      <ClientProgressTimeSeries clientId={selectedClient} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+            {/* Detailed Progress for Selected Client - Mobile Optimized */}
+            {selectedProgressClient && (
+              <Card className="bg-surface border-gray-700">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-white text-base sm:text-lg">
+                      Progress Analytics
+                    </CardTitle>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedProgressClient('')}
+                      className="text-xs px-3 py-1 h-8 touch-manipulation border-gray-600 hover:border-gray-500"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="bg-gray-800/50 rounded-lg p-3 mb-4">
+                    <ClientProgressTimeSeries clientId={selectedProgressClient} />
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         );
