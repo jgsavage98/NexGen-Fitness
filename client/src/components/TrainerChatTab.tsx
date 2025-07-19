@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { MessageCircle, Search, Send } from "lucide-react";
+import { MessageCircle, Send } from "lucide-react";
 
 interface ChatMessage {
   id: number;
@@ -43,7 +43,7 @@ export default function TrainerChatTab() {
   const [chatType, setChatType] = useState<'group' | 'individual'>('individual');
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [newMessage, setNewMessage] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
@@ -78,12 +78,8 @@ export default function TrainerChatTab() {
 
 
 
-  // Filter clients based on search term
-  const filteredClients = clients.filter(client => 
-    client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Use all clients without filtering
+  const filteredClients = clients;
 
   // const groupUnreadCount = Number(groupUnreadData?.count) || 0;
 
@@ -309,65 +305,53 @@ export default function TrainerChatTab() {
 
       {/* Client Selection */}
       <div className="px-6 py-4 bg-surface border-b border-gray-700">
-        <div className="space-y-3">
-          <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search clients..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-dark border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-primary-500"
-              />
-          </div>
-          <Select value={selectedClient} onValueChange={setSelectedClient}>
-              <SelectTrigger className="w-full bg-dark border-gray-600 text-white relative z-40">
-                <SelectValue placeholder="Select a client to chat with...">
-                  {selectedClient && (() => {
-                    const client = clients.find(c => c.id === selectedClient);
-                    return client ? `${client.firstName} ${client.lastName}` : selectedClient;
-                  })()}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-dark border-gray-600" style={{zIndex: 9999}}>
-                {filteredClients.map((client) => {
-                  const fullName = `${client.firstName} ${client.lastName}`;
-                  console.log(`🔍 Dropdown rendering client: "${fullName}" unreadCount: ${client.unreadCount}`);
-                  return (
-                  <SelectItem 
-                    key={client.id} 
-                    value={client.id} 
-                    className="text-white hover:bg-gray-700 focus:bg-gray-700"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center space-x-3">
-                        {client.profileImageUrl ? (
-                          <img 
-                            src={`/${client.profileImageUrl}`}
-                            alt={fullName}
-                            className="w-6 h-6 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-gray-500 flex items-center justify-center">
-                            <span className="text-white text-xs font-semibold">
-                              {client.firstName.charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-white">{fullName}</span>
-                      </div>
-                      {client.unreadCount && client.unreadCount > 0 && (
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0">
-                          {client.unreadCount}
-                        </span>
+        <Select value={selectedClient} onValueChange={setSelectedClient}>
+            <SelectTrigger className="w-full bg-dark border-gray-600 text-white relative z-40">
+              <SelectValue placeholder="Select a client to chat with...">
+                {selectedClient && (() => {
+                  const client = clients.find(c => c.id === selectedClient);
+                  return client ? `${client.firstName} ${client.lastName}` : selectedClient;
+                })()}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="bg-dark border-gray-600" style={{zIndex: 9999}}>
+              {filteredClients.map((client) => {
+                const fullName = `${client.firstName} ${client.lastName}`;
+                console.log(`🔍 Dropdown rendering client: "${fullName}" unreadCount: ${client.unreadCount}`);
+                return (
+                <SelectItem 
+                  key={client.id} 
+                  value={client.id} 
+                  className="text-white hover:bg-gray-700 focus:bg-gray-700"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center space-x-3">
+                      {client.profileImageUrl ? (
+                        <img 
+                          src={`/${client.profileImageUrl}`}
+                          alt={fullName}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gray-500 flex items-center justify-center">
+                          <span className="text-white text-xs font-semibold">
+                            {client.firstName.charAt(0)}
+                          </span>
+                        </div>
                       )}
+                      <span className="text-white">{fullName}</span>
                     </div>
-                  </SelectItem>
-                  );
-                })}
-              </SelectContent>
-          </Select>
-        </div>
+                    {client.unreadCount && client.unreadCount > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0">
+                        {client.unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </SelectItem>
+                );
+              })}
+            </SelectContent>
+        </Select>
       </div>
 
       {/* Chat Header */}
