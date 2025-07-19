@@ -36,7 +36,7 @@ interface Client {
   lastName: string;
   email: string;
   profileImageUrl?: string;
-  unansweredCount?: number;
+  unreadCount?: number;
 }
 
 export default function TrainerChatTab() {
@@ -54,6 +54,17 @@ export default function TrainerChatTab() {
     queryKey: ['/api/trainer/clients'],
     refetchInterval: 3000,
   });
+
+  // Debug client data
+  useEffect(() => {
+    if (clients.length > 0) {
+      console.log('🔍 TrainerChatTab received clients:', clients.map(c => ({
+        name: `${c.firstName} ${c.lastName}`,
+        unreadCount: c.unreadCount,
+        hasUnreadCount: 'unreadCount' in c
+      })));
+    }
+  }, [clients]);
 
   // Client data loaded successfully
 
@@ -293,27 +304,34 @@ export default function TrainerChatTab() {
               </SelectTrigger>
               <SelectContent className="bg-dark border-gray-600" style={{zIndex: 9999}}>
                 {filteredClients.map((client) => {
-                  console.log(`🔍 Dropdown rendering client: "${client.firstName}" "${client.lastName}" unansweredCount: ${client.unansweredCount}`);
+                  const fullName = `${client.firstName} ${client.lastName}`;
+                  console.log(`🔍 Dropdown rendering client: "${fullName}" unreadCount: ${client.unreadCount}`);
                   return (
-                  <SelectItem key={client.id} value={client.id} className="text-white hover:bg-gray-700">
-                    <div className="flex items-center space-x-3">
-                      {client.profileImageUrl ? (
-                        <img 
-                          src={`/${client.profileImageUrl}`}
-                          alt={`${client.firstName} ${client.lastName}`}
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-500 flex items-center justify-center">
-                          <span className="text-white text-xs font-semibold">
-                            {client.firstName.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                      <span>{client.firstName} {client.lastName}</span>
-                      {client.unansweredCount && client.unansweredCount > 0 && (
-                        <span className="bg-primary-500 text-white text-xs px-2 py-1 rounded-full">
-                          {client.unansweredCount}
+                  <SelectItem 
+                    key={client.id} 
+                    value={client.id} 
+                    className="text-white hover:bg-gray-700 focus:bg-gray-700"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center space-x-3">
+                        {client.profileImageUrl ? (
+                          <img 
+                            src={`/${client.profileImageUrl}`}
+                            alt={fullName}
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gray-500 flex items-center justify-center">
+                            <span className="text-white text-xs font-semibold">
+                              {client.firstName.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-white">{fullName}</span>
+                      </div>
+                      {client.unreadCount && client.unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0">
+                          {client.unreadCount}
                         </span>
                       )}
                     </div>

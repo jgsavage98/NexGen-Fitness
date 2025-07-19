@@ -2397,14 +2397,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
       ).orderBy(users.firstName);
 
-      // Add unanswered count property for each client
+      // Add unread count property for each client (messages trainer sent that client hasn't read)
       const clientsWithCount = await Promise.all(clients.map(async (client) => {
-        // Count unanswered messages (client messages without trainer responses after them)
-        const unansweredCount = await storage.getUnansweredMessageCount(client.id, trainerId);
+        // Count unread messages from trainer to this client
+        const unreadCount = await storage.getIndividualChatUnreadCount(client.id);
+        console.log(`🔔 Client ${client.firstName} ${client.lastName} (${client.id}): unreadCount = ${unreadCount}`);
 
         return {
           ...client,
-          unansweredCount
+          unreadCount
         };
       }));
       
