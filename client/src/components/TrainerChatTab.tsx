@@ -173,18 +173,18 @@ export default function TrainerChatTab() {
         return response.json();
       }
     },
-    onSuccess: () => {
-      console.log('🎉 Message sent successfully, invalidating cache...');
-      // Small delay to ensure server processing is complete
-      setTimeout(() => {
-        if (chatType === 'group') {
-          console.log('🔄 Invalidating group chat cache');
-          queryClient.invalidateQueries({ queryKey: ['/api/trainer/group-chat'] });
-        } else {
-          console.log('🔄 Invalidating individual chat cache for client:', selectedClient);
-          queryClient.invalidateQueries({ queryKey: ['/api/trainer/client-chat', selectedClient] });
-        }
-      }, 500); // 500ms delay to allow server processing
+    onSuccess: (data) => {
+      console.log('🎉 Message sent successfully:', data);
+      console.log('🔄 Invalidating cache for immediate UI update...');
+      
+      // Immediate cache invalidation
+      if (chatType === 'group') {
+        console.log('🔄 Invalidating group chat cache');
+        queryClient.invalidateQueries({ queryKey: ['/api/trainer/group-chat'] });
+      } else {
+        console.log('🔄 Invalidating individual chat cache for client:', selectedClient);
+        queryClient.invalidateQueries({ queryKey: ['/api/trainer/client-chat', selectedClient] });
+      }
       
       setNewMessage("");
       toast({
@@ -413,7 +413,7 @@ export default function TrainerChatTab() {
           </div>
         )}
 
-        {messages.map((message: ChatMessage) => {
+        {messages.slice().reverse().map((message: ChatMessage) => {
           const isTrainer = message.userId === 'coach_chassidy' || message.metadata?.fromCoach;
           const isFromClient = !isTrainer;
           
@@ -433,7 +433,7 @@ export default function TrainerChatTab() {
                     </div>
                     <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
                       <img 
-                        src={(trainerUser as any)?.profileImageUrl ? `/${(trainerUser as any).profileImageUrl}` : "/attached_assets/CE Bio Image_1749399911915.jpeg"}
+                        src={trainerUser?.profileImageUrl ? `/${trainerUser.profileImageUrl}` : "/attached_assets/CE Bio Image_1749399911915.jpeg"}
                         alt="Coach Chassidy"
                         className="w-8 h-8 rounded-full object-cover"
                       />
