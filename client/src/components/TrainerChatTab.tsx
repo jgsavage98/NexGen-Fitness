@@ -53,6 +53,13 @@ export default function TrainerChatTab() {
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ['/api/trainer/clients'],
     refetchInterval: 3000,
+    select: (data) => {
+      console.log('🔍 Raw client data received:', data);
+      data.forEach(client => {
+        console.log(`📋 Client: ${client.firstName} ${client.lastName} | ID: ${client.id} | unansweredCount: ${client.unansweredCount}`);
+      });
+      return data;
+    }
   });
 
   // Client data loaded successfully
