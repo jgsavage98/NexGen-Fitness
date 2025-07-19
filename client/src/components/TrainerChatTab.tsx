@@ -295,14 +295,6 @@ export default function TrainerChatTab() {
 
   return (
     <div className="chat-container">
-      {/* Individual Chat Header */}
-      <div className="px-6 py-3 bg-surface border-b border-gray-700 sticky top-0 z-10">
-        <div className="flex items-center space-x-2">
-          <MessageCircle className="w-5 h-5 text-primary-500" />
-          <h2 className="text-lg font-semibold text-white">Individual Client Chat</h2>
-        </div>
-      </div>
-
       {/* Client Selection */}
       <div className="px-6 py-4 bg-surface border-b border-gray-700">
         <Select value={selectedClient} onValueChange={setSelectedClient}>
@@ -354,50 +346,7 @@ export default function TrainerChatTab() {
         </Select>
       </div>
 
-      {/* Chat Header */}
-      <div className="px-6 py-4 bg-surface border-b border-gray-700">
-        <div className="flex items-center space-x-3">
-          {selectedClient ? (
-            (() => {
-              const client = clients.find(c => c.id === selectedClient);
-              return client ? (
-                <>
-                  {client.profileImageUrl ? (
-                    <img 
-                      src={`/${client.profileImageUrl}`}
-                      alt={`${client.firstName} ${client.lastName}`}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center border-2 border-primary/30">
-                      <span className="text-white font-semibold">
-                        {client.firstName.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-                  <div>
-                    <div className="font-semibold text-white">{client.firstName} {client.lastName}</div>
-                    <div className="text-sm text-primary-400 flex items-center">
-                      <div className="w-2 h-2 bg-primary-400 rounded-full mr-2"></div>
-                      Individual Chat • {client.email}
-                    </div>
-                  </div>
-                </>
-              ) : null;
-            })()
-          ) : (
-            <>
-              <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <div className="font-semibold text-white">Individual Chat</div>
-                <div className="text-sm text-gray-400">Select a client to start chatting</div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+
 
       {/* Chat Messages */}
       <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto space-y-4 scrollbar-thin overflow-x-hidden pb-4 min-h-0">
