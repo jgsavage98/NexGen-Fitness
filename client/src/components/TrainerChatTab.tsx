@@ -55,6 +55,8 @@ export default function TrainerChatTab() {
     refetchInterval: 3000,
   });
 
+  // Client data loaded successfully
+
   // Get group chat unread count
   const { data: groupUnreadData } = useQuery<{ count: number }>({
     queryKey: ['/api/trainer/group-chat-unread'],
@@ -296,7 +298,29 @@ export default function TrainerChatTab() {
             </div>
             <Select value={selectedClient} onValueChange={setSelectedClient}>
               <SelectTrigger className="w-full bg-dark border-gray-600 text-white">
-                <SelectValue placeholder="Select a client to chat with..." />
+                <SelectValue placeholder="Select a client to chat with...">
+                  {selectedClient && (() => {
+                    const client = clients.find(c => c.id === selectedClient);
+                    return client ? (
+                      <div className="flex items-center space-x-3">
+                        {client.profileImageUrl ? (
+                          <img 
+                            src={`/${client.profileImageUrl}`}
+                            alt={`${client.firstName} ${client.lastName}`}
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gray-500 flex items-center justify-center">
+                            <span className="text-white text-xs font-semibold">
+                              {client.firstName.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                        <span>{client.firstName} {client.lastName}</span>
+                      </div>
+                    ) : selectedClient;
+                  })()}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-dark border-gray-600">
                 {filteredClients.map((client) => (
