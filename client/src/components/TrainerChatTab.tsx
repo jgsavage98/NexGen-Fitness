@@ -292,7 +292,9 @@ export default function TrainerChatTab() {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-dark border-gray-600" style={{zIndex: 9999}}>
-                {filteredClients.map((client) => (
+                {filteredClients.map((client) => {
+                  console.log(`🔍 Dropdown rendering client: "${client.firstName}" "${client.lastName}" unansweredCount: ${client.unansweredCount}`);
+                  return (
                   <SelectItem key={client.id} value={client.id} className="text-white hover:bg-gray-700">
                     <div className="flex items-center space-x-3">
                       {client.profileImageUrl ? (
@@ -316,7 +318,8 @@ export default function TrainerChatTab() {
                       )}
                     </div>
                   </SelectItem>
-                ))}
+                  );
+                })}
               </SelectContent>
           </Select>
         </div>
