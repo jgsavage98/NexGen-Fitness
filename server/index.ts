@@ -27,7 +27,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static('public'));
 app.use('/exercises', express.static('public/exercises'));
 app.use('/attached_assets', express.static('attached_assets'));
-app.use('/screenshots', express.static('screenshots'));
+app.use('/screenshots', express.static('public/screenshots'));
 
 app.use((req, res, next) => {
   const start = Date.now();
