@@ -61,6 +61,8 @@ export default function TrainerChatTab() {
     refetchInterval: 3000,
   });
 
+
+
   // Filter clients based on search term
   const filteredClients = clients.filter(client => 
     client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -433,7 +435,7 @@ export default function TrainerChatTab() {
                     </div>
                     <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
                       <img 
-                        src={trainerUser?.profileImageUrl ? `/${trainerUser.profileImageUrl}` : "/attached_assets/CE Bio Image_1749399911915.jpeg"}
+                        src="/attached_assets/CE Bio Image_1749399911915.jpeg"
                         alt="Coach Chassidy"
                         className="w-8 h-8 rounded-full object-cover"
                       />
