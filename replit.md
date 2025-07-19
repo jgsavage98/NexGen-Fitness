@@ -22,6 +22,7 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 - **Simplified Progress Analytics**: Streamlined view showing only selected client's detailed progress charts, removing redundant client overview cards
 - **Code Cleanup**: Removed obsolete handleViewClientProgress and handleChatWithClient functions, eliminating unused navigation code
 - **Responsive Design**: Optimized spacing, typography, and layout for mobile devices while maintaining desktop compatibility
+- **Default Time Range Enhancement**: Set progress chart default time range to 90 days for broader client progress perspective
 
 ### Mobile Chat Interface Optimization - COMPLETE (4:42 PM)
 - **Fixed Dropdown Positioning**: Resolved header obstruction issue by positioning dropdown with sticky top-16/top-20 and proper z-index layering

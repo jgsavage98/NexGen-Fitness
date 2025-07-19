@@ -64,7 +64,7 @@ interface ClientProgressTimeSeriesProps {
 }
 
 export default function ClientProgressTimeSeries({ clientId }: ClientProgressTimeSeriesProps) {
-  const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d' | '90d'>('30d');
+  const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d' | '90d'>('90d');
   const [viewType, setViewType] = useState<'macros' | 'wellness' | 'adherence' | 'weight'>('macros');
   const [showProgressReport, setShowProgressReport] = useState(false);
 
