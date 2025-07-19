@@ -13,6 +13,13 @@ An AI-powered fitness and nutrition coaching web application that provides intel
 
 ## Recent Changes (July 19, 2025)
 
+### Nutrition Screenshot Display Fix - COMPLETE (11:37 PM)
+- **Static File Serving Configuration Fixed**: Corrected Express server static file serving to properly serve screenshots from `public/screenshots` directory
+- **Database Path Alignment**: Fixed database screenshot URL references to point to existing files instead of missing/orphaned entries
+- **Image Loading Resolution**: Users can now properly view their uploaded nutrition screenshots in the client dashboard
+- **Server Configuration Updated**: Modified `/screenshots/` route in `server/index.ts` to serve from correct `public/screenshots` directory
+- **Production Ready**: Screenshot display system fully operational with proper file serving and database integrity
+
 ### Progress Page Mobile Optimization - COMPLETE (5:11 PM)
 - **Replaced Client Summaries with Dropdown**: Eliminated comprehensive client cards display, replacing with streamlined dropdown selector similar to Chat page
 - **Mobile-First Client Selection**: Implemented touch-optimized dropdown with profile images, client names, and weight goal information
