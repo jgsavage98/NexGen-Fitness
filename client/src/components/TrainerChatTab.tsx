@@ -287,24 +287,7 @@ export default function TrainerChatTab() {
                 <SelectValue placeholder="Select a client to chat with...">
                   {selectedClient && (() => {
                     const client = clients.find(c => c.id === selectedClient);
-                    return client ? (
-                      <div className="flex items-center space-x-3">
-                        {client.profileImageUrl ? (
-                          <img 
-                            src={`/${client.profileImageUrl}`}
-                            alt={`${client.firstName} ${client.lastName}`}
-                            className="w-6 h-6 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-gray-500 flex items-center justify-center">
-                            <span className="text-white text-xs font-semibold">
-                              {client.firstName.charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                        <span>{client.firstName} {client.lastName}</span>
-                      </div>
-                    ) : selectedClient;
+                    return client ? `${client.firstName} ${client.lastName}` : selectedClient;
                   })()}
                 </SelectValue>
               </SelectTrigger>
