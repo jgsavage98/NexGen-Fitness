@@ -3502,44 +3502,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Free Exercise Database API - Using yuhonas/free-exercise-db (no network restrictions)
-  // Public endpoint - no authentication required for free exercise data
-  app.get('/api/exercises/free', async (req, res) => {
+  // Local Exercise GIFs - Serve locally stored exercise animations
+  app.get('/api/exercise-gif/:gifId', async (req, res) => {
     try {
-      console.log('🏋️ Fetching exercises from Free Exercise Database...');
+      const { gifId } = req.params;
+      const localGifPath = path.join(process.cwd(), 'public', 'exercises', 'gifs', `${gifId}.gif`);
       
-      const response = await fetch('https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json');
+      console.log(`🎯 Looking for local GIF: ${gifId} at ${localGifPath}`);
       
-      if (!response.ok) {
-        throw new Error(`GitHub API returned ${response.status}`);
+      // Check if local GIF exists
+      if (fs.existsSync(localGifPath)) {
+        console.log(`✅ Serving local GIF: ${gifId}`);
+        
+        res.set({
+          'Content-Type': 'image/gif',
+          'Cache-Control': 'public, max-age=86400',
+          'Access-Control-Allow-Origin': '*',
+        });
+        
+        return res.sendFile(localGifPath);
       }
       
-      const exercises = await response.json();
-      console.log(`✅ Successfully fetched ${exercises.length} exercises from Free Exercise DB`);
+      // Fallback: Generate SVG placeholder for missing GIFs
+      console.log(`🔄 Serving placeholder for missing GIF: ${gifId}`);
       
-      // Transform the data to match our existing interface
-      const transformedExercises = exercises.map((exercise: any, index: number) => ({
-        id: index + 1,
-        name: exercise.name,
-        description: exercise.instructions ? exercise.instructions.join(' ') : '',
-        exerciseType: exercise.mechanic || 'compound',
-        equipmentType: exercise.equipment || 'bodyweight',
-        bodyPart: exercise.primaryMuscles ? exercise.primaryMuscles[0] : 'full body',
-        difficulty: exercise.level || 'intermediate',
-        animatedGifUrl: exercise.images && exercise.images.length > 0 ? exercise.images[0] : null,
-        instructions: exercise.instructions || [],
-        primaryMuscles: exercise.primaryMuscles || [],
-        secondaryMuscles: exercise.secondaryMuscles || [],
-        force: exercise.force,
-        category: exercise.category
-      }));
+      const placeholderSvg = `
+        <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="#374151"/>
+          <g fill="#9CA3AF" text-anchor="middle" font-family="Arial, sans-serif">
+            <text x="50%" y="35%" font-size="16" font-weight="bold">Exercise Animation</text>
+            <text x="50%" y="50%" font-size="14">${gifId}</text>
+            <text x="50%" y="65%" font-size="12">GIF not downloaded</text>
+            <text x="50%" y="80%" font-size="10">Run: node scripts/download-exercise-gifs.js</text>
+          </g>
+          <circle cx="200" cy="120" r="25" fill="none" stroke="#9CA3AF" stroke-width="2">
+            <animate attributeName="r" values="20;30;20" dur="2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      `;
       
-      res.json(transformedExercises);
+      res.set({
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*',
+      });
+      
+      res.send(placeholderSvg);
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('💥 Error fetching Free Exercise DB:', errorMessage);
-      res.status(500).json({ error: 'Failed to fetch exercise data' });
+      console.error('💥 Local GIF error:', { gifId: req.params.gifId, error: errorMessage });
+      res.status(500).json({ error: 'Failed to serve exercise GIF' });
     }
   });
 

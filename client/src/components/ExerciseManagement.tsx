@@ -10,25 +10,20 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dumbbell, Filter, Plus, Search } from "lucide-react";
 
-// Handle different image URL formats - Free Exercise DB uses GitHub URLs
-function getImageUrl(originalUrl: string): string {
+// Convert exercisedb URLs to use local GIF storage
+function getLocalGifUrl(originalUrl: string): string {
   if (!originalUrl) return '';
   
-  // Free Exercise Database images are hosted on GitHub and should work directly
-  if (originalUrl.includes('github.com') || originalUrl.includes('githubusercontent.com')) {
-    console.log('✅ Using GitHub-hosted image:', originalUrl);
-    return originalUrl;
-  }
-  
-  // For exercisedb URLs, extract GIF ID for proxy
+  // Extract the GIF ID from exercisedb URLs
   const match = originalUrl.match(/https:\/\/v1\.cdn\.exercisedb\.dev\/media\/([^.]+)\.gif/);
   if (match && match[1]) {
-    const proxyUrl = `/api/exercise-gif/${match[1]}`;
-    console.log('🔄 Using proxy URL:', { originalUrl, proxyUrl, gifId: match[1] });
-    return proxyUrl;
+    const localUrl = `/api/exercise-gif/${match[1]}`;
+    console.log('🏠 Using local GIF URL:', { originalUrl, localUrl, gifId: match[1] });
+    return localUrl;
   }
   
-  console.log('⚠️ URL pattern not matched, using original:', originalUrl);
+  // For non-exercisedb URLs, return as-is
+  console.log('⚠️ Non-exercisedb URL, using original:', originalUrl);
   return originalUrl;
 }
 
@@ -68,23 +63,11 @@ export default function ExerciseManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Try the free exercise database first, fallback to our local one
-  const { data: freeExercises = [], isLoading: isFreeLoading, error: freeError } = useQuery<Exercise[]>({
-    queryKey: ["/api/exercises/free"],
-    staleTime: 30 * 60 * 1000, // 30 minutes cache for external data
-    gcTime: 60 * 60 * 1000,   // 1 hour
-  });
-
-  const { data: localExercises = [], isLoading: isLocalLoading, error: localError } = useQuery<Exercise[]>({
+  // Fetch exercises from local database
+  const { data: exercises = [], isLoading, error } = useQuery<Exercise[]>({
     queryKey: ["/api/exercises"],
-    enabled: freeExercises.length === 0, // Only fetch if free DB fails
     refetchOnMount: true,
   });
-
-  // Use free exercises if available, otherwise fallback to local
-  const exercises = freeExercises.length > 0 ? freeExercises : localExercises;
-  const isLoading = isFreeLoading || (freeExercises.length === 0 && isLocalLoading);
-  const error = freeError && localError;
 
   // Add new exercise mutation
   const addExerciseMutation = useMutation({
@@ -402,7 +385,7 @@ export default function ExerciseManagement() {
                   <div className="relative w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                     {exercise.animatedGifUrl ? (
                       <img
-                        src={getImageUrl(exercise.animatedGifUrl)}
+                        src={getLocalGifUrl(exercise.animatedGifUrl)}
                         alt={exercise.name}
                         className="w-full h-full object-cover rounded-lg"
                         onLoad={() => {
