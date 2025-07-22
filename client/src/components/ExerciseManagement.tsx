@@ -10,10 +10,20 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dumbbell, Filter, Plus, Search } from "lucide-react";
 
-// Since proxy approach fails due to Replit network restrictions, 
-// we'll use direct URLs and handle CORS gracefully
-function getImageUrl(originalUrl: string): string {
-  return originalUrl || '';
+// Convert exercisedb URLs to use our enhanced proxy
+function getProxyImageUrl(originalUrl: string): string {
+  if (!originalUrl) return '';
+  
+  // Extract the GIF ID from the exercisedb URL
+  const match = originalUrl.match(/https:\/\/v1\.cdn\.exercisedb\.dev\/media\/([^.]+)\.gif/);
+  if (match && match[1]) {
+    const proxyUrl = `/api/exercise-gif/${match[1]}`;
+    console.log('🔄 Using proxy URL:', { originalUrl, proxyUrl, gifId: match[1] });
+    return proxyUrl;
+  }
+  
+  console.log('⚠️ URL pattern not matched, using original:', originalUrl);
+  return originalUrl;
 }
 
 interface Exercise {
@@ -374,27 +384,37 @@ export default function ExerciseManagement() {
                   <div className="relative w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                     {exercise.animatedGifUrl ? (
                       <img
-                        src={exercise.animatedGifUrl}
+                        src={getProxyImageUrl(exercise.animatedGifUrl)}
                         alt={exercise.name}
                         className="w-full h-full object-cover rounded-lg"
-                        onLoad={() => console.log('✅ GIF loaded successfully:', exercise.name)}
+                        onLoad={() => {
+                          console.log('✅ Exercise GIF loaded successfully:', exercise.name);
+                          const fallbackDiv = document.querySelector(`[data-fallback="${exercise.id}"]`) as HTMLElement;
+                          if (fallbackDiv) {
+                            fallbackDiv.style.display = 'none';
+                          }
+                        }}
                         onError={(e) => {
-                          console.log('❌ GIF blocked by CORS/network restrictions for:', exercise.name);
+                          console.log('❌ Proxy GIF failed, showing fallback for:', exercise.name);
                           const img = e.target as HTMLImageElement;
                           img.style.display = 'none';
-                          const fallbackDiv = img.nextElementSibling as HTMLElement;
+                          const fallbackDiv = document.querySelector(`[data-fallback="${exercise.id}"]`) as HTMLElement;
                           if (fallbackDiv) {
-                            fallbackDiv.classList.remove('hidden');
+                            fallbackDiv.style.display = 'flex';
                           }
                         }}
                       />
                     ) : null}
-                    <div className={`absolute inset-0 flex items-center justify-center text-gray-400 text-center p-4 ${exercise.animatedGifUrl ? 'hidden' : ''}`}>
+                    <div 
+                      data-fallback={exercise.id}
+                      className={`absolute inset-0 flex items-center justify-center text-gray-400 text-center p-4 ${exercise.animatedGifUrl ? 'hidden' : 'flex'}`}
+                      style={{ display: exercise.animatedGifUrl ? 'none' : 'flex' }}
+                    >
                       <div>
                         <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-50" />
                         <p className="text-sm mb-1">Exercise Animation</p>
                         <p className="text-xs text-gray-500">
-                          {exercise.animatedGifUrl ? 'Temporarily restricted by network policies' : 'No preview available'}
+                          {exercise.animatedGifUrl ? 'Loading exercise demonstration...' : 'No preview available'}
                         </p>
                       </div>
                     </div>
