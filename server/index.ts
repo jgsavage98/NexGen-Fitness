@@ -6,6 +6,8 @@ import { weeklyCheckinScheduler } from "./weeklyCheckinScheduler";
 
 const app = express();
 
+
+
 // CORS configuration for cookies
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', req.headers.origin);
