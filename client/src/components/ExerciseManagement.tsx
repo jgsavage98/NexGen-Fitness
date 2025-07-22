@@ -17,9 +17,12 @@ function getProxyImageUrl(originalUrl: string): string {
   // Extract the GIF ID from the exercisedb URL
   const match = originalUrl.match(/https:\/\/v1\.cdn\.exercisedb\.dev\/media\/([^.]+)\.gif/);
   if (match && match[1]) {
-    return `/api/exercise-gif/${match[1]}`;
+    const proxyUrl = `/api/exercise-gif/${match[1]}`;
+    console.log('🔄 Converting URL:', { originalUrl, proxyUrl, gifId: match[1] });
+    return proxyUrl;
   }
   
+  console.log('⚠️ URL pattern not matched:', originalUrl);
   // Fallback to original URL if pattern doesn't match
   return originalUrl;
 }
@@ -377,6 +380,7 @@ export default function ExerciseManagement() {
               id: exercise.id,
               name: exercise.name,
               animatedGifUrl: exercise.animatedGifUrl,
+              proxyUrl: getProxyImageUrl(exercise.animatedGifUrl),
               hasGifUrl: !!exercise.animatedGifUrl
             });
             
@@ -390,14 +394,28 @@ export default function ExerciseManagement() {
                         src={getProxyImageUrl(exercise.animatedGifUrl)}
                         alt={exercise.name}
                         className="w-full h-full object-cover rounded-lg"
-                        onLoad={() => console.log('GIF loaded successfully:', exercise.name)}
+                        onLoad={() => console.log('✅ GIF loaded successfully:', exercise.name, getProxyImageUrl(exercise.animatedGifUrl))}
                         onError={(e) => {
-                          console.error('GIF failed to load:', {
+                          console.error('❌ GIF failed to load:', {
                             exercise: exercise.name,
                             originalUrl: exercise.animatedGifUrl,
                             proxyUrl: getProxyImageUrl(exercise.animatedGifUrl),
                             error: e
                           });
+                          // Test the proxy URL directly
+                          fetch(getProxyImageUrl(exercise.animatedGifUrl))
+                            .then(response => {
+                              console.log('🔍 Proxy test response:', {
+                                status: response.status,
+                                statusText: response.statusText,
+                                contentType: response.headers.get('content-type'),
+                                url: getProxyImageUrl(exercise.animatedGifUrl)
+                              });
+                            })
+                            .catch(fetchError => {
+                              console.error('🚫 Proxy fetch failed:', fetchError);
+                            });
+                          
                           const img = e.target as HTMLImageElement;
                           img.style.display = 'none';
                           const fallbackDiv = img.nextElementSibling as HTMLElement;

@@ -3506,12 +3506,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/exercise-gif/:gifId', async (req, res) => {
     try {
       const { gifId } = req.params;
-      const gifUrl = `https://v1.cdn.exercisedb.dev/media/${gifId}`;
+      const gifUrl = `https://v1.cdn.exercisedb.dev/media/${gifId}.gif`;
       
-      console.log(`Proxying GIF: ${gifUrl}`);
+      console.log(`🎯 Proxying GIF request: ${gifId} -> ${gifUrl}`);
       
       const response = await fetch(gifUrl);
+      console.log(`📦 CDN Response: ${response.status} ${response.statusText}`);
+      
       if (!response.ok) {
+        console.error(`❌ CDN Error: ${response.status} for ${gifUrl}`);
         return res.status(404).json({ error: 'GIF not found' });
       }
       
@@ -3526,9 +3529,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Pipe the response
       const buffer = await response.arrayBuffer();
+      console.log(`✅ Successfully proxied GIF: ${gifId} (${buffer.byteLength} bytes)`);
       res.send(Buffer.from(buffer));
     } catch (error) {
-      console.error('Error proxying GIF:', error);
+      console.error('💥 Error proxying GIF:', { gifId, error: error.message });
       res.status(500).json({ error: 'Failed to fetch GIF' });
     }
   });
