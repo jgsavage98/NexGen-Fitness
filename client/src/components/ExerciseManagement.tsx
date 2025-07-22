@@ -10,6 +10,20 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dumbbell, Filter, Plus, Search } from "lucide-react";
 
+// Utility function to convert exercisedb CDN URLs to our proxy
+function getProxyImageUrl(originalUrl: string): string {
+  if (!originalUrl) return '';
+  
+  // Extract the GIF ID from the exercisedb URL
+  const match = originalUrl.match(/https:\/\/v1\.cdn\.exercisedb\.dev\/media\/([^.]+)\.gif/);
+  if (match && match[1]) {
+    return `/api/exercise-gif/${match[1]}`;
+  }
+  
+  // Fallback to original URL if pattern doesn't match
+  return originalUrl;
+}
+
 interface Exercise {
   id: number;
   name: string;
@@ -373,18 +387,23 @@ export default function ExerciseManagement() {
                   <div className="w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                     {exercise.animatedGifUrl ? (
                       <img
-                        src={exercise.animatedGifUrl}
+                        src={getProxyImageUrl(exercise.animatedGifUrl)}
                         alt={exercise.name}
                         className="w-full h-full object-cover rounded-lg"
                         onLoad={() => console.log('GIF loaded successfully:', exercise.name)}
                         onError={(e) => {
                           console.error('GIF failed to load:', {
                             exercise: exercise.name,
-                            url: exercise.animatedGifUrl,
+                            originalUrl: exercise.animatedGifUrl,
+                            proxyUrl: getProxyImageUrl(exercise.animatedGifUrl),
                             error: e
                           });
-                          (e.target as HTMLImageElement).style.display = 'none';
-                          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                          const fallbackDiv = img.nextElementSibling as HTMLElement;
+                          if (fallbackDiv) {
+                            fallbackDiv.classList.remove('hidden');
+                          }
                         }}
                       />
                     ) : null}

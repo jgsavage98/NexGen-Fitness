@@ -3502,6 +3502,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Exercise GIF proxy to bypass CORS
+  app.get('/api/exercise-gif/:gifId', async (req, res) => {
+    try {
+      const { gifId } = req.params;
+      const gifUrl = `https://v1.cdn.exercisedb.dev/media/${gifId}`;
+      
+      console.log(`Proxying GIF: ${gifUrl}`);
+      
+      const response = await fetch(gifUrl);
+      if (!response.ok) {
+        return res.status(404).json({ error: 'GIF not found' });
+      }
+      
+      // Set appropriate headers
+      res.set({
+        'Content-Type': response.headers.get('content-type') || 'image/gif',
+        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      });
+      
+      // Pipe the response
+      const buffer = await response.arrayBuffer();
+      res.send(Buffer.from(buffer));
+    } catch (error) {
+      console.error('Error proxying GIF:', error);
+      res.status(500).json({ error: 'Failed to fetch GIF' });
+    }
+  });
+
 
 
   const httpServer = createServer(app);
