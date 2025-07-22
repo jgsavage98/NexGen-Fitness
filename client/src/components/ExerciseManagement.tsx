@@ -358,27 +358,41 @@ export default function ExerciseManagement() {
             </p>
           </div>
         ) : (
-          filteredExercises.map((exercise) => (
-            <Card key={exercise.id} className="bg-surface border-gray-700 hover:border-gray-600 transition-colors">
-              <CardContent className="p-4">
-                {/* Exercise GIF/Image */}
-                <div className="w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                  {exercise.animatedGifUrl ? (
-                    <img
-                      src={exercise.animatedGifUrl}
-                      alt={exercise.name}
-                      className="w-full h-full object-cover rounded-lg"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <div className={`text-gray-500 text-center ${exercise.animatedGifUrl ? 'hidden' : ''}`}>
-                    <Dumbbell className="w-12 h-12 mx-auto mb-2" />
-                    <p className="text-sm">No preview available</p>
+          filteredExercises.map((exercise) => {
+            console.log('Exercise render:', {
+              id: exercise.id,
+              name: exercise.name,
+              animatedGifUrl: exercise.animatedGifUrl,
+              hasGifUrl: !!exercise.animatedGifUrl
+            });
+            
+            return (
+              <Card key={exercise.id} className="bg-surface border-gray-700 hover:border-gray-600 transition-colors">
+                <CardContent className="p-4">
+                  {/* Exercise GIF/Image */}
+                  <div className="w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                    {exercise.animatedGifUrl ? (
+                      <img
+                        src={exercise.animatedGifUrl}
+                        alt={exercise.name}
+                        className="w-full h-full object-cover rounded-lg"
+                        onLoad={() => console.log('GIF loaded successfully:', exercise.name)}
+                        onError={(e) => {
+                          console.error('GIF failed to load:', {
+                            exercise: exercise.name,
+                            url: exercise.animatedGifUrl,
+                            error: e
+                          });
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`text-gray-500 text-center ${exercise.animatedGifUrl ? 'hidden' : ''}`}>
+                      <Dumbbell className="w-12 h-12 mx-auto mb-2" />
+                      <p className="text-sm">No preview available</p>
+                    </div>
                   </div>
-                </div>
 
                 {/* Exercise Info */}
                 <h3 className="text-lg font-semibold text-white mb-2">{exercise.name}</h3>
@@ -410,7 +424,8 @@ export default function ExerciseManagement() {
                 </div>
               </CardContent>
             </Card>
-          ))
+            );
+          })
         )}
       </div>
 
