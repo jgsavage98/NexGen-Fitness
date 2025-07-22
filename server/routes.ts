@@ -3532,7 +3532,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`✅ Successfully proxied GIF: ${gifId} (${buffer.byteLength} bytes)`);
       res.send(Buffer.from(buffer));
     } catch (error) {
-      console.error('💥 Error proxying GIF:', { gifId, error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('💥 Error proxying GIF:', { gifId: req.params.gifId, error: errorMessage });
       res.status(500).json({ error: 'Failed to fetch GIF' });
     }
   });
