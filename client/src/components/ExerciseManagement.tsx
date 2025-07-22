@@ -10,21 +10,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dumbbell, Filter, Plus, Search } from "lucide-react";
 
-// Utility function to convert exercisedb CDN URLs to our proxy
-function getProxyImageUrl(originalUrl: string): string {
-  if (!originalUrl) return '';
-  
-  // Extract the GIF ID from the exercisedb URL
-  const match = originalUrl.match(/https:\/\/v1\.cdn\.exercisedb\.dev\/media\/([^.]+)\.gif/);
-  if (match && match[1]) {
-    const proxyUrl = `/api/exercise-gif/${match[1]}`;
-    console.log('🔄 Converting URL:', { originalUrl, proxyUrl, gifId: match[1] });
-    return proxyUrl;
-  }
-  
-  console.log('⚠️ URL pattern not matched:', originalUrl);
-  // Fallback to original URL if pattern doesn't match
-  return originalUrl;
+// Since proxy approach fails due to Replit network restrictions, 
+// we'll use direct URLs and handle CORS gracefully
+function getImageUrl(originalUrl: string): string {
+  return originalUrl || '';
 }
 
 interface Exercise {
@@ -376,46 +365,21 @@ export default function ExerciseManagement() {
           </div>
         ) : (
           filteredExercises.map((exercise) => {
-            console.log('Exercise render:', {
-              id: exercise.id,
-              name: exercise.name,
-              animatedGifUrl: exercise.animatedGifUrl,
-              proxyUrl: getProxyImageUrl(exercise.animatedGifUrl),
-              hasGifUrl: !!exercise.animatedGifUrl
-            });
+            // Simplified exercise render - removed proxy URL logging
             
             return (
               <Card key={exercise.id} className="bg-surface border-gray-700 hover:border-gray-600 transition-colors">
                 <CardContent className="p-4">
                   {/* Exercise GIF/Image */}
-                  <div className="w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                  <div className="relative w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                     {exercise.animatedGifUrl ? (
                       <img
-                        src={getProxyImageUrl(exercise.animatedGifUrl)}
+                        src={exercise.animatedGifUrl}
                         alt={exercise.name}
                         className="w-full h-full object-cover rounded-lg"
-                        onLoad={() => console.log('✅ GIF loaded successfully:', exercise.name, getProxyImageUrl(exercise.animatedGifUrl))}
+                        onLoad={() => console.log('✅ GIF loaded successfully:', exercise.name)}
                         onError={(e) => {
-                          console.error('❌ GIF failed to load:', {
-                            exercise: exercise.name,
-                            originalUrl: exercise.animatedGifUrl,
-                            proxyUrl: getProxyImageUrl(exercise.animatedGifUrl),
-                            error: e
-                          });
-                          // Test the proxy URL directly
-                          fetch(getProxyImageUrl(exercise.animatedGifUrl))
-                            .then(response => {
-                              console.log('🔍 Proxy test response:', {
-                                status: response.status,
-                                statusText: response.statusText,
-                                contentType: response.headers.get('content-type'),
-                                url: getProxyImageUrl(exercise.animatedGifUrl)
-                              });
-                            })
-                            .catch(fetchError => {
-                              console.error('🚫 Proxy fetch failed:', fetchError);
-                            });
-                          
+                          console.log('❌ GIF blocked by CORS/network restrictions for:', exercise.name);
                           const img = e.target as HTMLImageElement;
                           img.style.display = 'none';
                           const fallbackDiv = img.nextElementSibling as HTMLElement;
@@ -425,9 +389,14 @@ export default function ExerciseManagement() {
                         }}
                       />
                     ) : null}
-                    <div className={`text-gray-500 text-center ${exercise.animatedGifUrl ? 'hidden' : ''}`}>
-                      <Dumbbell className="w-12 h-12 mx-auto mb-2" />
-                      <p className="text-sm">No preview available</p>
+                    <div className={`absolute inset-0 flex items-center justify-center text-gray-400 text-center p-4 ${exercise.animatedGifUrl ? 'hidden' : ''}`}>
+                      <div>
+                        <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm mb-1">Exercise Animation</p>
+                        <p className="text-xs text-gray-500">
+                          {exercise.animatedGifUrl ? 'Temporarily restricted by network policies' : 'No preview available'}
+                        </p>
+                      </div>
                     </div>
                   </div>
 

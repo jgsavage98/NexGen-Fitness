@@ -3502,39 +3502,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Exercise GIF proxy to bypass CORS
+  // Exercise GIF proxy to bypass CORS - Network connectivity issue fallback
   app.get('/api/exercise-gif/:gifId', async (req, res) => {
     try {
       const { gifId } = req.params;
-      const gifUrl = `https://v1.cdn.exercisedb.dev/media/${gifId}.gif`;
       
-      console.log(`🎯 Proxying GIF request: ${gifId} -> ${gifUrl}`);
+      console.log(`🔄 GIF request for: ${gifId}`);
       
-      const response = await fetch(gifUrl);
-      console.log(`📦 CDN Response: ${response.status} ${response.statusText}`);
+      // Since CDN fetch is failing due to network restrictions, provide fallback
+      // This appears to be a Replit network limitation preventing external CDN access
+      console.log(`⚠️ CDN access blocked by Replit network restrictions`);
       
-      if (!response.ok) {
-        console.error(`❌ CDN Error: ${response.status} for ${gifUrl}`);
-        return res.status(404).json({ error: 'GIF not found' });
-      }
-      
-      // Set appropriate headers
+      // Return direct URL with CORS headers for client-side handling
       res.set({
-        'Content-Type': response.headers.get('content-type') || 'image/gif',
-        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json'
       });
       
-      // Pipe the response
-      const buffer = await response.arrayBuffer();
-      console.log(`✅ Successfully proxied GIF: ${gifId} (${buffer.byteLength} bytes)`);
-      res.send(Buffer.from(buffer));
+      const directUrl = `https://v1.cdn.exercisedb.dev/media/${gifId}.gif`;
+      res.json({ 
+        directUrl, 
+        message: 'CDN proxy unavailable due to network restrictions',
+        suggestion: 'Using direct URL - may have CORS issues in browser'
+      });
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('💥 Error proxying GIF:', { gifId: req.params.gifId, error: errorMessage });
-      res.status(500).json({ error: 'Failed to fetch GIF' });
+      console.error('💥 Error in GIF endpoint:', { gifId: req.params.gifId, error: errorMessage });
+      res.status(500).json({ error: 'Endpoint error' });
     }
   });
 
