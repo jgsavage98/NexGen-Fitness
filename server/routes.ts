@@ -3502,85 +3502,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Exercise GIF proxy with multiple fallback strategies
-  app.get('/api/exercise-gif/:gifId', async (req, res) => {
+  // Free Exercise Database API - Using yuhonas/free-exercise-db (no network restrictions)
+  // Public endpoint - no authentication required for free exercise data
+  app.get('/api/exercises/free', async (req, res) => {
     try {
-      const { gifId } = req.params;
-      const exercisedbUrl = `https://v1.cdn.exercisedb.dev/media/${gifId}.gif`;
+      console.log('🏋️ Fetching exercises from Free Exercise Database...');
       
-      console.log(`🎯 Attempting to proxy GIF: ${gifId} from ${exercisedbUrl}`);
+      const response = await fetch('https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json');
       
-      // Try different approaches to bypass network restrictions
-      const fetchOptions = {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; fitness-app/1.0)',
-          'Accept': 'image/gif,image/*,*/*',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Cache-Control': 'no-cache',
-          'Referer': 'https://exercisedb.p.rapidapi.com/',
-          'Origin': 'https://exercisedb.p.rapidapi.com'
-        },
-        timeout: 15000
-      };
-
-      try {
-        const response = await fetch(exercisedbUrl, fetchOptions);
-        
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
-          
-          console.log(`✅ Successfully fetched GIF: ${gifId} (${buffer.length} bytes)`);
-          
-          res.set({
-            'Content-Type': 'image/gif',
-            'Content-Length': buffer.length.toString(),
-            'Cache-Control': 'public, max-age=86400',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET',
-            'Access-Control-Allow-Headers': 'Content-Type',
-          });
-          
-          return res.send(buffer);
-        } else {
-          console.log(`❌ CDN response: ${response.status} ${response.statusText}`);
-        }
-      } catch (fetchError) {
-        console.log(`⚠️ Fetch failed: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
+      if (!response.ok) {
+        throw new Error(`GitHub API returned ${response.status}`);
       }
       
-      // Fallback: serve a placeholder image or redirect
-      console.log(`🔄 Serving fallback for GIF: ${gifId}`);
+      const exercises = await response.json();
+      console.log(`✅ Successfully fetched ${exercises.length} exercises from Free Exercise DB`);
       
-      // Generate a simple SVG placeholder
-      const placeholderSvg = `
-        <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100%" height="100%" fill="#374151"/>
-          <g fill="#9CA3AF" text-anchor="middle" font-family="Arial, sans-serif">
-            <text x="50%" y="40%" font-size="16" font-weight="bold">Exercise Animation</text>
-            <text x="50%" y="55%" font-size="12">${gifId}</text>
-            <text x="50%" y="70%" font-size="10">Network restricted</text>
-          </g>
-          <circle cx="200" cy="120" r="30" fill="none" stroke="#9CA3AF" stroke-width="2">
-            <animate attributeName="r" values="20;35;20" dur="2s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
-          </circle>
-        </svg>
-      `;
+      // Transform the data to match our existing interface
+      const transformedExercises = exercises.map((exercise: any, index: number) => ({
+        id: index + 1,
+        name: exercise.name,
+        description: exercise.instructions ? exercise.instructions.join(' ') : '',
+        exerciseType: exercise.mechanic || 'compound',
+        equipmentType: exercise.equipment || 'bodyweight',
+        bodyPart: exercise.primaryMuscles ? exercise.primaryMuscles[0] : 'full body',
+        difficulty: exercise.level || 'intermediate',
+        animatedGifUrl: exercise.images && exercise.images.length > 0 ? exercise.images[0] : null,
+        instructions: exercise.instructions || [],
+        primaryMuscles: exercise.primaryMuscles || [],
+        secondaryMuscles: exercise.secondaryMuscles || [],
+        force: exercise.force,
+        category: exercise.category
+      }));
       
-      res.set({
-        'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=3600',
-        'Access-Control-Allow-Origin': '*',
-      });
-      
-      res.send(placeholderSvg);
+      res.json(transformedExercises);
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('💥 Proxy error:', { gifId: req.params.gifId, error: errorMessage });
-      res.status(500).json({ error: 'Proxy failed' });
+      console.error('💥 Error fetching Free Exercise DB:', errorMessage);
+      res.status(500).json({ error: 'Failed to fetch exercise data' });
     }
   });
 
