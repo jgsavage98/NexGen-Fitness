@@ -391,15 +391,17 @@ export default function ExerciseManagement() {
                         src={getLocalGifUrl(exercise.animatedGifUrl)}
                         alt={exercise.name}
                         className="w-full h-full object-cover rounded-lg"
-                        onLoad={() => {
+                        onLoad={(e) => {
                           console.log('✅ Exercise GIF loaded successfully:', exercise.name);
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'block';
                           const fallbackDiv = document.querySelector(`[data-fallback="${exercise.id}"]`) as HTMLElement;
                           if (fallbackDiv) {
                             fallbackDiv.style.display = 'none';
                           }
                         }}
                         onError={(e) => {
-                          console.log('❌ Proxy GIF failed, showing fallback for:', exercise.name);
+                          console.log('❌ GIF failed to load, showing fallback for:', exercise.name);
                           const img = e.target as HTMLImageElement;
                           img.style.display = 'none';
                           const fallbackDiv = document.querySelector(`[data-fallback="${exercise.id}"]`) as HTMLElement;
@@ -407,11 +409,12 @@ export default function ExerciseManagement() {
                             fallbackDiv.style.display = 'flex';
                           }
                         }}
+                        style={{ display: 'block' }}
                       />
                     ) : null}
                     <div 
                       data-fallback={exercise.id}
-                      className={`absolute inset-0 flex items-center justify-center text-gray-400 text-center p-4 ${exercise.animatedGifUrl ? 'hidden' : 'flex'}`}
+                      className="absolute inset-0 flex items-center justify-center text-gray-400 text-center p-4"
                       style={{ display: exercise.animatedGifUrl ? 'none' : 'flex' }}
                     >
                       <div>
