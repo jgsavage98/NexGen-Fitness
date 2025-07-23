@@ -382,12 +382,12 @@ export default function ExerciseManagement() {
             <Card key={exercise.id} className="bg-surface border-gray-700 hover:border-gray-600 transition-colors">
               <CardContent className="p-4">
                 {/* Exercise GIF/Image */}
-                <div className="relative w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                  {exercise.animatedGifUrl ? (
+                <div className="relative w-full h-48 bg-gray-800 rounded-lg mb-4 overflow-hidden">
+                  {exercise.animatedGifUrl && (
                     <img
                       src={getLocalGifUrl(exercise.animatedGifUrl)}
                       alt={exercise.name}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="absolute inset-0 w-full h-full object-cover rounded-lg"
                       onLoad={(e) => {
                         console.log('✅ Exercise GIF loaded successfully:', exercise.name);
                         console.log('📸 Image src:', (e.target as HTMLImageElement).src);
@@ -398,14 +398,10 @@ export default function ExerciseManagement() {
                         console.log('🔗 Failed URL:', (e.target as HTMLImageElement).src);
                         console.log('💥 Error details:', e);
                       }}
-                      style={{ 
-                        zIndex: 10, 
-                        position: 'relative',
-                        display: 'block'
-                      }}
                     />
-                  ) : (
-                    <div className="flex items-center justify-center text-gray-400 text-center p-4">
+                  )}
+                  {!exercise.animatedGifUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-center p-4">
                       <div>
                         <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-50" />
                         <p className="text-sm mb-1">Exercise Animation</p>
