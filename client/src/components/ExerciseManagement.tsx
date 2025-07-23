@@ -382,12 +382,13 @@ export default function ExerciseManagement() {
             <Card key={exercise.id} className="bg-surface border-gray-700 hover:border-gray-600 transition-colors">
               <CardContent className="p-4">
                 {/* Exercise GIF/Image */}
-                <div className="relative w-full h-48 bg-gray-800 rounded-lg mb-4 overflow-hidden">
+                <div className="relative w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                   {exercise.animatedGifUrl && (
                     <img
                       src={getLocalGifUrl(exercise.animatedGifUrl)}
                       alt={exercise.name}
-                      className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                      className="w-45 h-45 object-contain rounded-lg"
+                      style={{ maxWidth: '180px', maxHeight: '180px', width: 'auto', height: 'auto' }}
                       onLoad={(e) => {
                         console.log('✅ Exercise GIF loaded successfully:', exercise.name);
                         console.log('📸 Image src:', (e.target as HTMLImageElement).src);
