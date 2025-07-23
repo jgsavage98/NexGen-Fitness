@@ -14,11 +14,14 @@ import { Dumbbell, Filter, Plus, Search } from "lucide-react";
 function getLocalGifUrl(originalUrl: string): string {
   if (!originalUrl) return '';
   
-  // Extract the GIF ID from exercisedb URLs
+  // Extract the GIF ID from exercisedb URLs (handles both formats)
+  // Format 1: https://v1.cdn.exercisedb.dev/media/0001.gif (4-digit numeric)
+  // Format 2: https://v1.cdn.exercisedb.dev/media/UVo2Qs2.gif (alphanumeric)
   const match = originalUrl.match(/https:\/\/v1\.cdn\.exercisedb\.dev\/media\/([^.]+)\.gif/);
   if (match && match[1]) {
-    const localUrl = `/api/exercise-gif/${match[1]}`;
-    console.log('🏠 Using local GIF URL:', { originalUrl, localUrl, gifId: match[1] });
+    const gifId = match[1];
+    const localUrl = `/api/exercise-gif/${gifId}`;
+    console.log('🏠 Using local GIF URL:', { originalUrl, localUrl, gifId });
     return localUrl;
   }
   

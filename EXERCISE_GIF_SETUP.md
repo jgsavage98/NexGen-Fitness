@@ -4,15 +4,23 @@ Since Replit has network restrictions that prevent downloading exercise GIFs dir
 
 ## Option 1: Download on Local MacBook (Recommended)
 
-### Step 1: Download on your MacBook
+### Step 1: Get the exercise URLs
 ```bash
-# Clone the repo to your MacBook (if not already done)
-git clone https://github.com/your-repo/nexgen-fitness.git
-cd nexgen-fitness
-
-# Run the download script locally (where network access works)
-node scripts/download-exercise-gifs-local.js
+# Run this helper script to see the download instructions
+node scripts/generate-download-list.js
 ```
+
+### Step 2: Query your database for all exercise URLs
+```sql
+SELECT id, name, animated_gif_url FROM exercises WHERE animated_gif_url IS NOT NULL ORDER BY name;
+```
+
+### Step 3: Download GIFs manually on your MacBook
+For each URL in your database:
+1. Copy the URL (e.g., `https://v1.cdn.exercisedb.dev/media/UVo2Qs2.gif`)
+2. Right-click and "Save As..." or use curl/wget
+3. Save with the exact filename from the URL (e.g., `UVo2Qs2.gif`)
+4. Save to `public/exercises/gifs/` directory
 
 ### Step 2: Create ZIP file
 ```bash
@@ -45,17 +53,19 @@ If you prefer to download individual GIFs:
 4. Save with naming format: `0001.gif`, `0002.gif`, etc.
 5. Upload directly to `public/exercises/gifs/` in Replit
 
-## GIF ID Reference
+## GIF Filename Reference
 
-The system expects GIFs named by their exercisedb ID:
-- `0001.gif` - 3/4 Sit-up
-- `0002.gif` - Ab Crunch  
-- `0003.gif` - Air Bike
-- `0018.gif` - Barbell Bench Press
-- `0021.gif` - Barbell Deadlift
-- `0022.gif` - Barbell Squat
-- `0039.gif` - Push-ups
+Your database contains URLs with alphanumeric filenames. Use the exact filename from each URL:
+
+From your database:
+- `UVo2Qs2.gif` - flutter kicks
+- `DQ0cqkT.gif` - three bench dip  
+- `NZ5Qqkz.gif` - reverse dip
+- `5KLbZWx.gif` - kettlebell alternating press
+- `U3ffHlY.gif` - cable rope lying on floor tricep extension
 - And more...
+
+**Important**: Use the exact filename from your database's `animated_gif_url` field!
 
 ## How It Works
 
