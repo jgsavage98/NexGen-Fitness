@@ -378,54 +378,42 @@ export default function ExerciseManagement() {
             </p>
           </div>
         ) : (
-          filteredExercises.map((exercise) => {
-            // Simplified exercise render - removed proxy URL logging
-            
-            return (
-              <Card key={exercise.id} className="bg-surface border-gray-700 hover:border-gray-600 transition-colors">
-                <CardContent className="p-4">
-                  {/* Exercise GIF/Image */}
-                  <div className="relative w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                    {exercise.animatedGifUrl ? (
-                      <img
-                        src={getLocalGifUrl(exercise.animatedGifUrl)}
-                        alt={exercise.name}
-                        className="w-full h-full object-cover rounded-lg"
-                        onLoad={(e) => {
-                          console.log('✅ Exercise GIF loaded successfully:', exercise.name);
-                          const img = e.target as HTMLImageElement;
-                          img.style.display = 'block';
-                          const fallbackDiv = document.querySelector(`[data-fallback="${exercise.id}"]`) as HTMLElement;
-                          if (fallbackDiv) {
-                            fallbackDiv.style.display = 'none';
-                          }
-                        }}
-                        onError={(e) => {
-                          console.log('❌ GIF failed to load, showing fallback for:', exercise.name);
-                          const img = e.target as HTMLImageElement;
-                          img.style.display = 'none';
-                          const fallbackDiv = document.querySelector(`[data-fallback="${exercise.id}"]`) as HTMLElement;
-                          if (fallbackDiv) {
-                            fallbackDiv.style.display = 'flex';
-                          }
-                        }}
-                        style={{ display: 'block' }}
-                      />
-                    ) : null}
-                    <div 
-                      data-fallback={exercise.id}
-                      className="absolute inset-0 flex items-center justify-center text-gray-400 text-center p-4"
-                      style={{ display: exercise.animatedGifUrl ? 'none' : 'flex' }}
-                    >
+          filteredExercises.map((exercise) => (
+            <Card key={exercise.id} className="bg-surface border-gray-700 hover:border-gray-600 transition-colors">
+              <CardContent className="p-4">
+                {/* Exercise GIF/Image */}
+                <div className="relative w-full h-48 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                  {exercise.animatedGifUrl ? (
+                    <img
+                      src={getLocalGifUrl(exercise.animatedGifUrl)}
+                      alt={exercise.name}
+                      className="w-full h-full object-cover rounded-lg"
+                      onLoad={(e) => {
+                        console.log('✅ Exercise GIF loaded successfully:', exercise.name);
+                        console.log('📸 Image src:', (e.target as HTMLImageElement).src);
+                        console.log('📋 Image dimensions:', (e.target as HTMLImageElement).naturalWidth, 'x', (e.target as HTMLImageElement).naturalHeight);
+                      }}
+                      onError={(e) => {
+                        console.log('❌ GIF failed to load, showing fallback for:', exercise.name);
+                        console.log('🔗 Failed URL:', (e.target as HTMLImageElement).src);
+                        console.log('💥 Error details:', e);
+                      }}
+                      style={{ 
+                        zIndex: 10, 
+                        position: 'relative',
+                        display: 'block'
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center text-gray-400 text-center p-4">
                       <div>
                         <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-50" />
                         <p className="text-sm mb-1">Exercise Animation</p>
-                        <p className="text-xs text-gray-500">
-                          {exercise.animatedGifUrl ? 'Loading exercise demonstration...' : 'No preview available'}
-                        </p>
+                        <p className="text-xs text-gray-500">No preview available</p>
                       </div>
                     </div>
-                  </div>
+                  )}
+                </div>
 
                 {/* Exercise Info */}
                 <h3 className="text-lg font-semibold text-white mb-2">{exercise.name}</h3>
@@ -457,8 +445,7 @@ export default function ExerciseManagement() {
                 </div>
               </CardContent>
             </Card>
-            );
-          })
+          ))
         )}
       </div>
 
